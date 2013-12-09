@@ -5,6 +5,7 @@ and best practices. It includes
 * tests / executable documentation
 
 Suggested reading order is
+
 1. `instant/flags.vim`
 2. `plugin/commands.vim`
 3. `autoload/helloworld.vim`
