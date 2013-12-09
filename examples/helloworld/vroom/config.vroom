@@ -18,8 +18,8 @@ commands.
   :let g:helloworld = maktaba#plugin#Get('helloworld')
   :call g:helloworld.Flag('plugin[commands]', 0)
 
-Normally, users would use Glaive or a plugin manager like Glug to configure
-flags more conveniently.
+Normal users should use Glaive or a plugin manager implementing the
+maktaba#setting API to configure flags.
 
 Disabling plugin[commands] prevents the corresponding file (plugin/commands.vim)
 from loading during the normal plugin files phase after vimrc is done executing,
