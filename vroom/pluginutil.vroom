@@ -1,0 +1,97 @@
+Here we test some of the more mundane functionality provided by maktaba#plugin.
+Before reading through this, make sure you've read plugin.vroom. While you're
+glancing over it, I'll install maktaba:
+
+  :set nocompatible
+  :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
+  :let g:bootstrapfile = g:maktabadir . '/bootstrap.vim'
+  :execute 'source' g:bootstrapfile
+
+The first thing to note is that maktaba keeps a list of registered plugins.
+Right now, it contains 'maktaba':
+
+  :echomsg string(maktaba#plugin#RegisteredPlugins())
+  ~ ['maktaba']
+
+Let's install a few plugins to get things rolling.
+
+  :let g:thisdir = fnamemodify($VROOMFILE, ':p:h')
+  :let g:repo = maktaba#path#Join([g:thisdir, 'fakeplugins'])
+  :let g:mypath = maktaba#path#Join([g:repo, 'myplugin'])
+  :let g:modularpath = maktaba#path#Join([g:repo, 'modularplugin'])
+  :let g:myplugin = maktaba#plugin#Install(g:mypath)
+  :let g:modularplugin = maktaba#plugin#Install(g:modularpath)
+
+For starters, notice that maktaba#plugin#RegisteredPlugins now contains both
+plugins:
+
+  :echomsg string(sort(maktaba#plugin#RegisteredPlugins()))
+  ~ ['maktaba', 'modularplugin', 'myplugin']
+
+You cannot create plugins more than once. If you try to do so, you'll get an
+AlreadyExists error:
+
+  :let g:install = maktaba#function#Create('maktaba#plugin#Install')
+  :call maktaba#error#Try(g:install.WithArgs(g:mypath))
+  ~ ERROR(AlreadyExists): Plugin "myplugin" already exists.
+
+You can use maktaba#plugin#GetOrInstall to get around this, so long as the old
+path and the new path are the same:
+
+  :let g:myplugin2 = maktaba#plugin#GetOrInstall(g:mypath)
+  :call maktaba#ensure#IsEqual(g:myplugin2, g:myplugin)
+
+Be warned, maktaba cannot handle multiple plugins with the same name, even if
+they have different paths:
+
+  :let g:anotherpath = maktaba#path#Join(['another', 'path', 'to', 'myplugin'])
+  :let g:getorinstall = maktaba#function#Create('maktaba#plugin#GetOrInstall')
+  :call maktaba#error#Try(g:getorinstall.WithArgs(g:anotherpath))
+  ~ ERROR(AlreadyExists): Conflict for plugin "myplugin": * (glob)
+
+Maktaba plugin names are always normalized to be usable as vim variables.
+
+  :let g:weirdpath = maktaba#path#Join([g:repo, 'weird-p.l.u.g.i.n'])
+  :let g:weirdplugin = maktaba#plugin#Install(g:weirdpath)
+  :echomsg g:weirdplugin.name
+  ~ weird_p_l_u_g_i_n
+
+Non-variable characters are converted to underscores. Be careful!  This means
+that plugins with different names can experience name collisions if they
+normalize to he same name:
+
+  :let g:weirdpath = maktaba#path#Join([g:repo, 'weird_p-l-u-g-i-n'])
+  :call maktaba#error#Try(g:install.WithArgs(g:weirdpath))
+  ~ ERROR(AlreadyExists): Plugin "weird_p_l_u_g_i_n" already exists.
+
+You can check the canonical name of a plugin by using the
+maktaba#plugin#CanonicalName function:
+
+  :echomsg maktaba#plugin#CanonicalName('weird¬p…l✓u↓g⏎i‽n')
+  ~ weird_p_l_u_g_i_n
+
+In general, it's recommended that plugin directories stick to vim identifier
+characters [a-zA-Z0-9_].
+
+There are a few more utility functions available. To demonstrate, I'll load up
+one more plugin:
+
+  :let g:ftpath = maktaba#path#Join([g:repo, 'ftplugin'])
+  :let g:ftplugin = maktaba#plugin#Install(g:ftpath)
+
+Each plugin has a HasDir funtion which lets you know if a plugin has a specific
+directory, either as a direct subdirectory or in an after/ directory. You might
+want to verify the following statements in the plugins in the fakeplugin
+directory.
+
+myplugin does not have an ftplugin dir:
+
+  :call maktaba#ensure#IsFalse(g:myplugin.HasDir('ftplugin'))
+
+But the ftplugin does, of course:
+
+  :call maktaba#ensure#IsTrue(g:ftplugin.HasDir('ftplugin'))
+
+myplugin has a plugin dir in the after directory:
+
+  :call maktaba#ensure#IsTrue(g:myplugin.HasDir('plugin'))

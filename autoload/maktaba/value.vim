@@ -1,0 +1,242 @@
+" Note: We use Titled variable names in places where the variable may take on
+" any type (including funcref). Vim dies when you assign a funcref to
+" a lowercase name. Don't refactor this code to have lowercase variable names.
+let s:EmptyFn = function('empty')
+
+" Gets {target}[{focus}].
+" @throws BadValue if it can't.
+function! s:GetFocus(target, focus) abort
+  call maktaba#ensure#TypeMatchesOneOf(a:target, [[], {}])
+  if maktaba#value#IsList(a:target)
+    call maktaba#ensure#IsNumber(a:focus)
+    if a:focus >= len(a:target)
+      let l:msg = 'Index %s out of range in %s'
+      throw maktaba#error#BadValue(l:msg, a:focus, string(a:target))
+    endif
+  elseif !has_key(a:target, a:focus)
+    let l:msg = 'Key %s not in %s'
+    throw maktaba#error#BadValue(l:msg, a:focus, string(a:target))
+  endif
+  return a:target[a:focus]
+endfunction
+
+
+" Sets {target}[{focus}] to {value}.
+" @throws BadValue if it can't.
+function! s:SetFocus(target, focus, Value) abort
+  call maktaba#ensure#IsCollection(a:target)
+  if !maktaba#value#IsDict(a:target)
+    call maktaba#ensure#IsNumber(a:focus)
+    if a:focus > len(a:target)
+      let l:msg = 'Index %s out of range in %s'
+      throw maktaba#error#BadValue(l:msg, a:focus, string(a:target))
+    elseif a:focus == len(a:target)
+      call add(a:target, a:Value)
+    else
+      let a:target[a:focus] = a:Value
+    endif
+  else
+    let a:target[a:focus] = a:Value
+  endif
+endfunction
+
+
+""
+" Tests whether values {a} and {b} are equal.
+" This works around a number of limitations in vimscript's == operator. Unlike
+" with the == operator,
+"   1. String comparisons are case sensitive.
+"   2. {a} and {b} must be of the same type: 0 does not equal '0'.
+"   3. 0 == [] is false (instead of throwing an exception).
+" The == operator is insane. Use this instead.
+"
+" NOTE: {a} AND {b} MUST BE OF THE SAME TYPE. 1.0 DOES NOT EQUAL 1! This is
+" consistent with the behavior of equality established by instant() and count(),
+" but may be surprising to some users.
+function! maktaba#value#IsEqual(X, Y) abort
+  return type(a:X) == type(a:Y) && a:X ==# a:Y
+endfunction
+
+
+""
+" Whether {value} is in {list}.
+function! maktaba#value#IsIn(Value, list)
+  return index(maktaba#ensure#IsList(a:list), a:Value) >= 0
+endfunction
+
+
+""
+" Returns the empty value for {value}.
+" This is 0, 0.0, '', [], {}, or 'empty', depending upon the value type.
+function! maktaba#value#EmptyValue(Value) abort
+  let l:type = type(a:Value)
+  if l:type == type(0)
+    return 0
+  elseif l:type == type(0.0)
+    return 0.0
+  elseif l:type == type('')
+    return ''
+  elseif l:type == type([])
+    return []
+  elseif l:type == type({})
+    return {}
+  else
+    return s:EmptyFn
+  endif
+endfunction
+
+
+""
+" Returns the type of {value} as a string.
+" One of "number", "string", "funcref", "list", "dictionary", or "float".
+" See also |type()|.
+function! maktaba#value#TypeName(Value) abort
+  let l:type = type(a:Value)
+  if l:type == 0
+    return "number"
+  elseif l:type == 1
+    return "string"
+  elseif l:type == 2
+    return "funcref"
+  elseif l:type == 3
+    return "list"
+  elseif l:type == 4
+    return "dictionary"
+  elseif l:type == 5
+    return "float"
+  endif
+endfunction
+
+
+""
+" 1 if {value} has the same type as {reference}, 0 otherwise.
+function! maktaba#value#TypeMatches(Value, Reference) abort
+  return type(a:Value) == type(a:Reference)
+endfunction
+
+
+""
+" 1 if {value} has the same type as one of the elements in {references}.
+" 0 otherwise.
+function! maktaba#value#TypeMatchesOneOf(Value, references) abort
+  return index(map(copy(a:references), 'type(v:val)'), type(a:Value)) >= 0
+endfunction
+
+
+""
+" 1 if {value} is a vimscript "number" (more commonly known as "integer", 0
+" otherwise. Remember that vimscript calls integers "numbers".
+function! maktaba#value#IsNumber(Value) abort
+  return type(a:Value) == type(0)
+endfunction
+
+
+""
+" 1 if {value} is a string, 0 otherwise.
+function! maktaba#value#IsString(Value) abort
+  return type(a:Value) == type('')
+endfunction
+
+
+""
+" 1 if {value} is a funcref, 0 otherwise.
+function! maktaba#value#IsFuncref(Value) abort
+  return type(a:Value) == type(s:EmptyFn)
+endfunction
+
+
+""
+" 1 if {value} is a list, 0 otherwise.
+function! maktaba#value#IsList(Value) abort
+  return type(a:Value) == type([])
+endfunction
+
+
+""
+" 1 if {value} is a dict, 0 otherwise.
+function! maktaba#value#IsDict(Value) abort
+  return type(a:Value) == type({})
+endfunction
+
+
+""
+" 1 if {value} is a floating point number, 0 otherwise.
+function! maktaba#value#IsFloat(Value) abort
+  return type(a:Value) == type(0.0)
+endfunction
+
+
+""
+" 1 if {value} is numeric (integer or float, which vimscript stupidly refers
+" to as "number" and "float").
+" 0 otherwise.
+function! maktaba#value#IsNumeric(Value) abort
+  return maktaba#value#TypeMatchesOneOf(a:Value, [0, 0.0])
+endfunction
+
+
+""
+" 1 if {value} is a collection type (list or dict).
+" 0 otherwise.
+function! maktaba#value#IsCollection(Value) abort
+  return maktaba#value#TypeMatchesOneOf(a:Value, [[], {}])
+endfunction
+
+
+""
+" 1 if {value} is a callable type (string or function), 0 otherwise.
+" This DOES NOT guarantee that the function indicated by {value} actually
+" exists.
+function! maktaba#value#IsCallable(Value) abort
+  return maktaba#value#TypeMatchesOneOf(a:Value, ['', s:EmptyFn])
+      \ || maktaba#function#IsWellFormedDict(a:Value)
+endfunction
+
+
+""
+" 1 if {value} is a maktaba enum type, 0 otherwise.
+function! maktaba#value#IsEnum(Value) abort
+  return maktaba#enum#IsValid(a:Value)
+endfunction
+
+
+""
+" Focuses on a part of {target} specified by {foci}. That object will either be
+" returned, or set to [value] if [value] is given (in which case {target} is
+" returned). Examples will make this clearer:
+" >
+"   maktaba#value#Focus({'a': [0, {'b': 'hi!'}, 1]}, ['a', 1, 'b']) == 'hi'
+" <
+" Notice how this function lets you focus on one part of a complex data
+" structure. You can also use it to modify the data structure:
+" >
+"   maktaba#value#Focus({'a': {'b': 0}}, ['a', 'b'], 2) == {'a': {'b': 2}}
+" <
+" The only real reason to use this code is because it destructures {target} in
+" a safe way, throwing exceptions if the implicit assumptions aren't met.
+" @throws BadValue if {target} cannot be deconstructed the way {foci} expects.
+function! maktaba#value#Focus(Target, foci, ...) abort
+  call maktaba#ensure#IsList(a:foci)
+  if a:0 == 0
+    " May be a funcref, must be uppercase.
+    let l:Target = a:Target
+    for l:focus in a:foci
+      try
+        let l:Newtarget = s:GetFocus(l:Target, l:focus)
+      catch /ERROR(WrongType):/
+        let l:msg = '%s cannot be used to index %s.'
+        throw maktaba#error#WrongType(l:msg, string(l:focus), string(l:Target))
+      endtry
+      " This jankyness is necessary because vim doesn't let you change the type
+      " of a variable without unletting it.
+      unlet l:Target
+      let l:Target = l:Newtarget
+      unlet l:Newtarget
+    endfor
+    return l:Target
+  else
+    let l:parent = maktaba#value#Focus(a:Target, a:foci[:-2])
+    call s:SetFocus(l:parent, a:foci[-1], a:1)
+    return a:Target
+  endif
+endfunction
