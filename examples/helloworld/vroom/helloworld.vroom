@@ -23,9 +23,8 @@ the standard bootstrap.vim file.
 
 The bootstrap.vim file calls maktaba#plugin#GetOrInstall to install the
 helloworld plugin. The plugin can also be installed directly in other code, or
-by a plugin installer like Glug that implements the maktaba plugin installer
-API. These are built on top of maktaba#plugin#Install or
-maktaba#plugin#GetOrInstall.
+by a plugin manager that implements the maktaba plugin installer API.
+These are built on top of maktaba#plugin#Install or maktaba#plugin#GetOrInstall.
 
 Normally, that will all happen at vimrc time, and after your vimrc file is
 loaded, the plugin files like plugin/commands.vim will be loaded before you need
