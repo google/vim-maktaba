@@ -25,7 +25,7 @@ maktaba does not support vi-compatible mode.
 
   :set nocompatible
 
-Then you're ready to source the bootsrap file. This test file is at
+Then you're ready to source the bootstrap file. This test file is at
 maktaba/tests/main.vroom, so the bootstrap file is at ../bootstrap.vim.
 
   :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
