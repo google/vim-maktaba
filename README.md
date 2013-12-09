@@ -21,6 +21,9 @@ vimscript. This includes, among other things:
 In the `vroom/` directory you'll find literate test files that walk you through
 maktaba features in depth. `vroom/main.vroom` is a good place to start.
 
+In the `examples/` directory you can find an example maktaba plugin to give you
+a feel for how maktaba plugins look.
+
 In the `doc/` directory you'll find helpfiles for maktaba. These are also
 available via `:help maktaba` if maktaba has been installed and helptags have
 been generated. The help files document the maktaba API in its entirety.
