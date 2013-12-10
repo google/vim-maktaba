@@ -1,10 +1,7 @@
-# How to contribute #
-
-We'd love to accept your patches and contributions to this project, but there
-are a few guidelines you need to follow.
-
-
 ## Contributor License Agreement ##
+
+Patches and contributions are welcome. Before we can accept them, though, we
+have to see to the legal details.
 
 Contributions to any Google project must be accompanied by a Contributor
 License Agreement. This is not a copyright **assignment**, it simply gives
