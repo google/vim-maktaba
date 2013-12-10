@@ -738,7 +738,7 @@ maktaba#function#Compose({g}, {f})                  *maktaba#function#Compose*
   The final result is returned.
 
 
-maktaba#function#Compose({functions...})            *maktaba#function#Compose*
+maktaba#function#Compose({functions...})
   Composes all of {functions...}, RIGHT to LEFT. For example,
 >
     :let HGF = maktaba#function#Compose(H, G, F)
