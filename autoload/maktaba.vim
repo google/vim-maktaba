@@ -39,7 +39,7 @@
 " passed a given version number.
 
 if !exists('s:version')
-  let s:version = [1, 0, 0]
+  let s:version = [1, 1, 0]
   let maktaba#VERSION = join(s:version, '.')
   lockvar maktaba#VERSION
 endif
