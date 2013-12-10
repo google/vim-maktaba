@@ -1,16 +1,19 @@
-let s:unescaped_comma = '\v\\@<!%(\\\\)*\zs,'
-let s:escaped_char = '\v\\([\,])'
-let s:cache_string = ''
-let s:cache_list = []
+if !exists('s:leaf_pathcomponent')
+  " Some users have local vimfiles in .vim, others in .config/vim.
+  " Some distros install vim files into /usr/share/vimfiles, others in
+  " /usr/share/vim/vimN where N is a version number (like /usr/share/vim/vim73).
+  " Some users add runtime/ directories to their runtimepaths, and all plugins
+  " can contain an after/ directory.
+  " So all paths whose final component matches the following regex are not
+  " considered to be plugins.
+  let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
 
-" Some users have local vimfiles in .vim, others in .config/vim.
-" Some distros install vim files into /usr/share/vimfiles, others in
-" /usr/share/vim/vimN where N is a version number (like /usr/share/vim/vim73).
-" Some users add runtime/ directories to their runtimepaths, and all plugins can
-" contain an after/ directory.
-" So all paths whose final component matches the following regex are not
-" considered to be plugins.
-let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
+  let s:unescaped_comma = '\v\\@<!%(\\\\)*\zs,'
+  let s:escaped_char = '\v\\([\,])'
+  let s:cache_string = ''
+  let s:cache_list = []
+endif
+
 
 
 ""
@@ -20,14 +23,13 @@ let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
 " @default path=|runtimepath|
 function! maktaba#rtp#Split(...) abort
   let l:path = get(a:, 1, &runtimepath)
-  if l:path ==# s:cache_string
-    return copy(s:cache_list)
+  if l:path !=# s:cache_string
+    let s:cache_string = l:path
+    let s:cache_list = map(
+        \ split(l:path, s:unescaped_comma),
+        \ "substitute(v:val, s:escaped_char, '\\1', 'g')")
   endif
-  let l:parts = split(l:path, s:unescaped_comma)
-  let l:split = map(l:parts, "substitute(v:val, s:escaped_char, '\\1', 'g')")
-  let l:cache_string = l:path
-  let l:cache_list = copy(l:split)
-  return l:split
+  return copy(s:cache_list)
 endfunction
 
 
@@ -74,6 +76,8 @@ function! maktaba#rtp#Add(path) abort
     call insert(l:rtp, l:after, l:end)
   endif
   let &runtimepath = maktaba#rtp#Join(l:rtp)
+  let s:cache_string = &runtimepath
+  let s:cache_list = l:rtp
 endfunction
 
 
@@ -84,6 +88,8 @@ function! maktaba#rtp#Remove(path) abort
   let l:rtp = maktaba#rtp#Split(&runtimepath)
   call maktaba#list#RemoveAll(l:rtp, a:path)
   let &runtimepath = maktaba#rtp#Join(l:rtp)
+  let s:cache_string = &runtimepath
+  let s:cache_list = l:rtp
 endfunction
 
 
