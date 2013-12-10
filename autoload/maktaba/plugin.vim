@@ -366,35 +366,40 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ '_entered': l:entrycontroller,
       \ }
   let s:plugins[a:name] = l:plugin
-  call call('s:InitializePluginObject', [a:settings], l:plugin)
-  return l:plugin
-endfunction
 
+  " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
+  " possible that the user has given us a {location} which is already on the
+  " runtimepath but which is not absolute. If so, we must remove it, or the
+  " plugin will end up on the runtimepath twice.
+  call maktaba#rtp#Remove(a:location)
+  " Now we can safely add the full location to the runtimepath.
+  call maktaba#rtp#Add(l:plugin.location)
 
-function! s:InitializePluginObject(settings) dict abort
-  " The plugin directory must be added to the runtimepath.
-  call maktaba#rtp#Add(self.location)
   " These special flags let the user control the loading of parts of the plugin.
-  if isdirectory(maktaba#path#Join([self.location, 'plugin']))
-    call self.Flag('plugin', {})
+  if isdirectory(maktaba#path#Join([l:plugin.location, 'plugin']))
+    call l:plugin.Flag('plugin', {})
   endif
-  if isdirectory(maktaba#path#Join([self.location, 'instant']))
-    call self.Flag('instant', {})
+  if isdirectory(maktaba#path#Join([l:plugin.location, 'instant']))
+    call l:plugin.Flag('instant', {})
   endif
+
+  " Load flags file first.
+  call l:plugin.Source(['instant', 'flags'], 1)
+  " Then apply settings.
+  if !empty(a:settings)
+    call s:ApplySettings(l:plugin, a:settings)
+  endif
+  " Then load all instant files in random order.
+  call call('s:SourceDir', ['instant'], l:plugin)
+
   " g:installed_<plugin> is set to signal that the plugin has been installed
   " (though perhaps not loaded). This fills the gap between installation time
   " (when the plugin is available on the runtimepath) and load time (when the
   " plugin's files are sourced). This new convention is expected to make it much
   " easier to build vim dependency managers.
-  let g:installed_{self.name} = 1
-  " Load flags file first.
-  call self.Source(['instant', 'flags'], 1)
-  " Then apply settings.
-  if !empty(a:settings)
-    call s:ApplySettings(self, a:settings)
-  endif
-  " Then load all instant files in random order.
-  call call('s:SourceDir', ['instant'], self)
+  let g:installed_{l:plugin.name} = 1
+
+  return l:plugin
 endfunction
 
 

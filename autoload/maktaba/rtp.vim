@@ -32,13 +32,11 @@ endfunction
 
 
 ""
-" Join a list of strings into a comma-separated string.
-" Handles escaping the commas.
+" Join a list of strings into a comma-separated string. Handles escaping the commas.
 " {paths} The list of strings to join.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)
-  let l:paths = maktaba#list#RemoveDuplicates(copy(a:paths))
-  return join(map(l:paths, "escape(v:val, '\,')"), ',')
+  return join(map(a:paths, "escape(v:val, '\,')"), ',')
 endfunction
 
 
@@ -57,6 +55,9 @@ endfunction
 " files) and its after directory will be the 2nd to last thing sourced (before
 " user files). Thus, plugins stack outwards from the middle, like an onion.
 "
+" If {path} is already in the runtimepath, the existing instances will be
+" removed and {path} will be re-inserted as described above.
+"
 " If you have more than one directory of files that you'd like to run
 " before/after all plugins, it is recommended that you add that directory after
 " all plugins and/or sort the runtimepath yourself. @function(#Split) and
@@ -65,11 +66,23 @@ function! maktaba#rtp#Add(path) abort
   call maktaba#ensure#IsString(a:path)
   let l:rtp = maktaba#rtp#Split(&runtimepath)
   let l:end = len(l:rtp) == 0 ? 1 : -1
+  call maktaba#list#RemoveAll(l:rtp, a:path)
   call insert(l:rtp, a:path, 1)
   let l:after = maktaba#path#Join([a:path, 'after'])
   if isdirectory(l:after)
+    call maktaba#list#RemoveAll(l:rtp, l:after)
     call insert(l:rtp, l:after, l:end)
   endif
+  let &runtimepath = maktaba#rtp#Join(l:rtp)
+endfunction
+
+
+""
+" Removes {path} from the runtimepath.
+function! maktaba#rtp#Remove(path) abort
+  call maktaba#ensure#IsString(a:path)
+  let l:rtp = maktaba#rtp#Split(&runtimepath)
+  call maktaba#list#RemoveAll(l:rtp, a:path)
   let &runtimepath = maktaba#rtp#Join(l:rtp)
 endfunction
 

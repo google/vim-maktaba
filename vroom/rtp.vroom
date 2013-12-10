@@ -77,10 +77,30 @@ second-last:
 maktaba#rtp#Add will not add duplicate paths.
 
   :call maktaba#rtp#Add('/your/cool/plugin')
-  :let g:rtp1 = &runtimepath
+  :let g:rtpsave = &runtimepath
   :call maktaba#rtp#Add('/your/cool/plugin')
-  :let g:rtp2 = &runtimepath
-  :call maktaba#ensure#IsEqual(g:rtp1, g:rtp2)
+  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+
+
+
+You can also remove from the runtimepath.
+
+  :let g:save = &runtimepath
+  :call maktaba#rtp#Add('/some/weird/path')
+  :call maktaba#rtp#Remove('/some/weird/path')
+  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+
+All instances of he given path are removed.
+
+  :let g:rtpsave = &runtimepath
+  :set rtp+=/some/weird/path
+  :set rtp+=/some/weird/path
+  :call maktaba#rtp#Remove('/some/weird/path')
+  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+
+This function will not complain if the given path was not present.
+
+  :call maktaba#rtp#Remove('/path/that/is/not/present')
 
 
 
