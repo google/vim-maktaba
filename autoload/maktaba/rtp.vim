@@ -32,8 +32,8 @@ endfunction
 
 
 ""
-" Join a list of strings into a comma-separated string. Handles escaping the commas.
-" {paths} The list of strings to join.
+" Joins {paths}, a list of strings, into a comma-separated strings.
+" Handles the escaping of commas in {paths}.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)
   return join(map(a:paths, "escape(v:val, '\,')"), ',')

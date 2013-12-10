@@ -1092,8 +1092,8 @@ maktaba#rtp#Split([path])                                  *maktaba#rtp#Split*
   [path] is |runtimepath| if omitted.
 
 maktaba#rtp#Join({paths})                                   *maktaba#rtp#Join*
-  Join a list of strings into a comma-separated string. Handles escaping the
-  commas. {paths} The list of strings to join.
+  Joins {paths}, a list of strings, into a comma-separated strings. Handles
+  the escaping of commas in {paths}.
 
 maktaba#rtp#Add({path})                                      *maktaba#rtp#Add*
   Adds {path} to the runtimepath.
@@ -1110,10 +1110,16 @@ maktaba#rtp#Add({path})                                      *maktaba#rtp#Add*
   files) and its after directory will be the 2nd to last thing sourced (before
   user files). Thus, plugins stack outwards from the middle, like an onion.
 
+  If {path} is already in the runtimepath, the existing instances will be
+  removed and {path} will be re-inserted as described above.
+
   If you have more than one directory of files that you'd like to run
   before/after all plugins, it is recommended that you add that directory
   after all plugins and/or sort the runtimepath yourself. |maktaba#rtp#Split|
   and |maktaba#rtp#Join| may be of some use.
+
+maktaba#rtp#Remove({path})                                *maktaba#rtp#Remove*
+  Removes {path} from the runtimepath.
 
 maktaba#rtp#LeafDirs()                                  *maktaba#rtp#LeafDirs*
   Returns a dictionary of {leaf path} for runtimepath directories that appear
