@@ -37,7 +37,7 @@ endfunction
 
 
 ""
-" Returns {string} stripped of [chars] (a string of characters) from the front.
+" Returns {string} stripped of [chars] (a string of characters) from the end.
 " THE ORDER OF [chars] DOES NOT MATTER: stripping will continue so long as the
 " suffix contains one of [chars]. See also @function(#Strip).
 " @default chars=" \t\n\r"
