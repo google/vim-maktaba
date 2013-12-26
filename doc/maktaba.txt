@@ -1227,9 +1227,9 @@ maktaba#string#StripLeading({string}, [chars])   *maktaba#string#StripLeading*
   [chars] is " \t\n\r" if omitted.
 
 maktaba#string#StripTrailing({string}, [chars]) *maktaba#string#StripTrailing*
-  Returns {string} stripped of [chars] (a string of characters) from the
-  front. THE ORDER OF [chars] DOES NOT MATTER: stripping will continue so long
-  as the suffix contains one of [chars]. See also |maktaba#string#Strip|.
+  Returns {string} stripped of [chars] (a string of characters) from the end.
+  THE ORDER OF [chars] DOES NOT MATTER: stripping will continue so long as the
+  suffix contains one of [chars]. See also |maktaba#string#Strip|.
   [chars] is " \t\n\r" if omitted.
 
 maktaba#string#StartsWith({string}, {prefix})      *maktaba#string#StartsWith*
