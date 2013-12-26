@@ -1,15 +1,14 @@
+" Some users have local vimfiles in .vim, others in .config/vim.
+" Some distros install vim files into /usr/share/vimfiles, others in
+" /usr/share/vim/vimN where N is a version number (like /usr/share/vim/vim73).
+" Some users add runtime/ directories to their runtimepaths, and all plugins
+" can contain an after/ directory.
+" So all paths whose final component matches the following regex are not
+" considered to be plugins.
+let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
+let s:unescaped_comma = '\v\\@<!%(\\\\)*\zs,'
+let s:escaped_char = '\v\\([\,])'
 if !exists('s:leaf_pathcomponent')
-  " Some users have local vimfiles in .vim, others in .config/vim.
-  " Some distros install vim files into /usr/share/vimfiles, others in
-  " /usr/share/vim/vimN where N is a version number (like /usr/share/vim/vim73).
-  " Some users add runtime/ directories to their runtimepaths, and all plugins
-  " can contain an after/ directory.
-  " So all paths whose final component matches the following regex are not
-  " considered to be plugins.
-  let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
-
-  let s:unescaped_comma = '\v\\@<!%(\\\\)*\zs,'
-  let s:escaped_char = '\v\\([\,])'
   let s:cache_string = ''
   let s:cache_list = []
 endif
