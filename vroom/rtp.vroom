@@ -90,7 +90,7 @@ You can also remove from the runtimepath.
   :call maktaba#rtp#Remove('/some/weird/path')
   :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
 
-All instances of he given path are removed.
+All instances of the given path are removed.
 
   :let g:rtpsave = &runtimepath
   :set rtp+=/some/weird/path
