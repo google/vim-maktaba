@@ -180,5 +180,5 @@ and pass those settings to maktaba#plugin#Install:
   :let g:bombpath = maktaba#path#Join([g:repo, 'bomber'])
   :let g:bomber = maktaba#plugin#Install(g:bombpath, g:settings)
 
-The exception is instant/flags.vim, which cannot be turned off no matter how had
-you try.
+The exception is instant/flags.vim, which cannot be turned off no matter how
+hard you try.

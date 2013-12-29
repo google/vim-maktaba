@@ -100,7 +100,7 @@ them to get and set the flag.
   ~ ['newlist']
 
 This allows you to use some advanced flag functionality, such as flag
-tanslators:
+translators:
 
   :call g:plugin.Flag('invertme', 0)
   :call g:plugin.flags['invertme'].AddTranslator('empty')

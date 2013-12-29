@@ -7,7 +7,7 @@ often. Before we see it, let's install maktaba:
   :execute 'source' g:bootstrapfile
 
 The function is maktaba#string#Strip which strips whitespace (including
-newlines) from both sides of a string. It works exactly like you expect it does.
+newlines) from both sides of a string. It works exactly as you'd expect it does.
 
   :echomsg maktaba#string#Strip('string')
   ~ string
