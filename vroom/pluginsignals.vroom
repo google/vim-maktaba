@@ -21,7 +21,7 @@ Vim establishes a (rather crippled) convention that is useful for checking
 whether certain plugins have been loaded: the variable g:loaded_{plugin} is
 supposed to be set, where {plugin} is the plugin name, when the plugin is
 loaded. Maktaba DOES NOT honor this convention: maktaba plugins can be loaded
-piecemeil, and there's no clear moment at which a plugin is definatively
+piecemeal, and there's no clear moment at which a plugin is definitively
 'loaded'.
 
   :call maktaba#ensure#IsFalse(exists('g:loaded_myplugin'))
@@ -45,5 +45,5 @@ yet loaded).
   :call maktaba#ensure#IsTrue(g:installed_myplugin)
 
 In general, you should use maktaba#plugin#IsRegistered to check whether a plugin
-is availabe: however, the g:installed_{plugin} variable is accessible even by
+is available: however, the g:installed_{plugin} variable is accessible even by
 those who are not using maktaba.

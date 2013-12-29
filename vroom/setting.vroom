@@ -38,10 +38,10 @@ be applied to plugin objects.
 
 Note that maktaba DOES NOT provide commands or other methods of exposing
 settings to users. Maktaba is a LIBRARY, and provides only a setting API. To use
-makatab settings, check out plugins like Glaive.
+maktaba settings, check out plugins like Glaive.
 
-With that in mind, let's take a tour of maktaba setting syntax. First, we need
-to install maktaba:
+With that in mind, let's take a tour of the maktaba setting syntax. First, we
+need to install maktaba:
 
   :set nocompatible
   :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
