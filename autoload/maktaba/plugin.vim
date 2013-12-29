@@ -217,13 +217,25 @@ endfunction
 " The canonical name of {plugin}.
 " This is the name of the plugin directory with all invalid characters replaced
 " with underscores. Valid characters include _, [a-z], [A-Z], and [0-9].
-" For example, the canonical name of "my-plugin" is "my_plugin".
+" For example, the canonical name of "my-plugin" is "my_plugin".  Certain
+" conventions which are common for github vim projects are also recognized.
+" Specifically, either a "vim-" prefix and a ".vim" suffix would be
+" disregarded: both "vim-unimpaired" and "unimpaired.vim" would become simply
+" "unimpaired".
+"
 " Note that plugins with different names in the filesystem can conflict in
 " maktaba. If you've loaded a plugin in the directory "plugins/my-plugin" then
 " maktaba can't handle a plugin named "plugins/my_plugin". Make sure your
 " plugins have sufficiently different names!
 function! maktaba#plugin#CanonicalName(plugin) abort
-  return substitute(a:plugin, '[^_a-zA-Z0-9]', '_', 'g')
+  let l:plugin = a:plugin
+  if maktaba#string#StartsWith(l:plugin, 'vim-')
+    let l:plugin = l:plugin[4:]
+  endif
+  if maktaba#string#EndsWith(l:plugin, '.vim')
+    let l:plugin = l:plugin[:-5]
+  endif
+  return substitute(l:plugin, '[^_a-zA-Z0-9]', '_', 'g')
 endfunction
 
 
