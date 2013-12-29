@@ -320,13 +320,13 @@ function! maktaba#plugin#GetOrInstall(dir, ...) abort
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
   if has_key(s:plugins, l:name)
     let l:plugin = s:plugins[l:name]
-    " Compare fully resolved paths. Trailing slashes must be stripped for
-    " resolve(), and fnamemodify() with ':p:h' does this safely.
+    " Compare fully resolved paths. Trailing slashes must (see patch 7.3.194) be
+    " stripped for resolve(), and fnamemodify() with ':p:h' does this safely.
     let l:pluginpath = fnamemodify(l:plugin.location, ':p:h')
-    let l:newpath = fnamemodify(a:dir, ':p:h')
-    if resolve(l:pluginpath) !=# resolve(l:newpath)
+    let l:newpath = s:Fullpath(a:dir)
+    if resolve(l:pluginpath) !=# resolve(fnamemodify(l:newpath, ':p:h'))
       let l:msg = 'Conflict for plugin "%s": %s and %s'
-      throw s:AlreadyExists(l:msg, l:plugin.name, l:pluginpath, l:newpath)
+      throw s:AlreadyExists(l:msg, l:plugin.name, l:plugin.location, l:newpath)
     endif
     if !empty(l:settings)
       call s:ApplySettings(l:plugin, l:settings)
