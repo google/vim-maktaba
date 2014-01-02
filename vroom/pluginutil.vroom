@@ -28,6 +28,17 @@ plugins:
   :echomsg string(sort(maktaba#plugin#RegisteredPlugins()))
   ~ ['maktaba', 'modularplugin', 'myplugin']
 
+These are the canonical names of the plugins.  *Usually*, that's just the name
+of the directory, but there are exceptions.  For instance, any non-alphanumeric
+characters get converted to '_', so that the plugin name can always be used as a
+vim variable.  Also, maktaba is smart about certain naming conventions which are
+common on github vim repos: leading 'vim-' and trailing '.vim' are stripped.
+
+  :call maktaba#plugin#Install(maktaba#path#Join([g:repo, 'dash-it-off.vim']))
+  :call maktaba#plugin#Install(maktaba#path#Join([g:repo, 'vim-unimpaired']))
+  :echomsg string(sort(maktaba#plugin#RegisteredPlugins()))
+  ~ ['dash_it_off', 'maktaba', 'modularplugin', 'myplugin', 'unimpaired']
+
 You cannot create plugins more than once. If you try to do so, you'll get an
 AlreadyExists error:
 
