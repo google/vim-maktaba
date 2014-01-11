@@ -532,7 +532,7 @@ function! maktaba#setting#Handle(handle) abort
     return [l:flagname, l:foci]
   endif
   let l:msg = 'Junk after flag handle %s. (Unrecognized: %s)'
-  throw matkaba#error#BadValue(l:msg, a:handle, l:rest)
+  throw maktaba#error#BadValue(l:msg, a:handle, l:rest)
 endfunction
 
 
