@@ -304,7 +304,7 @@ endfunction
 ""
 " Gets the plugin object associated with {plugin}. {plugin} may either be the
 " name of the plugin directory, or the canonicalized plugin name (with invalid
-" characters converted to whitespace.) See @function(#CanonicalName).
+" characters converted to underscores). See @function(#CanonicalName).
 " @throws NotFound if the plugin object does not exist.
 function! maktaba#plugin#Get(name) abort
   let l:name = maktaba#plugin#CanonicalName(a:name)
