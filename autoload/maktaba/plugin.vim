@@ -27,6 +27,12 @@ endfunction
 
 
 " @exception
+function! s:BadDependency(message, ...) abort
+  return maktaba#error#Exception('BadDependency', a:message, a:000)
+endfunction
+
+
+" @exception
 function! s:CannotEnter(file) abort
   return maktaba#error#Message(
       \ 'CannotEnter',
@@ -116,6 +122,39 @@ function! s:FileHandleToFlagHandle(handle) abort
   return a:handle[:-2]
 endfunction
 
+
+""
+" Determines whether {json} is valid JSON. Allows single-quoted strings for
+" compatibility with VAM.
+" Based on vam#VerifyIsJSON.
+function! s:VerifyIsJSON(json) abort
+  " Allows single-quoted strings because VAM does.
+  let l:json_scalar = '\v\"%(\\.|[^"\\])*\"|\''%(\''{2}|[^''])*\''|' .
+      \ 'true|false|null|[+-]?\d+%(\.\d+%([Ee][+-]?\d+)?)?'
+
+  let l:scalarless_body = substitute(a:json, l:json_scalar, '', 'g')
+  return l:scalarless_body !~# "[^,:{}[\\] \t]"
+endfunction
+
+
+""
+" Safely deserializes {json} string into a vim value.
+" Based on vam#ReadAddonInfo.
+" @throws WrongType
+" @throws BadValue
+function! s:EvalJSON(json) abort
+  call maktaba#ensure#IsString(a:json)
+
+  if s:VerifyIsJSON(a:json)
+    let l:true = 1
+    let l:false = 0
+    let l:null = ''
+    " Using eval is now safe!
+    return eval(a:json)
+  endif
+
+  throw maktaba#error#BadValue('Not a valid JSON string: %s', a:json)
+endfunction
 
 ""
 " @private
@@ -291,6 +330,7 @@ endfunction
 " @throws BadValue if {dir} is empty.
 " @throws AlreadyExists if the plugin already exists.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
+" @throws BadDependency when a plugin dependency can't be satisfied.
 function! maktaba#plugin#Install(dir, ...) abort
   let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
@@ -327,6 +367,7 @@ endfunction
 " See also @function(#Install).
 " @throws AlreadyExists if the existing plugin comes from a different directory.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
+" @throws BadDependency when a plugin dependency can't be satisfied.
 function! maktaba#plugin#GetOrInstall(dir, ...) abort
   let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
@@ -355,6 +396,62 @@ endfunction
 " itself.
 
 
+""
+" Installs plugin dependencies listed in addon-info.json file at {location}.
+" @throws BadDependency when a plugin dependency can't be satisfied.
+function! s:InstallPluginDeps(location) abort
+  let l:addon_info_path = maktaba#path#Join([a:location, 'addon-info.json'])
+  if !filereadable(l:addon_info_path)
+    return
+  endif
+
+  let l:name = s:PluginNameFromDir(a:location)
+  try
+    " Don't add "b" because it'll read DOS files as "\r\n" which will fail the
+    " check and evaluate in eval. \r\n is checked out by some msys git
+    " versions with strange settings.
+    let l:addon_info = s:EvalJSON(join(readfile(l:addon_info_path), ''))
+  catch /.*/
+    call maktaba#error#Warn(
+        \ 'Error parsing %s: %s. Not installing dependencies for %s.',
+        \ l:addon_info_path,
+        \ v:exception,
+        \ l:name)
+    return
+  endtry
+
+  try
+    call maktaba#ensure#IsDict(l:addon_info)
+    let l:deps = maktaba#ensure#IsDict(get(l:addon_info, 'dependencies', {}))
+    for l:dep in keys(l:deps)
+      call maktaba#ensure#IsString(l:dep)
+    endfor
+  catch /ERROR(WrongType):/
+    call maktaba#error#Warn(
+        \ 'Invalid type in %s: %s. Not installing dependencies for %s.',
+        \ l:addon_info_path,
+        \ v:exception,
+        \ l:name)
+    return
+  endtry
+
+  try
+    for l:dep in keys(l:deps)
+      " Repository info is ignored for now.
+      call maktaba#library#Import(l:dep)
+    endfor
+    return
+  catch /ERROR(NotFound):/
+    throw s:BadDependency(
+        \ "Failed to install %s. Dependency %s wasn't found.", l:name, l:dep)
+  catch /ERROR(NotALibrary):/
+    throw s:BadDependency(
+        \ "Failed to install %s. Dependency %s isn't a library.",
+        \ l:name,
+        \ l:dep)
+  endtry
+endfunction
+
 " Common code used by #Install and #GetOrInstall.
 function! s:CreatePluginObject(name, location, settings) abort
   let l:entrycontroller = {
@@ -381,6 +478,9 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ '_entered': l:entrycontroller,
       \ }
   let s:plugins[a:name] = l:plugin
+
+  " Install deps (after plugin is in s:plugin to avoid circular dep problems).
+  call s:InstallPluginDeps(a:location)
 
   " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
   " possible that the user has given us a {location} which is already on the

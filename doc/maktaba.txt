@@ -297,7 +297,7 @@ Setting.Apply({plugin})                                        *Setting.Apply*
   for convenience.
   Throws ERROR(NotFound) if {plugin} does not define the appropriate flag.
   Throws ERROR(WrongType) if the flag is not of a type the setting requires.
-  Throws ERROR(BadValue) if the flag has a value innapropriate for the
+  Throws ERROR(BadValue) if the flag has a value inappropriate for the
   setting.
 
 ==============================================================================
@@ -992,11 +992,15 @@ maktaba#plugin#CanonicalName({plugin})          *maktaba#plugin#CanonicalName*
   The canonical name of {plugin}. This is the name of the plugin directory
   with all invalid characters replaced with underscores. Valid characters
   include _, [a-z], [A-Z], and [0-9]. For example, the canonical name of
-  "my-plugin" is "my_plugin". Note that plugins with different names in the
-  filesystem can conflict in maktaba. If you've loaded a plugin in the
-  directory "plugins/my-plugin" then maktaba can't handle a plugin named
-  "plugins/my_plugin". Make sure your plugins have sufficiently different
-  names!
+  "my-plugin" is "my_plugin".  Certain conventions which are common for github
+  vim projects are also recognized. Specifically, either a "vim-" prefix and a
+  ".vim" suffix would be disregarded: both "vim-unimpaired" and
+  "unimpaired.vim" would become simply "unimpaired".
+
+  Note that plugins with different names in the filesystem can conflict in
+  maktaba. If you've loaded a plugin in the directory "plugins/my-plugin" then
+  maktaba can't handle a plugin named "plugins/my_plugin". Make sure your
+  plugins have sufficiently different names!
 
 maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
   Installs the plugin located at {dir}. Installation entails adding the plugin
@@ -1050,11 +1054,12 @@ maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
   Throws ERROR(BadValue) if {dir} is empty.
   Throws ERROR(AlreadyExists) if the plugin already exists.
   Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
+  Throws ERROR(BadDependency) when a plugin dependency can't be satisfied.
 
 maktaba#plugin#Get({plugin})                              *maktaba#plugin#Get*
   Gets the plugin object associated with {plugin}. {plugin} may either be the
   name of the plugin directory, or the canonicalized plugin name (with invalid
-  characters converted to whitespace.) See |maktaba#plugin#CanonicalName|.
+  characters converted to underscores). See |maktaba#plugin#CanonicalName|.
   Throws ERROR(NotFound) if the plugin object does not exist.
 
 maktaba#plugin#GetOrInstall({dir}, [settings])   *maktaba#plugin#GetOrInstall*
@@ -1070,6 +1075,7 @@ maktaba#plugin#GetOrInstall({dir}, [settings])   *maktaba#plugin#GetOrInstall*
   Throws ERROR(AlreadyExists) if the existing plugin comes from a different
   directory.
   Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
+  Throws ERROR(BadDependency) when a plugin dependency can't be satisfied.
 
 maktaba#plugin#Source({file}, [optional])              *maktaba#plugin#Source*
   Sources {file}, which should be a list specifying the location of a file

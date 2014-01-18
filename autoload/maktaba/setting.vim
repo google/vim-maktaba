@@ -141,7 +141,7 @@ endfunction
 " for convenience.
 " @throws NotFound if {plugin} does not define the appropriate flag.
 " @throws WrongType if the flag is not of a type the setting requires.
-" @throws BadValue if the flag has a value innapropriate for the setting.
+" @throws BadValue if the flag has a value inappropriate for the setting.
 function! maktaba#setting#Apply(plugin) dict abort
   let l:flag = self._GetFlag(a:plugin)
   try
