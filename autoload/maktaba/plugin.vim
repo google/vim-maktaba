@@ -401,16 +401,15 @@ endfunction
 " @throws BadDependency when a plugin dependency can't be satisfied.
 function! s:InstallPluginDeps(location) abort
   let l:addon_info_path = maktaba#path#Join([a:location, 'addon-info.json'])
-  if !filereadable(l:addon_info_path)
-    return
-  endif
-
   let l:name = s:PluginNameFromDir(a:location)
   try
     " Don't add "b" because it'll read DOS files as "\r\n" which will fail the
     " check and evaluate in eval. \r\n is checked out by some msys git
     " versions with strange settings.
     let l:addon_info = s:EvalJSON(join(readfile(l:addon_info_path), ''))
+  catch /E48[45]:/
+    " File missing or unreadable. Assume no dependencies.
+    return
   catch /.*/
     call maktaba#error#Warn(
         \ 'Error parsing %s: %s. Not installing dependencies for %s.',
