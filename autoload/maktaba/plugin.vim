@@ -422,7 +422,7 @@ endfunction
 " Gets a list of all subdirectories in the root plugin directory.
 " Caches the list for performance, so new paths will not be discovered after the
 " initial scan.
-function! s:GetPluginDirs() dict abort
+function! s:GetSubdirs() dict abort
   if !has_key(self, '_dirs')
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:direct_glob = maktaba#path#Join([self.location, '*', ''])
@@ -437,7 +437,7 @@ endfunction
 " Gets a list of all subdirectories in the plugin after/ directory.
 " Caches the list for performance, so new paths will not be discovered after the
 " initial scan.
-function! s:GetPluginAfterDirs() dict abort
+function! s:GetAfterSubdirs() dict abort
   if !has_key(self, '_after_dirs')
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:after_glob = maktaba#path#Join([self.location, 'after', '*', ''])
@@ -590,8 +590,8 @@ endfunction
 " Cached for performance, so new paths will not be discovered if they're added
 " to the plugin after the first check.
 function! maktaba#plugin#HasDir(dir) dict abort
-  let l:dirs = call('s:GetPluginDirs', [], self)
-  let l:after_dirs = call('s:GetPluginAfterDirs', [], self)
+  let l:dirs = call('s:GetSubdirs', [], self)
+  let l:after_dirs = call('s:GetAfterSubdirs', [], self)
   return index(l:dirs, a:dir) > -1 || index(l:after_dirs, a:dir) > -1
 endfunction
 
