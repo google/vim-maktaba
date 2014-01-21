@@ -118,6 +118,40 @@ endfunction
 
 
 ""
+" Determines whether {json} is valid JSON. Allows single-quoted strings for
+" compatibility with VAM.
+" Based on vam#VerifyIsJSON.
+function! s:VerifyIsJSON(json) abort
+  " Allows single-quoted strings because VAM does.
+  let l:json_scalar = '\v\"%(\\.|[^"\\])*\"|\''%(\''{2}|[^''])*\''|' .
+      \ 'true|false|null|[+-]?\d+%(\.\d+%([Ee][+-]?\d+)?)?'
+
+  let l:scalarless_body = substitute(a:json, l:json_scalar, '', 'g')
+  return l:scalarless_body !~# "[^,:{}[\\] \t]"
+endfunction
+
+
+""
+" Safely deserializes {json} string into a vim value.
+" Based on vam#ReadAddonInfo.
+" @throws WrongType
+" @throws BadValue
+function! s:EvalJSON(json) abort
+  call maktaba#ensure#IsString(a:json)
+
+  if s:VerifyIsJSON(a:json)
+    let l:true = 1
+    let l:false = 0
+    let l:null = ''
+    " Using eval is now safe!
+    return eval(a:json)
+  endif
+
+  throw maktaba#error#BadValue('Not a valid JSON string: %s', a:json)
+endfunction
+
+
+""
 " @private
 " Used by maktaba#library to help throw good error messages about non-library
 " directories.
@@ -371,6 +405,7 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'logger': maktaba#log#Logger(a:name),
       \ 'Source': function('maktaba#plugin#Source'),
       \ 'Load': function('maktaba#plugin#Load'),
+      \ 'AddonInfo': function('maktaba#plugin#AddonInfo'),
       \ 'Flag': function('maktaba#plugin#Flag'),
       \ 'HasFlag': function('maktaba#plugin#HasFlag'),
       \ 'HasDir': function('maktaba#plugin#HasDir'),
@@ -602,6 +637,30 @@ endfunction
 " indent, or syntax).
 function! maktaba#plugin#HasFiletypeData() dict abort
   return maktaba#rtp#DirDefinesFiletypes(self.location)
+endfunction
+
+
+""
+" @dict Plugin
+" Gets plugin metadata from plugin's addon-info.json file, if present.
+" Otherwise, returns an empty dict.
+" @throws BadValue if addon-info.json isn't valid JSON.
+function! maktaba#plugin#AddonInfo() dict abort
+  if !has_key(self, '_addon_info')
+    let l:addon_info_path =
+        \ maktaba#path#Join([self.location, 'addon-info.json'])
+    try
+      " Don't add "b" because it'll read DOS files as "\r\n" which will fail the
+      " check and evaluate in eval. \r\n is checked out by some msys git
+      " versions with strange settings.
+      let self._addon_info = s:EvalJSON(join(readfile(l:addon_info_path), ''))
+    catch /E48[45]:/
+      " File missing or unreadable. Assume no dependencies.
+      let self._addon_info = {}
+    endtry
+  endif
+
+  return self._addon_info
 endfunction
 
 
