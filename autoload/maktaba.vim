@@ -75,7 +75,7 @@ endfunction
 " another requiring >=2.1.0. Enforcing a maximum version is discouraged.
 function! maktaba#IsAtLeastVersion(version) abort
   call maktaba#ensure#Matches(a:version, '\v^\d+\.\d+\.\d+')
-  let l:version = matchlist(a:version, '\v^(\d+)\.(\d+)\.(\d+)')
+  let l:version = map(split(a:version, '\.'), 'v:val + 0')
   for l:i in range(len(s:version))
     if s:version[l:i] > l:version[l:i]
       return 1
