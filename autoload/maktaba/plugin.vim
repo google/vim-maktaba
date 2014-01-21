@@ -418,6 +418,37 @@ function! s:CreatePluginObject(name, location, settings) abort
 endfunction
 
 
+" @dict Plugin
+" Gets a list of all subdirectories in the root plugin directory.
+" Caches the list for performance, so new paths will not be discovered after the
+" initial scan.
+function! s:GetSubdirs() dict abort
+  if !has_key(self, '_dirs')
+    " Glob includes trailing slash, which makes glob() only detect directories.
+    let l:direct_glob = maktaba#path#Join([self.location, '*', ''])
+    let l:direct_dirs = split(glob(l:direct_glob), "\n")
+    let self._dirs = map(l:direct_dirs, 'maktaba#path#Split(v:val)[-1]')
+  endif
+  return self._dirs
+endfunction
+
+
+" @dict Plugin
+" Gets a list of all subdirectories in the plugin after/ directory.
+" Caches the list for performance, so new paths will not be discovered after the
+" initial scan.
+function! s:GetAfterSubdirs() dict abort
+  if !has_key(self, '_after_dirs')
+    " Glob includes trailing slash, which makes glob() only detect directories.
+    let l:after_glob = maktaba#path#Join([self.location, 'after', '*', ''])
+    let l:after_dirs = split(glob(l:after_glob), "\n")
+    let self._after_dirs = map(l:after_dirs, 'maktaba#path#Split(v:val)[-1]')
+  endif
+  return self._after_dirs
+endfunction
+
+
+" @dict Plugin
 " Sources all files in {dir} and after/{dir}.
 " Does not source files that have been marked as entered. (Note that this is, in
 " theory, an efficiency gain only: functions using #Enter properly wouldn't be
@@ -556,10 +587,12 @@ endfunction
 " @dict Plugin
 " Tests whether the plugin has {dir}, either as a direct subdirectory or as
 " a subirectory of the after/ directory.
+" Cached for performance, so new paths will not be discovered if they're added
+" to the plugin after the first check.
 function! maktaba#plugin#HasDir(dir) dict abort
-  let l:dir = maktaba#path#Join([self.location, a:dir])
-  let l:after = maktaba#path#Join([self.location, 'after', a:dir])
-  return isdirectory(l:dir) || isdirectory(l:after)
+  let l:dirs = call('s:GetSubdirs', [], self)
+  let l:after_dirs = call('s:GetAfterSubdirs', [], self)
+  return index(l:dirs, a:dir) > -1 || index(l:after_dirs, a:dir) > -1
 endfunction
 
 
