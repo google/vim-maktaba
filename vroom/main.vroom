@@ -53,6 +53,7 @@ version is at or past a certain point.
 
   :call maktaba#ensure#IsTrue(maktaba#IsAtLeastVersion('0.0.1'))
   :call maktaba#ensure#IsFalse(maktaba#IsAtLeastVersion('100.0.0'))
+  :call maktaba#ensure#IsTrue(maktaba#IsAtLeastVersion(maktaba#VERSION))
 
 This is useful if you want to check whether the user has certain maktaba
 features available.
