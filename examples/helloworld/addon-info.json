@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "maktaba": {"type": "git", "url": "git://github.com/google/maktaba.git"}
+  }
+}
