@@ -611,6 +611,7 @@ endfunction
 " @dict Plugin
 " Gets plugin metadata from plugin's addon-info.json file, if present.
 " Otherwise, returns an empty dict.
+" @throws BadValue if addon-info.json isn't valid JSON.
 function! maktaba#plugin#AddonInfo() dict abort
   if !has_key(self, '_addon_info')
     let l:addon_info_path =

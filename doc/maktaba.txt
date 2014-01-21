@@ -199,6 +199,7 @@ Plugin.HasFiletypeData()                              *Plugin.HasFiletypeData*
 Plugin.AddonInfo()                                          *Plugin.AddonInfo*
   Gets plugin metadata from plugin's addon-info.json file, if present.
   Otherwise, returns an empty dict.
+  Throws ERROR(BadValue) if addon-info.json isn't valid JSON.
 
 Plugin.Flag({flag}, [value])                                     *Plugin.Flag*
   Gets or sets {flag}. If [value] is given, {flag} is set to [value].
