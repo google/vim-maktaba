@@ -190,7 +190,8 @@ Plugin.GenerateHelpTags()                            *Plugin.GenerateHelpTags*
 
 Plugin.HasDir({dir})                                           *Plugin.HasDir*
   Tests whether the plugin has {dir}, either as a direct subdirectory or as a
-  subirectory of the after/ directory.
+  subirectory of the after/ directory. Cached for performance, so new paths
+  will not be discovered if they're added to the plugin after the first check.
 
 Plugin.HasFiletypeData()                              *Plugin.HasFiletypeData*
   Tests wheter a plugin has a filetype-active directory (ftdetect, ftplugin,
