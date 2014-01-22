@@ -242,8 +242,15 @@ endfunction
 " This is more reliable for determining if a Maktaba compatible plugin by
 " the name of {plugin} was registered, but can not be used to dependency check
 " non-Maktaba plugins.
+" Detects plugins added to 'runtimepath' even if they haven't been explicitly
+" registered with maktaba.
 function! maktaba#plugin#IsRegistered(plugin) abort
-  return has_key(s:plugins, maktaba#plugin#CanonicalName(a:plugin))
+  try
+    let l:plugin = maktaba#plugin#Get(a:plugin)
+  catch /ERROR(NotFound):/
+    return 0
+  endtry
+  return 1
 endfunction
 
 
@@ -339,12 +346,21 @@ endfunction
 " Gets the plugin object associated with {plugin}. {plugin} may either be the
 " name of the plugin directory, or the canonicalized plugin name (with invalid
 " characters converted to underscores). See @function(#CanonicalName).
+" Detects plugins added to 'runtimepath' even if they haven't been explicitly
+" registered with maktaba.
 " @throws NotFound if the plugin object does not exist.
 function! maktaba#plugin#Get(name) abort
   let l:name = maktaba#plugin#CanonicalName(a:name)
   if has_key(s:plugins, l:name)
     return s:plugins[l:name]
   endif
+
+  " Check if any dir on runtimepath is a plugin that hasn't been detected yet.
+  let l:leafdirs = maktaba#rtp#LeafDirs()
+  if has_key(l:leafdirs, a:name)
+    return maktaba#plugin#GetOrInstall(l:leafdirs[a:name])
+  endif
+
   throw maktaba#error#NotFound('Plugin %s', a:name)
 endfunction
 

@@ -180,6 +180,17 @@ loaded automatically. You can load it with the Load function:
 
 This will source all of the relevant plugin files.
 
+Maktaba is able to detect any plugin present on the runtimepath, even if it
+wasn't explicitly registered with maktaba.
+
+  :let g:fakeplugins = maktaba#path#Join([g:thisdir, 'fakeplugins'])
+  :let g:emptyplugin_path = maktaba#path#Join([g:fakeplugins, 'emptyplugin'])
+  :let &runtimepath .= ',' . g:emptyplugin_path
+  :call maktaba#ensure#IsTrue(maktaba#plugin#IsRegistered('emptyplugin'))
+  :let g:emptyplugin = maktaba#plugin#Get('emptyplugin')
+  :let g:emptyplugin_fullpath = maktaba#path#Join([g:emptyplugin_path, ''])
+  :call maktaba#ensure#IsEqual(g:emptyplugin.location, g:emptyplugin_fullpath)
+
 That's Maktaba plugin basics for you. There's still a lot more ground to cover.
 Here's a directory of relevant topics:
 

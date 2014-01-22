@@ -991,7 +991,8 @@ maktaba#plugin#IsRegistered({plugin})            *maktaba#plugin#IsRegistered*
   1 if {plugin} was registered with maktaba#plugin#Register. This is more
   reliable for determining if a Maktaba compatible plugin by the name of
   {plugin} was registered, but can not be used to dependency check non-Maktaba
-  plugins.
+  plugins. Detects plugins added to 'runtimepath' even if they haven't been
+  explicitly registered with maktaba.
 
 maktaba#plugin#CanonicalName({plugin})          *maktaba#plugin#CanonicalName*
   The canonical name of {plugin}. This is the name of the plugin directory
@@ -1064,6 +1065,8 @@ maktaba#plugin#Get({plugin})                              *maktaba#plugin#Get*
   Gets the plugin object associated with {plugin}. {plugin} may either be the
   name of the plugin directory, or the canonicalized plugin name (with invalid
   characters converted to underscores). See |maktaba#plugin#CanonicalName|.
+  Detects plugins added to 'runtimepath' even if they haven't been explicitly
+  registered with maktaba.
   Throws ERROR(NotFound) if the plugin object does not exist.
 
 maktaba#plugin#GetOrInstall({dir}, [settings])   *maktaba#plugin#GetOrInstall*
