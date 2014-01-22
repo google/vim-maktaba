@@ -1,5 +1,3 @@
-" @tagline Time-honored greeting
-
 " This file defines all maktaba flags that will be used to configure the plugin.
 " Users can configure these flags using |Glaive| or other plugins that hook into
 " the maktaba#setting API. Maktaba will make sure this file is sourced
