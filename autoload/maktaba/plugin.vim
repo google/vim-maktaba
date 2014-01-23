@@ -32,7 +32,8 @@ function! s:CannotEnter(file) abort
       \ 'CannotEnter',
       \ 'maktaba#plugin#Enter must be called from ' .
       \ 'a file in an autoload/, plugin/, ftplugin/, or instant/ directory. ' .
-      \ 'It was called from %s.')
+      \ 'It was called from %s.',
+      \ a:file)
 endfunction
 
 
@@ -198,11 +199,11 @@ function! maktaba#plugin#Enter(file) abort
   let l:controller = l:plugin._entered[l:filedir]
 
   if l:filedir ==# 'ftplugin'
-    call extend(l:controller, {l:handle: []}, 'keep')
-    if index(l:controller[l:handle], bufnr()) >= 0
+    call extend(l:controller, {l:handle : []}, 'keep')
+    if index(l:controller[l:handle], bufnr('.')) >= 0
       return [l:plugin, 0]
     endif
-    call add(l:controller[l:handle], bufnr())
+    call add(l:controller[l:handle], bufnr('.'))
     return [l:plugin, 1]
   endif
 
