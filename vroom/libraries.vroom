@@ -83,6 +83,16 @@ It worked! Huzzah. The 'library' plugin is installed.
 
   :call maktaba#ensure#IsTrue(maktaba#plugin#IsRegistered('library'))
 
+Dependencies can also be satisfied by plugins manually added to the runtimepath,
+even if they haven't been registered with maktaba yet.
+
+  :let g:tmpsource = tempname()
+  :call mkdir(g:tmpsource)
+  :let g:tmpplugin = maktaba#path#Join([g:tmpsource, 'tmpplugin'])
+  :call mkdir(g:tmpplugin)
+  :let &runtimepath .= ',' . g:tmpplugin
+  :call maktaba#ensure#IsTrue(maktaba#plugin#IsRegistered('tmpplugin'))
+
 Note that installers are only called the first time a plugin is installed. To
 see this, let's install a louder installer.
 
