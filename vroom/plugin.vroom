@@ -196,6 +196,7 @@ Here's a directory of relevant topics:
 
 * pluginfiles.vroom.........................................MAKTABA PLUGIN FILES
 * pluginflags.vroom.......................CONFIGURING MAKTABA PLUGINS WITH FLAGS
+* plugincontrol.vroom............................CONTROLLING PLUGIN FILE LOADING
 * pluginutil.vroom...................................ADDITIONAL PLUGIN UTILITIES
 * ftplugin.vroom................................................FILETYPE PLUGINS
 * helptags.vroom..............................................HELPTAG GENERATION
