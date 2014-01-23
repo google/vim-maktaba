@@ -1,0 +1,7 @@
+{
+  "name": "helloworld",
+  "description": "Time-honored greeting",
+  "dependencies": {
+    "maktaba": {"type": "git", "url": "git://github.com/google/maktaba"}
+  }
+}

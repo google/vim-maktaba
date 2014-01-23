@@ -15,7 +15,7 @@ example of a maktaba plugin and a point of reference for developers creating
 new plugins. It's not intended to cover all the corner cases that will come up
 in developing a large, complex plugin, but it does take full advantage of
 maktaba and related tools, with comprehensive generated documentation and
-verbose executable tests.
+verbose tests doubling as executable documentation.
 
 ==============================================================================
 CONFIGURATION                                              *helloworld-config*

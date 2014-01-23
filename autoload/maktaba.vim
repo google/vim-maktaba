@@ -1,6 +1,4 @@
 " @stylized Maktaba
-" @tagline Consistent Vimscript
-" @author Google
 " @library
 " @order intro version dicts functions exceptions
 " A vimscript library that hides the worst parts of vimscript and helps you
