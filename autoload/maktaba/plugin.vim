@@ -3,6 +3,14 @@ if !exists('s:plugins')
   let s:plugins = {}
 endif
 
+" Mapping from normalized locations to the corresponding plugin object.
+" Used to look up plugins by location in maktaba#plugin#Install and
+" maktaba#plugin#GetOrInstall.
+" May have multiple locations mapped to the same plugin in the case of symlinks.
+if !exists('s:plugins_by_location')
+  let s:plugins_by_location = {}
+endif
+
 " Recognized special directories are as follows:
 "
 " autoload/*: Files containing functions made available upon request.
@@ -66,14 +74,30 @@ function! s:ApplySettings(plugin, settings) abort
 endfunction
 
 
-" Splits a path into a canonical plugin name and a parent directory.
+""
+" Splits {dir} into canonical plugin name and parent directory, returning name.
+" If {dir} is in s:plugins_by_location, gets the name of the plugin there
+" instead.
 function! s:PluginNameFromDir(dir) abort
+  let l:fullpath = s:Fullpath(a:dir)
+  if has_key(s:plugins_by_location, l:fullpath)
+    return s:plugins_by_location[l:fullpath].name
+  endif
+
   let l:splitpath = maktaba#path#Split(a:dir)
   if len(l:splitpath) == 0
     throw maktaba#error#BadValue('Found empty path.')
   endif
   let l:name = maktaba#plugin#CanonicalName(l:splitpath[-1])
   return l:name
+endfunction
+
+
+""
+" Gets a version of {plugin} with special characters converted to underscores.
+" Doesn't apply sophisticated heuristics like stripping 'vim-' prefix.
+function! s:SanitizedName(plugin) abort
+  return substitute(a:plugin, '[^_a-zA-Z0-9]', '_', 'g')
 endfunction
 
 
@@ -277,7 +301,7 @@ function! maktaba#plugin#CanonicalName(plugin) abort
   if maktaba#string#EndsWith(l:plugin, '.vim')
     let l:plugin = l:plugin[:-5]
   endif
-  return substitute(l:plugin, '[^_a-zA-Z0-9]', '_', 'g')
+  return s:SanitizedName(l:plugin)
 endfunction
 
 
@@ -351,6 +375,12 @@ endfunction
 " registered with maktaba.
 " @throws NotFound if the plugin object does not exist.
 function! maktaba#plugin#Get(name) abort
+  let l:name = s:SanitizedName(a:name)
+  if has_key(s:plugins, l:name)
+    return s:plugins[l:name]
+  endif
+
+  " If sanitized name didn't match, fall back to heavily canonicalized name.
   let l:name = maktaba#plugin#CanonicalName(a:name)
   if has_key(s:plugins, l:name)
     return s:plugins[l:name]
@@ -432,7 +462,26 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
       \ '_entered': l:entrycontroller,
       \ }
-  let s:plugins[a:name] = l:plugin
+  " If plugin has an addon-info.json file with a "name" declared, overwrite the
+  " default name with the custom one.
+  " Do this after creating the plugin dict so we can call AddonInfo and have
+  " caching work.
+  try
+    let l:plugin.name = s:SanitizedName(l:plugin.AddonInfo().name)
+  catch /ERROR(BadValue):/
+    " Couldn't deserialize JSON.
+  catch /E716:/
+    " No 'name' defined.
+  endtry
+  let s:plugins[l:plugin.name] = l:plugin
+  let s:plugins_by_location[l:plugin.location] = l:plugin
+
+  " If plugin is symlinked, register resolved path as custom location to avoid
+  " conflicts.
+  let l:resolved_location = s:Fullpath(resolve(l:plugin.location))
+  if l:resolved_location !=# l:plugin.location
+    let s:plugins_by_location[l:resolved_location] = l:plugin
+  endif
 
   " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
   " possible that the user has given us a {location} which is already on the

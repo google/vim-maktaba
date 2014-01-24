@@ -39,6 +39,15 @@ common on github vim repos: leading 'vim-' and trailing '.vim' are stripped.
   :echomsg string(sort(maktaba#plugin#RegisteredPlugins()))
   ~ ['dash_it_off', 'maktaba', 'modularplugin', 'myplugin', 'unimpaired']
 
+If a plugin declares an explicit name in an addon-info.json file, that name will
+be used instead, without any smart renaming applied.
+
+  :let g:customnamepath = maktaba#path#Join([g:repo, 'customnameplugin'])
+  :let g:customnameplugin = maktaba#plugin#Install(g:customnamepath)
+  :echomsg g:customnameplugin.name
+  ~ name_from_addon_info_plugin_vim
+
+
 You cannot create plugins more than once. If you try to do so, you'll get an
 AlreadyExists error:
 
