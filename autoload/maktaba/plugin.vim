@@ -3,12 +3,13 @@ if !exists('s:plugins')
   let s:plugins = {}
 endif
 
-" Mapping of non-standard plugin locations to the corresponding plugin object.
-" Non-standard means that the plugin name isn't a simple function of the path
-" (either it comes from addon-info.json or multiple symlinked paths point to the
-" same plugin).
-if !exists('s:custom_locations')
-  let s:custom_locations = {}
+" Mapping from locations to the corresponding plugin object for explicitly-named
+" plugins.
+" For plugins named based on the path, the lookup is simple, but plugins that
+" get an explicit name (either from addon-info.json or from a symlink name) need
+" this mapping so they can be looked up by path.
+if !exists('s:custom_name_locations')
+  let s:custom_name_locations = {}
 endif
 
 " Recognized special directories are as follows:
@@ -76,11 +77,12 @@ endfunction
 
 ""
 " Splits {dir} into canonical plugin name and parent directory, returning name.
-" If {dir} is in s:custom_locations, gets the name of the plugin there instead.
+" If {dir} is in s:custom_name_locations, gets the name of the plugin there
+" instead.
 function! s:PluginNameFromDir(dir) abort
   let l:fullpath = s:Fullpath(a:dir)
-  if has_key(s:custom_locations, l:fullpath)
-    return s:custom_locations[l:fullpath].name
+  if has_key(s:custom_name_locations, l:fullpath)
+    return s:custom_name_locations[l:fullpath].name
   endif
 
   let l:splitpath = maktaba#path#Split(a:dir)
@@ -467,7 +469,7 @@ function! s:CreatePluginObject(name, location, settings) abort
   " caching work.
   try
     let l:plugin.name = s:SanitizedName(l:plugin.AddonInfo().name)
-    let s:custom_locations[l:plugin.location] = l:plugin
+    let s:custom_name_locations[l:plugin.location] = l:plugin
   catch /ERROR(BadValue):/
     " Couldn't deserialize JSON.
   catch /E716:/
@@ -479,7 +481,7 @@ function! s:CreatePluginObject(name, location, settings) abort
   " conflicts.
   let l:resolved_location = s:Fullpath(resolve(l:plugin.location))
   if l:resolved_location !=# l:plugin.location
-    let s:custom_locations[l:resolved_location] = l:plugin
+    let s:custom_name_locations[l:resolved_location] = l:plugin
   endif
 
   " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
