@@ -18,6 +18,24 @@ vimscript. This includes, among other things:
 * Variable type enforcement
 * Filepath manipulation
 
+# Usage example
+
+Maktaba plugins can be installed using any plugin manager. However, maktaba
+plugins make heavy use of dependency management, so it's recommended to use a
+plugin manager with dependency management capabilities, like
+[VAM](https://github.com/MarcWeber/vim-addon-manager).
+
+Installation of a few plugins using VAM looks something like
+```vim
+set runtimepath+=~/.vim/bundle/vim-addon-manager/
+" Loads glaive, vtd, and their maktaba dependency.
+call vam#ActivateAddons(['glaive', 'vtd'])
+" Initializes all maktaba plugins.
+call maktaba#plugin#Detect()
+```
+
+# Further reading
+
 In the `vroom/` directory you'll find literate test files that walk you through
 maktaba features in depth. `vroom/main.vroom` is a good place to start.
 

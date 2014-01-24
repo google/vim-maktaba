@@ -985,8 +985,13 @@ maktaba#plugin#Enter({file})                            *maktaba#plugin#Enter*
   "loaded". If you feel you must adhere to this convention, be sure to set the
   appropriate g:loaded_* variable when appropriate.
 
+maktaba#plugin#Detect()                                *maktaba#plugin#Detect*
+  Scans 'runtimepath' for any unregistered plugins and registers them with
+  maktaba. May trigger instant/ hooks for newly-registered plugins.
+
 maktaba#plugin#RegisteredPlugins()          *maktaba#plugin#RegisteredPlugins*
-  A list of all installed plugins in alphabetical order.
+  A list of all installed plugins in alphabetical order. Automatically detects
+  unregistered plugins using |maktaba#plugin#Detect|.
 
 maktaba#plugin#IsRegistered({plugin})            *maktaba#plugin#IsRegistered*
   1 if {plugin} was registered with maktaba#plugin#Register. This is more

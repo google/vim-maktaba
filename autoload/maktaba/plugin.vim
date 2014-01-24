@@ -256,8 +256,20 @@ endfunction
 
 
 ""
+" Scans 'runtimepath' for any unregistered plugins and registers them with
+" maktaba. May trigger instant/ hooks for newly-registered plugins.
+function! maktaba#plugin#Detect() abort
+  for [l:name, l:location] in items(maktaba#rtp#LeafDirs())
+    call maktaba#plugin#GetOrInstall(l:location)
+  endfor
+endfunction
+
+
+""
 " A list of all installed plugins in alphabetical order.
+" Automatically detects unregistered plugins using @function(#Detect).
 function! maktaba#plugin#RegisteredPlugins() abort
+  call maktaba#plugin#Detect()
   return sort(keys(s:plugins))
 endfunction
 

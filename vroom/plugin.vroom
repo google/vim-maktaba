@@ -191,6 +191,35 @@ wasn't explicitly registered with maktaba.
   :let g:emptyplugin_fullpath = maktaba#path#Join([g:emptyplugin_path, ''])
   :call maktaba#ensure#IsEqual(g:emptyplugin.location, g:emptyplugin_fullpath)
 
+Most plugins will be registered eventually since registration is automatically
+triggered by several different conditions: plugin files being entered, being
+required by another plugin, having flags looked up and configured, etc. However,
+instant/ hooks won't activate until the plugin is registered with maktaba, and
+these automatic registration conditions don't usually come very early in vim
+startup, so if you want instant/ hooks to work properly, you'll probably need to
+manually trigger vim to detect and register all plugins once they've been added
+to the runtimepath by your plugin manager.
+
+  :call maktaba#rtp#Add(maktaba#path#Join([g:fakeplugins, 'fullplugin']))
+  :call maktaba#rtp#Add(maktaba#path#Join([g:fakeplugins, 'loudplugin']))
+
+Call maktaba#plugin#Detect to detect and register plugins.
+
+  :call maktaba#plugin#Detect()
+  ~ INSTANT LOADED
+  :echomsg string(maktaba#plugin#RegisteredPlugins())
+  ~ ['emptyplugin', 'fullplugin', 'loudplugin', 'maktaba', 'myplugin']
+
+Calling maktaba#plugin#RegisteredPlugins will also detect new plugins
+automatically.
+
+  :call maktaba#rtp#Add(maktaba#path#Join([g:fakeplugins, 'library']))
+  :call maktaba#rtp#Add(maktaba#path#Join([g:fakeplugins, 'library2']))
+
+  :echomsg string(maktaba#plugin#RegisteredPlugins())
+  ~ ['emptyplugin', 'fullplugin', 'library', 'library2', 'loudplugin',
+  | 'maktaba', 'myplugin']
+
 That's Maktaba plugin basics for you. There's still a lot more ground to cover.
 Here's a directory of relevant topics:
 
