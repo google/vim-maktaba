@@ -5,7 +5,8 @@ endif
 
 " Mapping of non-standard plugin locations to the corresponding plugin object.
 " Non-standard means that the plugin name isn't a simple function of the path
-" (e.g., it comes from addon-info.json).
+" (either it comes from addon-info.json or multiple symlinked paths point to the
+" same plugin).
 if !exists('s:custom_locations')
   let s:custom_locations = {}
 endif
@@ -473,6 +474,13 @@ function! s:CreatePluginObject(name, location, settings) abort
     " No 'name' defined.
   endtry
   let s:plugins[l:plugin.name] = l:plugin
+
+  " If plugin is symlinked, register resolved path as custom location to avoid
+  " conflicts.
+  let l:resolved_location = s:Fullpath(resolve(l:plugin.location))
+  if l:resolved_location !=# l:plugin.location
+    let s:custom_locations[l:resolved_location] = l:plugin
+  endif
 
   " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
   " possible that the user has given us a {location} which is already on the
