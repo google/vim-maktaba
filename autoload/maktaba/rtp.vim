@@ -14,6 +14,24 @@ if !exists('s:cache_string')
   let s:cache_list = []
 endif
 
+" The leaf directory associated with each runtimepath path. Cached to avoid a
+" hot spot in maktaba#path#Split.
+if !exists('s:cache_leafdirs')
+  let s:cache_leafdirs = {}
+endif
+
+
+
+""
+" Gets leaf dir of {path}, using cached copy if possible instead of splitting.
+function! s:GetLeafDir(path) abort
+  let l:leaf = get(s:cache_leafdirs, a:path, 0)
+  if l:leaf isnot 0
+    return l:leaf
+  endif
+  let s:cache_leafdirs[a:path] = maktaba#path#Split(a:path)[-1]
+  return s:cache_leafdirs[a:path]
+endfunction
 
 
 ""
@@ -115,13 +133,10 @@ endfunction
 " plugins.
 function! maktaba#rtp#LeafDirs() abort
   let l:plugins = {}
-  for l:path in maktaba#rtp#Split(&rtp)
-    let l:components = maktaba#path#Split(l:path)
-    if l:components[-1] !~? s:leaf_pathcomponent
-      let l:plugins[l:components[-1]] = l:path
-    endif
+  for l:path in maktaba#rtp#Split(&runtimepath)
+    let l:plugins[s:GetLeafDir(l:path)] = l:path
   endfor
-  return l:plugins
+  return filter(l:plugins, 'v:key !~? s:leaf_pathcomponent')
 endfunction
 
 
