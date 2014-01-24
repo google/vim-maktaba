@@ -478,7 +478,7 @@ function! s:GetSubdirs() dict abort
   if !has_key(self, '_dirs')
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:direct_glob = maktaba#path#Join([self.location, '*', ''])
-    let l:direct_dirs = split(glob(l:direct_glob), "\n")
+    let l:direct_dirs = split(glob(l:direct_glob, 1), "\n")
     let self._dirs = map(l:direct_dirs, 'maktaba#path#Split(v:val)[-1]')
   endif
   return self._dirs
@@ -493,7 +493,7 @@ function! s:GetAfterSubdirs() dict abort
   if !has_key(self, '_after_dirs')
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:after_glob = maktaba#path#Join([self.location, 'after', '*', ''])
-    let l:after_dirs = split(glob(l:after_glob), "\n")
+    let l:after_dirs = split(glob(l:after_glob, 1), "\n")
     let self._after_dirs = map(l:after_dirs, 'maktaba#path#Split(v:val)[-1]')
   endif
   return self._after_dirs
