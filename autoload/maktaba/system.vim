@@ -1,11 +1,14 @@
 "" Utilities for making system calls and dealing with the shell.
 
 let s:plugin = maktaba#plugin#Get('maktaba')
-let s:usable_shell = '\v^/bin/sh$'
-
 " Note: '' denotes that we should use the default (currently 'hidden').
 let s:contexts = ['', 'hidden', 'foreground', 'foreground_pause']
 let s:default_context = 'hidden'
+
+if !exists('s:usable_shell')
+  let s:usable_shell = '\v^/bin/sh$'
+endif
+
 
 ""
 " Join {words} together into a single shell command, escaping if necessary.
