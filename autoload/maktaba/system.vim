@@ -40,12 +40,13 @@ endfunction
 "   to use the default for this, but specify a non-default value for
 "   [throw_errors].)
 " @default context='hidden'
-" * [throw_errors] is whether exit codes should trigger a ShellError to be
-"   thrown. If 0, the caller is responsible for checking v:shell_error.
+" [throw_errors] is whether exit codes should trigger a ShellError to be thrown.
+" If 0, the caller is responsible for checking v:shell_error.
 " @default throw_errors=1
 " Returns a dictionary with the following fields:
 " * 'stdout': the shell command's entire stdout string, if available.
 " * 'stderr': the shell command's entire stderr string, if available.
+" @throws WrongType
 " @throws BadValue if [context] is unrecognized.
 " @throws ShellError if the shell command returns an exit code.
 function! maktaba#system#Call(cmd, ...) abort
@@ -137,12 +138,13 @@ endfunction
 "   'hidden', 'foreground', or 'foreground_pause'. See @function(#Call) for
 "   details.
 " @default context='hidden'
-" * [throw_errors] is whether exit codes should trigger a ShellError to be
-"   thrown. If 0, the caller is responsible for checking v:shell_error.
+" [throw_errors] is whether exit codes should trigger a ShellError to be thrown.
+" If 0, the caller is responsible for checking v:shell_error.
 " @default throw_errors=1
 " Returns a dictionary with the following fields:
 " * 'stdout': the shell command's entire stdout string, if available.
 " * 'stderr': the shell command's entire stderr string, if available.
+" @throws WrongType
 " @throws BadValue if [context] is unrecognized.
 " @throws NotFound if {working_dir} is invalid.
 " @throws ShellError if the shell command returns an exit code.

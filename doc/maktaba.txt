@@ -1282,12 +1282,13 @@ maktaba#system#Call({cmd}, [context], [throw_errors])    *maktaba#system#Call*
       way to use the default for this, but specify a non-default value for
       [throw_errors].)
   [context] is 'hidden' if omitted.
-    * [throw_errors] is whether exit codes should trigger a ShellError to be
-      thrown. If 0, the caller is responsible for checking v:shell_error.
+  [throw_errors] is whether exit codes should trigger a ShellError to be
+  thrown. If 0, the caller is responsible for checking v:shell_error.
   [throw_errors] is 1 if omitted.
   Returns a dictionary with the following fields:
     * 'stdout': the shell command's entire stdout string, if available.
     * 'stderr': the shell command's entire stderr string, if available.
+  Throws ERROR(WrongType)
   Throws ERROR(BadValue) if [context] is unrecognized.
   Throws ERROR(ShellError) if the shell command returns an exit code.
 
@@ -1303,12 +1304,13 @@ maktaba#system#CallAt({cmd}, {working_dir}, [context], [throw_errors])
       'hidden', 'foreground', or 'foreground_pause'. See |maktaba#system#Call|
       for details.
   [context] is 'hidden' if omitted.
-    * [throw_errors] is whether exit codes should trigger a ShellError to be
-      thrown. If 0, the caller is responsible for checking v:shell_error.
+  [throw_errors] is whether exit codes should trigger a ShellError to be
+  thrown. If 0, the caller is responsible for checking v:shell_error.
   [throw_errors] is 1 if omitted.
   Returns a dictionary with the following fields:
     * 'stdout': the shell command's entire stdout string, if available.
     * 'stderr': the shell command's entire stderr string, if available.
+  Throws ERROR(WrongType)
   Throws ERROR(BadValue) if [context] is unrecognized.
   Throws ERROR(NotFound) if {working_dir} is invalid.
   Throws ERROR(ShellError) if the shell command returns an exit code.
