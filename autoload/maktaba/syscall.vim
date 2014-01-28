@@ -69,7 +69,7 @@ function! s:DoSyscallCommon(CallFunc, throw_errors) abort dict
   if has_key(l:return_data, 'stderr')
     let l:err_msg .= "\n" . l:return_data.stderr
   endif
-  throw maktaba#error#Message('ShellError', l:err_msg, self.cmd)
+  throw maktaba#error#Message('ShellError', l:err_msg, self.GetCommand())
 endfunction
 
 
