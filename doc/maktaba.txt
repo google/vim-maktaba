@@ -1022,7 +1022,8 @@ maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
   Returns the maktaba plugin object describing the installed plugin.
 
   {dir} should be the full path to the plugin directory. The plugin itself
-  should be the last component in the directory path. The plugin name will be
+  should be the last component in the directory path. If the plugin doesn't
+  have an explicit name declared in addon-info.json, the plugin name will be
   the name of this directory with all invalid characters converted to
   underscores (see |maktaba#plugin#CanonicalName|).
 

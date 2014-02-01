@@ -326,9 +326,10 @@ endfunction
 " Returns the maktaba plugin object describing the installed plugin.
 "
 " {dir} should be the full path to the plugin directory. The plugin itself
-" should be the last component in the directory path. The plugin name will be
-" the name of this directory with all invalid characters converted to
-" underscores (see @function(#CanonicalName)).
+" should be the last component in the directory path. If the plugin doesn't have
+" an explicit name declared in addon-info.json, the plugin name will be the name
+" of this directory with all invalid characters converted to underscores (see
+" @function(#CanonicalName)).
 "
 " If the plugin contains a plugin/ directory it will have a special "plugin"
 " dictionary flag that controls which plugin files are loaded. For example, if
