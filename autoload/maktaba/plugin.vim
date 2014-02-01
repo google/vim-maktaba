@@ -495,13 +495,17 @@ function! s:CreatePluginObject(name, location, settings) abort
     let s:plugins_by_location[l:resolved_location] = l:plugin
   endif
 
-  " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
-  " possible that the user has given us a {location} which is already on the
-  " runtimepath but which is not absolute. If so, we must remove it, or the
-  " plugin will end up on the runtimepath twice.
-  call maktaba#rtp#Remove(a:location)
-  " Now we can safely add the full location to the runtimepath.
-  call maktaba#rtp#Add(l:plugin.location)
+  let l:rtp_dirs = maktaba#rtp#Split()
+  " If the plugin location isn't already on the runtimepath, add it. Check
+  " for both the raw {location} value and the expanded form.
+  " Note that this may not detect odd spellings that don't match the raw or
+  " expanded form, e.g., if it's on rtp with a trailing slash but installed
+  " using a location without. In such cases, the plugin will end up on the
+  " runtimepath twice.
+  if index(l:rtp_dirs, a:location) == -1 &&
+      \ index(l:rtp_dirs, l:plugin.location) == -1
+    call maktaba#rtp#Add(l:plugin.location)
+  endif
 
   " These special flags let the user control the loading of parts of the plugin.
   if isdirectory(maktaba#path#Join([l:plugin.location, 'plugin']))
