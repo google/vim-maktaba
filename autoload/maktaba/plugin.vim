@@ -314,6 +314,133 @@ endfunction
 
 
 ""
+" Get a plugin object corresponding to {location}. Returns existing plugin
+" object if already registered (but does not register the plugin).
+function! s:GetOrCreatePluginObject(location) abort
+  let l:name = s:PluginNameFromDir(a:location)
+  if has_key(s:plugins, l:name)
+    return s:plugins[l:name]
+  endif
+
+  let l:entrycontroller = {
+      \ 'autoload': [],
+      \ 'plugin': [],
+      \ 'instant': [],
+      \ 'ftplugin': {}
+      \}
+  let l:plugin = {
+      \ 'name': l:name,
+      \ 'location': s:Fullpath(a:location),
+      \ 'flags': {},
+      \ 'globals': {},
+      \ 'logger': maktaba#log#Logger(l:name),
+      \ 'Source': function('maktaba#plugin#Source'),
+      \ 'Load': function('maktaba#plugin#Load'),
+      \ 'AddonInfo': function('maktaba#plugin#AddonInfo'),
+      \ 'Flag': function('maktaba#plugin#Flag'),
+      \ 'HasFlag': function('maktaba#plugin#HasFlag'),
+      \ 'HasDir': function('maktaba#plugin#HasDir'),
+      \ 'HasFiletypeData': function('maktaba#plugin#HasFiletypeData'),
+      \ 'GenerateHelpTags': function('maktaba#plugin#GenerateHelpTags'),
+      \ 'MapPrefix': function('maktaba#plugin#MapPrefix'),
+      \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
+      \ '_entered': l:entrycontroller,
+      \ }
+  " If plugin has an addon-info.json file with a "name" declared, overwrite the
+  " default name with the custom one.
+  " Do this after creating the plugin dict so we can call AddonInfo and have
+  " caching work.
+  try
+    let l:addon_info = l:plugin.AddonInfo()
+    if has_key(l:addon_info, 'name')
+      let l:plugin.name = l:addon_info.name
+    endif
+  catch /ERROR(BadValue):/
+    " Couldn't deserialize JSON.
+  endtry
+
+  return l:plugin
+endfunction
+
+
+""
+" Register {plugin} at {location} with maktaba.
+" @throws AlreadyExists if the existing plugin comes from a different directory.
+function! s:RegisterPlugin(plugin, location) abort
+  if has_key(s:plugins, a:plugin.name)
+    let l:orig_plugin = s:plugins[a:plugin.name]
+    " Compare fully resolved paths. Trailing slashes must (see patch 7.3.194) be
+    " stripped for resolve(), and fnamemodify() with ':p:h' does this safely.
+    let l:pluginpath = resolve(fnamemodify(l:orig_plugin.location, ':p:h'))
+    let l:newpath = resolve(fnamemodify(s:Fullpath(a:location), ':p:h'))
+    if l:pluginpath !=# l:newpath
+      let l:msg = 'Conflict for plugin "%s": %s and %s'
+      throw s:AlreadyExists(l:msg, a:plugin.name, l:pluginpath, l:newpath)
+    endif
+  endif
+
+  let s:plugins[a:plugin.name] = a:plugin
+  let s:plugins_by_location[a:plugin.location] = a:plugin
+
+  " If plugin is symlinked, register resolved path as custom location to avoid
+  " conflicts.
+  let l:resolved_location = s:Fullpath(resolve(a:plugin.location))
+  if l:resolved_location !=# a:plugin.location
+    let s:plugins_by_location[l:resolved_location] = a:plugin
+  endif
+endfunction
+
+
+""
+" Install {plugin} on 'runtimepath' if not already listed under either
+" {raw_location} or the location value from {plugin}.
+function! s:InstallPlugin(plugin, raw_location) abort
+  let l:rtp_dirs = maktaba#rtp#Split()
+  " If the plugin location isn't already on the runtimepath, add it. Check
+  " for both the {raw_location} value and the expanded form.
+  " Note that this may not detect odd spellings that don't match the raw or
+  " expanded form, e.g., if it's on rtp with a trailing slash but installed
+  " using a location without. In such cases, the plugin will end up on the
+  " runtimepath twice.
+  if index(l:rtp_dirs, a:raw_location) == -1 &&
+      \ index(l:rtp_dirs, a:plugin.location) == -1
+    call maktaba#rtp#Add(a:plugin.location)
+  endif
+endfunction
+
+
+""
+" Perform one-time initialization of {plugin} (load flags, source instant/
+" files, and define g:installed_PLUGIN variable). Apply {settings} to maktaba
+" flags.
+function! s:InitPlugin(plugin, settings) abort
+  " These special flags let the user control the loading of parts of the plugin.
+  if isdirectory(maktaba#path#Join([a:plugin.location, 'plugin']))
+    call a:plugin.Flag('plugin', {})
+  endif
+  if isdirectory(maktaba#path#Join([a:plugin.location, 'instant']))
+    call a:plugin.Flag('instant', {})
+  endif
+
+  " Load flags file first.
+  call a:plugin.Source(['instant', 'flags'], 1)
+  " Then apply settings.
+  if !empty(a:settings)
+    call s:ApplySettings(a:plugin, a:settings)
+  endif
+  " Then load all instant files in random order.
+  call call('s:SourceDir', ['instant'], a:plugin)
+
+  " g:installed_<plugin> is set to signal that the plugin has been installed
+  " (though perhaps not loaded). This fills the gap between installation time
+  " (when the plugin is available on the runtimepath) and load time (when the
+  " plugin's files are sourced). This new convention is expected to make it much
+  " easier to build vim dependency managers.
+  let g:installed_{s:SanitizedName(a:plugin.name)} = 1
+endfunction
+
+
+""
 " @usage dir [settings]
 " Installs the plugin located at {dir}. Installation entails adding the plugin
 " to the runtimepath, loading its flags.vim file, and sourcing any files in its
@@ -367,12 +494,15 @@ endfunction
 " @throws AlreadyExists if the plugin already exists.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
 function! maktaba#plugin#Install(dir, ...) abort
-  let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
-  if has_key(s:plugins, l:name)
-    throw s:AlreadyExists('Plugin "%s" already exists.', l:name)
+  let l:plugin = s:GetOrCreatePluginObject(a:dir)
+  if has_key(s:plugins, l:plugin.name)
+    throw s:AlreadyExists('Plugin "%s" already exists.', l:plugin.name)
   endif
-  return s:CreatePluginObject(l:name, a:dir, l:settings)
+  call s:RegisterPlugin(l:plugin, a:dir)
+  call s:InstallPlugin(l:plugin, a:dir)
+  call s:InitPlugin(l:plugin, l:settings)
+  return l:plugin
 endfunction
 
 
@@ -405,6 +535,40 @@ endfunction
 
 
 ""
+" Registers the plugin located at {dir} with maktaba, unless it is already
+" registered. Should be used for plugins already installed on 'runtimepath'. The
+" appropriate maktaba plugin object is returned.
+"
+" [settings], if given, must be a list of maktaba settings (see
+" |maktaba#setting#Create|). If the plugin is new, they will be applied as in
+" @function(#Install). Otherwise, they will be applied before returning the
+" plugin object.
+"
+" @throws AlreadyExists if the existing plugin comes from a different directory.
+" @throws ConfigError if [settings] cannot be applied to this plugin.
+function! maktaba#plugin#Register(dir, ...) abort
+  let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
+  let l:plugin = s:GetOrCreatePluginObject(a:dir)
+  if has_key(s:plugins, l:plugin.name)
+    " Plugin name already registered. Register again to trigger path check (and
+    " to store a:dir location if that path style wasn't encountered yet.
+    call s:RegisterPlugin(l:plugin, a:dir)
+    if !empty(l:settings)
+      call s:ApplySettings(l:plugin, l:settings)
+    endif
+    return l:plugin
+  endif
+
+  " Plugin name hasn't been registered yet.
+  call s:RegisterPlugin(l:plugin, a:dir)
+  " NOTE: Does not check explicitly if plugin is already on runtimepath. If it's
+  " not, instant/ files may get sourced without autoload functions available.
+  call s:InitPlugin(l:plugin, l:settings)
+  return l:plugin
+endfunction
+
+
+""
 " Installs the plugin located at {dir}, unless it already exists. The
 " appropriate maktaba plugin object is returned.
 "
@@ -417,24 +581,23 @@ endfunction
 " @throws AlreadyExists if the existing plugin comes from a different directory.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
 function! maktaba#plugin#GetOrInstall(dir, ...) abort
-  let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
-  if has_key(s:plugins, l:name)
-    let l:plugin = s:plugins[l:name]
-    " Compare fully resolved paths. Trailing slashes must (see patch 7.3.194) be
-    " stripped for resolve(), and fnamemodify() with ':p:h' does this safely.
-    let l:pluginpath = fnamemodify(l:plugin.location, ':p:h')
-    let l:newpath = s:Fullpath(a:dir)
-    if resolve(l:pluginpath) !=# resolve(fnamemodify(l:newpath, ':p:h'))
-      let l:msg = 'Conflict for plugin "%s": %s and %s'
-      throw s:AlreadyExists(l:msg, l:plugin.name, l:plugin.location, l:newpath)
-    endif
+  let l:plugin = s:GetOrCreatePluginObject(a:dir)
+  if has_key(s:plugins, l:plugin.name)
+    " Plugin name already registered. Register again to trigger path check (and
+    " to store a:dir location if that path style wasn't encountered yet.
+    call s:RegisterPlugin(l:plugin, a:dir)
     if !empty(l:settings)
       call s:ApplySettings(l:plugin, l:settings)
     endif
     return l:plugin
   endif
-  return s:CreatePluginObject(l:name, a:dir, l:settings)
+
+  " Plugin name hasn't been registered yet.
+  call s:RegisterPlugin(l:plugin, a:dir)
+  call s:InstallPlugin(l:plugin, a:dir)
+  call s:InitPlugin(l:plugin, l:settings)
+  return l:plugin
 endfunction
 
 
@@ -442,94 +605,6 @@ endfunction
 " @dict Plugin
 " The maktaba plugin object. Exposes functions that operate on the plugin
 " itself.
-
-
-" Common code used by #Install and #GetOrInstall.
-function! s:CreatePluginObject(name, location, settings) abort
-  let l:entrycontroller = {
-      \ 'autoload': [],
-      \ 'plugin': [],
-      \ 'instant': [],
-      \ 'ftplugin': {}
-      \}
-  let l:plugin = {
-      \ 'name': a:name,
-      \ 'location': s:Fullpath(a:location),
-      \ 'flags': {},
-      \ 'globals': {},
-      \ 'logger': maktaba#log#Logger(a:name),
-      \ 'Source': function('maktaba#plugin#Source'),
-      \ 'Load': function('maktaba#plugin#Load'),
-      \ 'AddonInfo': function('maktaba#plugin#AddonInfo'),
-      \ 'Flag': function('maktaba#plugin#Flag'),
-      \ 'HasFlag': function('maktaba#plugin#HasFlag'),
-      \ 'HasDir': function('maktaba#plugin#HasDir'),
-      \ 'HasFiletypeData': function('maktaba#plugin#HasFiletypeData'),
-      \ 'GenerateHelpTags': function('maktaba#plugin#GenerateHelpTags'),
-      \ 'MapPrefix': function('maktaba#plugin#MapPrefix'),
-      \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
-      \ '_entered': l:entrycontroller,
-      \ }
-  " If plugin has an addon-info.json file with a "name" declared, overwrite the
-  " default name with the custom one.
-  " Do this after creating the plugin dict so we can call AddonInfo and have
-  " caching work.
-  try
-    let l:addon_info = l:plugin.AddonInfo()
-    if has_key(l:addon_info, 'name')
-      let l:plugin.name = l:addon_info.name
-    endif
-  catch /ERROR(BadValue):/
-    " Couldn't deserialize JSON.
-  endtry
-  let s:plugins[l:plugin.name] = l:plugin
-  let s:plugins_by_location[l:plugin.location] = l:plugin
-
-  " If plugin is symlinked, register resolved path as custom location to avoid
-  " conflicts.
-  let l:resolved_location = s:Fullpath(resolve(l:plugin.location))
-  if l:resolved_location !=# l:plugin.location
-    let s:plugins_by_location[l:resolved_location] = l:plugin
-  endif
-
-  let l:rtp_dirs = maktaba#rtp#Split()
-  " If the plugin location isn't already on the runtimepath, add it. Check
-  " for both the raw {location} value and the expanded form.
-  " Note that this may not detect odd spellings that don't match the raw or
-  " expanded form, e.g., if it's on rtp with a trailing slash but installed
-  " using a location without. In such cases, the plugin will end up on the
-  " runtimepath twice.
-  if index(l:rtp_dirs, a:location) == -1 &&
-      \ index(l:rtp_dirs, l:plugin.location) == -1
-    call maktaba#rtp#Add(l:plugin.location)
-  endif
-
-  " These special flags let the user control the loading of parts of the plugin.
-  if isdirectory(maktaba#path#Join([l:plugin.location, 'plugin']))
-    call l:plugin.Flag('plugin', {})
-  endif
-  if isdirectory(maktaba#path#Join([l:plugin.location, 'instant']))
-    call l:plugin.Flag('instant', {})
-  endif
-
-  " Load flags file first.
-  call l:plugin.Source(['instant', 'flags'], 1)
-  " Then apply settings.
-  if !empty(a:settings)
-    call s:ApplySettings(l:plugin, a:settings)
-  endif
-  " Then load all instant files in random order.
-  call call('s:SourceDir', ['instant'], l:plugin)
-
-  " g:installed_<plugin> is set to signal that the plugin has been installed
-  " (though perhaps not loaded). This fills the gap between installation time
-  " (when the plugin is available on the runtimepath) and load time (when the
-  " plugin's files are sourced). This new convention is expected to make it much
-  " easier to build vim dependency managers.
-  let g:installed_{s:SanitizedName(l:plugin.name)} = 1
-
-  return l:plugin
-endfunction
 
 
 " @dict Plugin

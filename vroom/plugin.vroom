@@ -148,7 +148,7 @@ Now, we install the plugin by giving maktaba the full plugin path:
 This should generally be done by a plugin manager.
 
 A few things have happened. First of all, notice that the flags file was sourced
-immediately. (Take a look at fakeplugins/myplugin/plugin/flags.vim to see where
+immediately. (Take a look at fakeplugins/myplugin/instant/flags.vim to see where
 the message came from.) Secondly and most importantly, our plugin is now on the
 runtimepath and registered with maktaba:
 
@@ -159,6 +159,22 @@ If we ever lose our handle on the plugin object, we can always use
 maktaba#plugin#Get to get another:
 
   :call maktaba#ensure#IsEqual(maktaba#plugin#Get('myplugin'), g:plugin)
+
+Non-plugin-manager code may also want to ensure that a plugin is registered with
+maktaba (and has flags initialized and instant/ code executed) without actually
+affecting runtimepath or triggering other side-effects that should be left to
+the plugin manager. For these cases, there's maktaba#plugin#Register.
+
+  @messages (STRICT)
+  :let g:modularpluginpath = maktaba#path#Join(
+  | [g:thisdir, 'fakeplugins', 'modularplugin'])
+  :let g:modularplugin = maktaba#plugin#Register(g:modularpluginpath)
+  ~ The flags file is sourced immediately.
+  @messages
+
+Notice that this plugin hasn't been added to runtimepath.
+
+  :call maktaba#ensure#IsFalse(has_key(maktaba#rtp#LeafDirs(), 'modularplugin'))
 
 This all works as you might expect, but none of it is very interesting. Let's
 see what the plugin object can do. It posesses some boring data, such as name
@@ -208,7 +224,8 @@ Call maktaba#plugin#Detect to detect and register plugins.
   :call maktaba#plugin#Detect()
   ~ INSTANT LOADED
   :echomsg string(maktaba#plugin#RegisteredPlugins())
-  ~ ['emptyplugin', 'fullplugin', 'loudplugin', 'maktaba', 'myplugin']
+  ~ ['emptyplugin', 'fullplugin', 'loudplugin', 'maktaba', 'modularplugin',
+  | 'myplugin']
 
 Calling maktaba#plugin#RegisteredPlugins will also detect new plugins
 automatically.
@@ -218,7 +235,7 @@ automatically.
 
   :echomsg string(maktaba#plugin#RegisteredPlugins())
   ~ ['emptyplugin', 'fullplugin', 'library', 'library2', 'loudplugin',
-  | 'maktaba', 'myplugin']
+  | 'maktaba', 'modularplugin', 'myplugin']
 
 That's Maktaba plugin basics for you. There's still a lot more ground to cover.
 Here's a directory of relevant topics:
