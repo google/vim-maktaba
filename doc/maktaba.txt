@@ -1,5 +1,5 @@
-*maktaba* - Consistent Vimscript                                     *Maktaba*
-Google
+*maktaba.txt*	Consistent Vimscript
+Google                                                     *Maktaba* *maktaba*
 
 ==============================================================================
 CONTENTS                                                    *maktaba-contents*
