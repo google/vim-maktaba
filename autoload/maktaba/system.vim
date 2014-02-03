@@ -58,12 +58,11 @@ function! maktaba#system#Call(cmd, ...) abort
   " Force shell to /bin/sh since vim only works properly with POSIX shells.
   " If the shell is a whitelisted wrapper, override the wrapped shell via $SHELL
   " instead.
+  let l:shell_state = maktaba#value#Save(['&shell', '$SHELL'])
   if &shell !~# s:usable_shell
-    let l:save_shell = &shell
     set shell=/bin/sh
   endif
   if $SHELL !~# s:usable_shell
-    let l:save_env_shell = $SHELL
     let $SHELL = '/bin/sh'
   endif
 
@@ -91,12 +90,7 @@ function! maktaba#system#Call(cmd, ...) abort
     " TODO(dbarnett): Implement 'deferred' execution (queued until cursorhold).
   finally
     " Restore configured shell.
-    if exists('l:save_shell')
-      let &shell = l:save_shell
-    endif
-    if exists('l:save_env_shell')
-      let $SHELL = l:save_env_shell
-    endif
+    call maktaba#value#Restore(l:shell_state)
 
     if filereadable(l:error_file)
       let l:return_data.stderr = join(add(readfile(l:error_file), ''), "\n")
