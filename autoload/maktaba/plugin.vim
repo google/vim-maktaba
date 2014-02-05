@@ -479,11 +479,12 @@ function! s:CreatePluginObject(name, location, settings) abort
   " Do this after creating the plugin dict so we can call AddonInfo and have
   " caching work.
   try
-    let l:plugin.name = s:SanitizedName(l:plugin.AddonInfo().name)
+    let l:addon_info = l:plugin.AddonInfo()
+    if has_key(l:addon_info, 'name')
+      let l:plugin.name = s:SanitizedName(l:addon_info.name)
+    endif
   catch /ERROR(BadValue):/
     " Couldn't deserialize JSON.
-  catch /E716:/
-    " No 'name' defined.
   endtry
   let s:plugins[l:plugin.name] = l:plugin
   let s:plugins_by_location[l:plugin.location] = l:plugin
