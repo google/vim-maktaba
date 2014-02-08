@@ -326,9 +326,10 @@ endfunction
 " Returns the maktaba plugin object describing the installed plugin.
 "
 " {dir} should be the full path to the plugin directory. The plugin itself
-" should be the last component in the directory path. The plugin name will be
-" the name of this directory with all invalid characters converted to
-" underscores (see @function(#CanonicalName)).
+" should be the last component in the directory path. If the plugin doesn't have
+" an explicit name declared in addon-info.json, the plugin name will be the name
+" of this directory with all invalid characters converted to underscores (see
+" @function(#CanonicalName)).
 "
 " If the plugin contains a plugin/ directory it will have a special "plugin"
 " dictionary flag that controls which plugin files are loaded. For example, if
@@ -479,11 +480,12 @@ function! s:CreatePluginObject(name, location, settings) abort
   " Do this after creating the plugin dict so we can call AddonInfo and have
   " caching work.
   try
-    let l:plugin.name = s:SanitizedName(l:plugin.AddonInfo().name)
+    let l:addon_info = l:plugin.AddonInfo()
+    if has_key(l:addon_info, 'name')
+      let l:plugin.name = s:SanitizedName(l:addon_info.name)
+    endif
   catch /ERROR(BadValue):/
     " Couldn't deserialize JSON.
-  catch /E716:/
-    " No 'name' defined.
   endtry
   let s:plugins[l:plugin.name] = l:plugin
   let s:plugins_by_location[l:plugin.location] = l:plugin
@@ -495,13 +497,17 @@ function! s:CreatePluginObject(name, location, settings) abort
     let s:plugins_by_location[l:resolved_location] = l:plugin
   endif
 
-  " Maktaba adds the expanded (absolute) plugin path to the runtimepath. It's
-  " possible that the user has given us a {location} which is already on the
-  " runtimepath but which is not absolute. If so, we must remove it, or the
-  " plugin will end up on the runtimepath twice.
-  call maktaba#rtp#Remove(a:location)
-  " Now we can safely add the full location to the runtimepath.
-  call maktaba#rtp#Add(l:plugin.location)
+  let l:rtp_dirs = maktaba#rtp#Split()
+  " If the plugin location isn't already on the runtimepath, add it. Check
+  " for both the raw {location} value and the expanded form.
+  " Note that this may not detect odd spellings that don't match the raw or
+  " expanded form, e.g., if it's on rtp with a trailing slash but installed
+  " using a location without. In such cases, the plugin will end up on the
+  " runtimepath twice.
+  if index(l:rtp_dirs, a:location) == -1 &&
+      \ index(l:rtp_dirs, l:plugin.location) == -1
+    call maktaba#rtp#Add(l:plugin.location)
+  endif
 
   " These special flags let the user control the loading of parts of the plugin.
   if isdirectory(maktaba#path#Join([l:plugin.location, 'plugin']))
