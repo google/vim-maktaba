@@ -28,11 +28,11 @@ endfunction
 
 
 ""
-" @dict Syscall
-" Wrapper function that implements the basic settings and error handling for
-" @function(#Call) and @function(#CallForeground), calling {CallFunc} for the
-" specific call implementation.
-function! s:DoSyscallCommon(CallFunc, throw_errors) abort dict
+" Execute {syscall} using the specific call implementation {CallFunc}, handling
+" settings overrides and error propagation.
+" Used to implement @function(#Call) and @function(#CallForeground).
+" @throws ShellError if {syscall} returns an exit code and {throw_errors} is 1.
+function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
   call maktaba#ensure#IsBool(a:throw_errors)
   let l:return_data = {}
 
@@ -69,7 +69,7 @@ function! s:DoSyscallCommon(CallFunc, throw_errors) abort dict
   if has_key(l:return_data, 'stderr')
     let l:err_msg .= "\n" . l:return_data.stderr
   endif
-  throw maktaba#error#Message('ShellError', l:err_msg, self.GetCommand())
+  throw maktaba#error#Message('ShellError', l:err_msg, a:syscall.GetCommand())
 endfunction
 
 
@@ -200,7 +200,7 @@ endfunction
 function! maktaba#syscall#Call(...) abort dict
   let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
   let l:call_func = maktaba#function#Create('maktaba#syscall#DoCall', [], self)
-  return call('s:DoSyscallCommon', [l:call_func, l:throw_errors], self)
+  return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
 endfunction
 
 
@@ -221,7 +221,7 @@ function! maktaba#syscall#CallForeground(pause, ...) abort dict
   let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
   let l:call_func = maktaba#function#Create(
       \ 'maktaba#syscall#DoCallForeground', [a:pause], self)
-  return call('s:DoSyscallCommon', [l:call_func, l:throw_errors], self)
+  return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
 endfunction
 
 
