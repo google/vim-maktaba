@@ -73,7 +73,8 @@ function! s:DoSyscallCommon(CallFunc, throw_errors) abort dict
 endfunction
 
 
-"" @private
+""
+" @private
 " @dict Syscall
 " Calls |system()| and returns a stdout/stderr dict.
 " The specific implementation for @function(#Call).
@@ -92,7 +93,8 @@ function! maktaba#syscall#DoCall() abort dict
   return l:return_data
 endfunction
 
-"" @private
+""
+" @private
 " @dict Syscall
 " Executes the ! command and returns empty dict, respecting {pause}.
 " The specific implementation for @function(#CallForeground).
