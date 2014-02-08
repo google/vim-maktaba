@@ -151,9 +151,9 @@ function! maktaba#syscall#WithCwd(directory) abort dict
     throw maktaba#error#NotFound('Directory %s does not exist.', l:directory)
   endif
   let l:new_cmd = copy(self)
-  let l:orig_cmd = self.cmd
+  let l:orig_cmd_value = self.cmd
   let l:new_cmd.cmd = ['cd', l:directory]
-  return l:new_cmd.And(l:orig_cmd)
+  return l:new_cmd.And(l:orig_cmd_value)
 endfunction
 
 
