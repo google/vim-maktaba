@@ -9,7 +9,8 @@ which aren't. Before we can see them, we'll have to install maktaba:
 and a fake plugin:
 
   :let g:thisdir = fnamemodify($VROOMFILE, ':p:h')
-  :let g:pluginpath = maktaba#path#Join([g:thisdir, 'fakeplugins', 'myplugin'])
+  :let g:repo = maktaba#path#Join([g:thisdir, 'fakeplugins'])
+  :let g:pluginpath = maktaba#path#Join([g:repo, 'myplugin'])
   :let g:plugin = maktaba#plugin#Install(g:pluginpath)
 
 The best way to interact with a maktaba plugin is to use maktaba#plugin#Get to
@@ -43,6 +44,14 @@ g:installed_{plugin}, signaling that the plugin is installed (but perhaps not
 yet loaded).
 
   :call maktaba#ensure#IsTrue(g:installed_myplugin)
+
+If the plugin name contains special characters, the corresponding variable will
+replace them with underscores.
+
+  :let g:weirdpath = maktaba#path#Join([g:repo, 'weird¬p…l✓u↓g⏎i‽n'])
+  :let g:weirdplugin = maktaba#plugin#Install(g:weirdpath)
+
+  :call maktaba#ensure#IsTrue(g:installed_weird_p_l_u_g_i_n)
 
 In general, you should use maktaba#plugin#IsRegistered to check whether a plugin
 is available: however, the g:installed_{plugin} variable is accessible even by
