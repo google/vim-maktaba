@@ -306,6 +306,57 @@ Setting.Apply({plugin})                                        *Setting.Apply*
   Throws ERROR(BadValue) if the flag has a value innapropriate for the
   setting.
 
+                                                             *maktaba.Syscall*
+A maktaba representation of a system call, which is used to configure and
+execute a system command.
+
+Syscall.WithCwd({directory})                                 *Syscall.WithCwd*
+  Returns a copy of the |maktaba.Syscall| configured to be executed in
+  {directory}.
+  Throws ERROR(WrongType)
+  Throws ERROR(NotFound) if {directory} is invalid.
+
+Syscall.And({cmd})                                               *Syscall.And*
+  Returns a new |maktaba.Syscall| that chains self and {cmd} together with a
+  logical AND operation ("&&"). {cmd} may be any valid
+  |maktaba#syscall#Create| argument.
+  Throws ERROR(WrongType)
+
+Syscall.Or({cmd})                                                 *Syscall.Or*
+  Returns a new |maktaba.Syscall| that chains self and {cmd} together with a
+  logical OR operation ("&&"). {cmd} may be any valid |maktaba#syscall#Create|
+  argument.
+  Throws ERROR(WrongType)
+
+Syscall.Call([throw_errors])                                    *Syscall.Call*
+  Executes the system call without showing output to the user. If
+  [throw_errors] is 1, any exit code from the command will cause a ShellError
+  to be thrown. Otherwise, the caller is responsible for checking
+  |v:shell_error| and handling error conditions.
+  [throw_errors] is 1 if omitted.
+  Returns a dictionary with the following fields:
+    * stdout: the shell command's entire stdout string, if available.
+    * stderr: the shell command's entire stderr string, if available.
+  Throws ERROR(WrongType)
+  Throws ERROR(ShellError) if the shell command returns an exit code.
+
+Syscall.CallForeground({pause}, [throw_errors])       *Syscall.CallForeground*
+  Executes the system call in the foreground, showing the output to the user.
+  If {pause} is 1, output will stay on the screen until the user presses
+  Enter. If [throw_errors] is 1, any exit code from the command will cause a
+  ShellError to be thrown. Otherwise, the caller is responsible for checking
+  |v:shell_error| and handling error conditions.
+  [throw_errors] is 1 if omitted.
+  Returns a dictionary with the following fields:
+    * stdout: the shell command's entire stdout string, if available.
+    * stderr: the shell command's entire stderr string, if available.
+  Throws ERROR(WrongType)
+  Throws ERROR(ShellError) if the shell command returns an exit code.
+
+Syscall.GetCommand()                                      *Syscall.GetCommand*
+  Gets the literal command string that would be executed by |Syscall.Call| or
+  |Syscall.CallForeground|, with words joined and special characters escaped.
+
 ==============================================================================
 FUNCTIONS                                                  *maktaba-functions*
 
@@ -1263,64 +1314,12 @@ maktaba#string#StartsWith({string}, {prefix})      *maktaba#string#StartsWith*
 maktaba#string#EndsWith({string}, {suffix})          *maktaba#string#EndsWith*
   Whether or not {string} ends with {suffix}.
 
-maktaba#system#Command({words})                       *maktaba#system#Command*
-  Join {words} together into a single shell command, escaping if necessary.
-  Also accepts a bare string for convenience and simply returns it, with the
-  assumption that it's been properly escaped beforehand. Functions in
-  maktaba#system# pass any system command arguments to this function, allowing
-  you to use lists or escaped strings anywhere.
-
-maktaba#system#Call({cmd}, [context], [throw_errors])    *maktaba#system#Call*
-  Runs {cmd} in [context] and returns a dictionary of results data. {cmd} is
-  either a bare string that's already properly escaped or a list of "word"
-  strings that are escaped for you. [context] is the execution context for the
-  call.
-    * 'hidden' executes without affecting vim UI.
-    * 'foreground' scrolls the output on-screen as it executes.
-    * 'foreground_pause' scrolls the output on-screen and waits for the user
-      to dismiss it when it finishes.
-    * '' (the empty string) means to use the default value.  (This is the only
-      way to use the default for this, but specify a non-default value for
-      [throw_errors].)
-  [context] is 'hidden' if omitted.
-    * [throw_errors] is whether exit codes should trigger a ShellError to be
-      thrown. If 0, the caller is responsible for checking v:shell_error.
-  [throw_errors] is 1 if omitted.
-  Returns a dictionary with the following fields:
-    * 'stdout': the shell command's entire stdout string, if available.
-    * 'stderr': the shell command's entire stderr string, if available.
-  Throws ERROR(BadValue) if [context] is unrecognized.
-  Throws ERROR(ShellError) if the shell command returns an exit code.
-
-maktaba#system#CallAt({cmd}, {working_dir}, [context], [throw_errors])
-                                                       *maktaba#system#CallAt*
-  Runs {cmd} from {working_dir} and returns a dictionary of results data.
-    * {cmd} is the string to execute as a shell command.
-    * {working_dir} is a path for vim to cd into before executing the command
-      (or 0). If it's a file instead of a directory, the parent directory will
-      be
-  assumed automatically.
-    * [context] is the execution context for the call. It should be one of
-      'hidden', 'foreground', or 'foreground_pause'. See |maktaba#system#Call|
-      for details.
-  [context] is 'hidden' if omitted.
-    * [throw_errors] is whether exit codes should trigger a ShellError to be
-      thrown. If 0, the caller is responsible for checking v:shell_error.
-  [throw_errors] is 1 if omitted.
-  Returns a dictionary with the following fields:
-    * 'stdout': the shell command's entire stdout string, if available.
-    * 'stderr': the shell command's entire stderr string, if available.
-  Throws ERROR(BadValue) if [context] is unrecognized.
-  Throws ERROR(NotFound) if {working_dir} is invalid.
-  Throws ERROR(ShellError) if the shell command returns an exit code.
-
-maktaba#system#And({cmds})                                *maktaba#system#And*
-  Chain {cmds} together with logical AND operations ('&&'). {cmds} is a list
-  of shell command strings.
-
-maktaba#system#Or({cmds})                                  *maktaba#system#Or*
-  Chain {cmds} together with logical OR operations ('||'). {cmds} is a list of
-  shell command strings.
+maktaba#syscall#Create({cmd})                         *maktaba#syscall#Create*
+  Creates a |maktaba.Syscall| object that can be used to execute {cmd} with
+  |Syscall.Call|. {cmd} may be a pre-escaped string, a list of words to be
+  automatically escaped and joined. Also accepts an existing Syscall object
+  and returns it for convenience.
+  Throws ERROR(WrongType)
 
 maktaba#test#Override({target}, {replacement})         *maktaba#test#Override*
   Overides the function {target} such that when it is called, {replacement} is
