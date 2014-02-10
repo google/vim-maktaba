@@ -1,3 +1,6 @@
+let s:plugin = maktaba#Maktaba()
+
+
 " Add the 'e' flag to flags unless it is present.
 " This mimics 'gdefault' but for the e flag.
 " The e flag suppresses search errors such as "Pattern not found".
@@ -25,6 +28,19 @@ function! maktaba#buffer#Overwrite(startline, endline, lines) abort
   call maktaba#ensure#IsNumber(a:startline)
   call maktaba#ensure#IsNumber(a:endline)
   call maktaba#ensure#IsList(a:lines)
+
+  " If python is available, use difflib-based python implementation, which can
+  " overwrite only modified chunks and leave equal chunks undisturbed.
+  if has('python')
+    call maktaba#python#ImportModule(s:plugin, 'maktaba')
+    python maktaba.OverwriteBufferLines(
+        \ int(vim.eval('a:startline')),
+        \ int(vim.eval('a:endline')),
+        \ vim.eval('a:lines'))
+    return
+  endif
+
+  " Otherwise, fall back to pure-vimscript implementation.
   if a:startline > a:endline
     throw maktaba#error#BadValue(
         \ 'Startline %d greater than endline %d',
