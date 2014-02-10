@@ -521,13 +521,12 @@ function! s:CreatePluginObject(name, location, settings) abort
   " Then load all instant files in random order.
   call call('s:SourceDir', ['instant'], l:plugin)
 
-  let l:sanitized_plugin_name = s:SanitizedName(l:plugin.name)
   " g:installed_<plugin> is set to signal that the plugin has been installed
   " (though perhaps not loaded). This fills the gap between installation time
   " (when the plugin is available on the runtimepath) and load time (when the
   " plugin's files are sourced). This new convention is expected to make it much
   " easier to build vim dependency managers.
-  let g:installed_{l:sanitized_plugin_name} = 1
+  let g:installed_{s:SanitizedName(l:plugin.name)} = 1
 
   return l:plugin
 endfunction
