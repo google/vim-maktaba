@@ -6,8 +6,10 @@ let s:EmptyFn = function('empty')
 " Sentinel value used by #Save to flag a variable as undefined.
 let s:UNSET = {}
 
-let s:ENV_VAR_NAME = '\m\c\$[a-z_][a-z0-9_]*'
-let s:SETTING_NAME = '\m\c&[a-z_][a-z0-9_]*'
+" Pattern for environment variable name.
+let s:ENV_VAR_NAME = '\m\c^\$[a-z_][a-z0-9_]*$'
+" Pattern for vim setting name. s:var and v:var not supported.
+let s:SETTING_NAME = '\m\c^&\([gl]:\)\?[a-z_][a-z0-9_]*$'
 
 
 " Gets {target}[{focus}].
@@ -292,6 +294,10 @@ function! maktaba#value#Restore(state) abort
     elseif maktaba#string#StartsWith(l:name, '&')
       " Restore vim setting.
       call maktaba#ensure#Matches(l:name, s:SETTING_NAME)
+      " Note that for local settings, this only overrides the literal value and
+      " doesn't ever remove the local value. It's just possible to scrape the
+      " output of :setlocal in #Save and determine whether there's an explicit
+      " local value, but this hasn't been implemented yet.
       execute 'let' l:name '=' string(l:Value isnot s:UNSET ? l:Value : '')
     else
       " Restore standard variable.
