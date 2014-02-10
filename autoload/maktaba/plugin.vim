@@ -94,10 +94,10 @@ endfunction
 
 
 ""
-" Gets a version of {plugin} with special characters converted to underscores.
+" Gets a version of {name} with special characters converted to underscores.
 " Doesn't apply sophisticated heuristics like stripping 'vim-' prefix.
-function! s:SanitizedName(plugin) abort
-  return substitute(a:plugin, '[^_a-zA-Z0-9]', '_', 'g')
+function! s:SanitizedName(name) abort
+  return substitute(a:name, '[^_a-zA-Z0-9]', '_', 'g')
 endfunction
 
 
@@ -293,17 +293,13 @@ endfunction
 
 ""
 " The canonical name of {plugin}.
-" This is the name of the plugin directory with all invalid characters replaced
-" with underscores. Valid characters include _, [a-z], [A-Z], and [0-9].
-" For example, the canonical name of "my-plugin" is "my_plugin".  Certain
-" conventions which are common for github vim projects are also recognized.
-" Specifically, either a "vim-" prefix and a ".vim" suffix would be
-" disregarded: both "vim-unimpaired" and "unimpaired.vim" would become simply
-" "unimpaired".
+" This is the name of the plugin directory with any "vim-" prefix or ".vim"
+" suffix stripped off: both "vim-unimpaired" and "unimpaired.vim" would become
+" simply "unimpaired".
 "
 " Note that plugins with different names in the filesystem can conflict in
-" maktaba. If you've loaded a plugin in the directory "plugins/my-plugin" then
-" maktaba can't handle a plugin named "plugins/my_plugin". Make sure your
+" maktaba. If you've loaded a plugin in the directory "plugins/vim-myplugin"
+" then maktaba can't handle a plugin named "plugins/myplugin". Make sure your
 " plugins have sufficiently different names!
 function! maktaba#plugin#CanonicalName(plugin) abort
   let l:plugin = a:plugin
@@ -313,7 +309,7 @@ function! maktaba#plugin#CanonicalName(plugin) abort
   if maktaba#string#EndsWith(l:plugin, '.vim')
     let l:plugin = l:plugin[:-5]
   endif
-  return s:SanitizedName(l:plugin)
+  return l:plugin
 endfunction
 
 
@@ -382,18 +378,17 @@ endfunction
 
 ""
 " Gets the plugin object associated with {plugin}. {plugin} may either be the
-" name of the plugin directory, or the canonicalized plugin name (with invalid
-" characters converted to underscores). See @function(#CanonicalName).
+" name of the plugin directory, or the canonicalized plugin name (with any
+" "vim-" prefix or ".vim" suffix stripped off). See @function(#CanonicalName).
 " Detects plugins added to 'runtimepath' even if they haven't been explicitly
 " registered with maktaba.
 " @throws NotFound if the plugin object does not exist.
 function! maktaba#plugin#Get(name) abort
-  let l:name = s:SanitizedName(a:name)
-  if has_key(s:plugins, l:name)
-    return s:plugins[l:name]
+  if has_key(s:plugins, a:name)
+    return s:plugins[a:name]
   endif
 
-  " If sanitized name didn't match, fall back to heavily canonicalized name.
+  " If literal name didn't match, fall back to canonicalized name.
   let l:name = maktaba#plugin#CanonicalName(a:name)
   if has_key(s:plugins, l:name)
     return s:plugins[l:name]
@@ -482,7 +477,7 @@ function! s:CreatePluginObject(name, location, settings) abort
   try
     let l:addon_info = l:plugin.AddonInfo()
     if has_key(l:addon_info, 'name')
-      let l:plugin.name = s:SanitizedName(l:addon_info.name)
+      let l:plugin.name = l:addon_info.name
     endif
   catch /ERROR(BadValue):/
     " Couldn't deserialize JSON.
@@ -531,7 +526,7 @@ function! s:CreatePluginObject(name, location, settings) abort
   " (when the plugin is available on the runtimepath) and load time (when the
   " plugin's files are sourced). This new convention is expected to make it much
   " easier to build vim dependency managers.
-  let g:installed_{l:plugin.name} = 1
+  let g:installed_{s:SanitizedName(l:plugin.name)} = 1
 
   return l:plugin
 endfunction
