@@ -7,7 +7,7 @@ let s:escaped_char = '\v\\([\,])'
 " can contain an after/ directory.
 " So all paths whose final component matches the following regex are not
 " considered to be plugins.
-let s:leaf_pathcomponent = '\v^(\.vim|vim%(files)?\d*|after|runtime)$'
+let s:nonplugin_leaf = '\v^(\.vim|vim%(files)?\d*|after|runtime|addons)$'
 
 if !exists('s:cache_string')
   let s:cache_string = ''
@@ -136,7 +136,7 @@ function! maktaba#rtp#LeafDirs() abort
   for l:path in maktaba#rtp#Split(&runtimepath)
     let l:plugins[s:GetLeafDir(l:path)] = l:path
   endfor
-  return filter(l:plugins, 'v:key !~? s:leaf_pathcomponent')
+  return filter(l:plugins, 'v:key !~? s:nonplugin_leaf')
 endfunction
 
 
