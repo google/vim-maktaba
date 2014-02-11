@@ -4,8 +4,8 @@ if !exists('s:plugins')
 endif
 
 " Mapping from normalized locations to the corresponding plugin object.
-" Used to look up plugins by location in maktaba#plugin#Install and
-" maktaba#plugin#GetOrInstall.
+" Used to look up plugins by location in @function(#Install),
+" @function(#Register), and @function(#GetOrInstall).
 " May have multiple locations mapped to the same plugin in the case of symlinks.
 if !exists('s:plugins_by_location')
   let s:plugins_by_location = {}
@@ -219,7 +219,7 @@ endfunction
 " g:loaded_* variable when appropriate.
 function! maktaba#plugin#Enter(file) abort
   let [l:plugindir, l:filedir, l:handle] = s:SplitEnteredFile(a:file)
-  let l:plugin = maktaba#plugin#GetOrInstall(l:plugindir)
+  let l:plugin = maktaba#plugin#Register(l:plugindir)
   let l:controller = l:plugin._entered[l:filedir]
 
   if l:filedir ==# 'ftplugin'
@@ -260,7 +260,7 @@ endfunction
 " maktaba. May trigger instant/ hooks for newly-registered plugins.
 function! maktaba#plugin#Detect() abort
   for [l:name, l:location] in items(maktaba#rtp#LeafDirs())
-    call maktaba#plugin#GetOrInstall(l:location)
+    call maktaba#plugin#Register(l:location)
   endfor
 endfunction
 
@@ -527,7 +527,7 @@ function! maktaba#plugin#Get(name) abort
   " Check if any dir on runtimepath is a plugin that hasn't been detected yet.
   let l:leafdirs = maktaba#rtp#LeafDirs()
   if has_key(l:leafdirs, a:name)
-    return maktaba#plugin#GetOrInstall(l:leafdirs[a:name])
+    return maktaba#plugin#Register(l:leafdirs[a:name])
   endif
 
   throw maktaba#error#NotFound('Plugin %s', a:name)
