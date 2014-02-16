@@ -45,6 +45,16 @@ function! s:CannotEnter(file) abort
 endfunction
 
 
+""
+" Gets resolved version of {path}, expanding symlinks.
+" Works the same as |resolve()|, but doesn't choke on paths with trailing
+" slashes under vim<7.3.194.
+function! s:Resolve(path) abort
+  " Remove trailing slash if there is one, then resolve symlinks.
+  return resolve(fnamemodify(a:path, ':p:h'))
+endfunction
+
+
 " This is The Way to store a plugin location, by convention:
 " Fully expanded path with trailing slash at the end.
 function! s:Fullpath(location) abort
@@ -504,10 +514,9 @@ function! s:RegisterPlugin(plugin, location, settings, force_rtp) abort
   let l:already_installed = has_key(s:plugins, a:plugin.name)
   if l:already_installed
     let l:orig_plugin = s:plugins[a:plugin.name]
-    " Compare fully resolved paths. Trailing slashes must (see patch 7.3.194) be
-    " stripped for resolve(), and fnamemodify() with ':p:h' does this safely.
-    let l:pluginpath = resolve(fnamemodify(l:orig_plugin.location, ':p:h'))
-    let l:newpath = resolve(fnamemodify(s:Fullpath(a:location), ':p:h'))
+    " Compare fully resolved paths.
+    let l:pluginpath = s:Resolve(l:orig_plugin.location)
+    let l:newpath = s:Resolve(s:Fullpath(a:location))
     if l:pluginpath !=# l:newpath
       let l:msg = 'Conflict for plugin "%s": %s and %s'
       throw s:AlreadyExists(l:msg, a:plugin.name, l:pluginpath, l:newpath)
@@ -519,7 +528,7 @@ function! s:RegisterPlugin(plugin, location, settings, force_rtp) abort
 
   " If plugin is symlinked, register resolved path as custom location to avoid
   " conflicts.
-  let l:resolved_location = s:Fullpath(resolve(a:plugin.location))
+  let l:resolved_location = s:Fullpath(s:Resolve(a:plugin.location))
   if l:resolved_location !=# a:plugin.location
     let s:plugins_by_location[l:resolved_location] = a:plugin
   endif
