@@ -3,6 +3,15 @@
 " a lowercase name. Don't refactor this code to have lowercase variable names.
 let s:EmptyFn = function('empty')
 
+" Sentinel value used by #Save to flag a variable as undefined.
+let s:UNSET = {}
+
+" Pattern for environment variable name.
+let s:ENV_VAR_NAME = '\m\c^\$[a-z_][a-z0-9_]*$'
+" Pattern for vim setting name. s:var and v:var not supported.
+let s:SETTING_NAME = '\m\c^&\([gl]:\)\?[a-z_][a-z0-9_]*$'
+
+
 " Gets {target}[{focus}].
 " @throws BadValue if it can't.
 function! s:GetFocus(target, focus) abort
@@ -239,4 +248,79 @@ function! maktaba#value#Focus(Target, foci, ...) abort
     call s:SetFocus(l:parent, a:foci[-1], a:1)
     return a:Target
   endif
+endfunction
+
+
+""
+" Captures the state of a {variable} into a returned dict.
+" The return value can be passed to @function(#Restore) to restore the listed
+" variable to its captured state.
+" @throws WrongType
+" @throws BadValue
+function! maktaba#value#Save(variable) abort
+  return maktaba#value#SaveAll([a:variable])
+endfunction
+
+
+""
+" Captures the state of a list of {variables} into a returned dict.
+" The return value can be passed to @function(#Restore) to restore all listed
+" variables to their captured state.
+" @throws WrongType
+" @throws BadValue
+function! maktaba#value#SaveAll(variables) abort
+  let l:savedict = {}
+  for l:name in maktaba#ensure#IsList(a:variables)
+    call maktaba#ensure#IsString(l:name)
+    if maktaba#string#StartsWith(l:name, '$')
+      " Capture environment variable.
+      " Use eval() since expand() has different behavior (see
+      " :help expr-env-expand).
+      call maktaba#ensure#Matches(l:name, s:ENV_VAR_NAME)
+      let l:savedict[l:name] = exists(l:name) ? eval(l:name) : s:UNSET
+    elseif maktaba#string#StartsWith(l:name, '&')
+      " Capture vim setting.
+      call maktaba#ensure#Matches(l:name, s:SETTING_NAME)
+      let l:savedict[l:name] = exists(l:name) ? eval(l:name) : s:UNSET
+    else
+      " Capture standard variable.
+      let l:savedict[l:name] = exists(l:name) ? {l:name} : s:UNSET
+    endif
+  endfor
+  return l:savedict
+endfunction
+
+
+""
+" Restores the previously-captured {state} of the set of variables.
+" {state} is a dict returned from a previous call to @function(#Save) or
+" @function(#SaveAll).
+" @throws WrongType
+" @throws BadValue
+function! maktaba#value#Restore(state) abort
+  call maktaba#ensure#IsDict(a:state)
+  for [l:name, l:Value] in items(a:state)
+    if maktaba#string#StartsWith(l:name, '$')
+      " Restore environment variable.
+      call maktaba#ensure#Matches(l:name, s:ENV_VAR_NAME)
+      execute 'let' l:name '=' string(l:Value isnot s:UNSET ? l:Value : '')
+    elseif maktaba#string#StartsWith(l:name, '&')
+      " Restore vim setting.
+      call maktaba#ensure#Matches(l:name, s:SETTING_NAME)
+      " Note that for local settings, this only overrides the literal value and
+      " doesn't ever remove the local value. It's just possible to scrape the
+      " output of :setlocal in #Save and determine whether there's an explicit
+      " local value, but this hasn't been implemented yet.
+      execute 'let' l:name '=' string(l:Value isnot s:UNSET ? l:Value : '')
+    else
+      " Restore standard variable.
+      " Use unlet to avoid 'type mismatch' in case restoring changes the type.
+      unlet! {l:name}
+      if l:Value isnot s:UNSET
+        let {l:name} = l:Value
+      endif
+    endif
+    " Type can vary between iterations. Use unlet to avoid 'type mismatch'.
+    unlet l:Value
+  endfor
 endfunction
