@@ -5,6 +5,10 @@ not on the critical path of maktaba functionality, but offer slight enhancements
 in behavior or performance over the corresponding pure-vimscript fallbacks.
 """
 
+# NOTE: Code should only be added here as a last resort. Use a pure vimscript
+# implementation if at all possible, even if the code is uglier. Or you can
+# always add python code to a separate plugin.
+
 import difflib
 import vim
 
