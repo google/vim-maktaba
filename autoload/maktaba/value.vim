@@ -252,14 +252,26 @@ endfunction
 
 
 ""
+" Captures the state of a {variable} into a returned dict.
+" The return value can be passed to @function(#Restore) to restore the listed
+" variable to its captured state.
+" @throws WrongType
+" @throws BadValue
+function! maktaba#value#Save(variable) abort
+  return maktaba#value#SaveAll([a:variable])
+endfunction
+
+
+""
 " Captures the state of a list of {variables} into a returned dict.
 " The return value can be passed to @function(#Restore) to restore all listed
 " variables to their captured state.
 " @throws WrongType
 " @throws BadValue
-function! maktaba#value#Save(variables) abort
+function! maktaba#value#SaveAll(variables) abort
   let l:savedict = {}
   for l:name in maktaba#ensure#IsList(a:variables)
+    call maktaba#ensure#IsString(l:name)
     if maktaba#string#StartsWith(l:name, '$')
       " Capture environment variable.
       " Use eval() since expand() has different behavior (see
@@ -281,7 +293,8 @@ endfunction
 
 ""
 " Restores the previously-captured {state} of the set of variables.
-" {state} is a dict returned from a previous call to @function(#Save).
+" {state} is a dict returned from a previous call to @function(#Save) or
+" @function(#SaveAll).
 " @throws WrongType
 " @throws BadValue
 function! maktaba#value#Restore(state) abort

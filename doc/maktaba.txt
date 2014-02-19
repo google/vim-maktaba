@@ -1432,7 +1432,14 @@ maktaba#value#Focus({target}, {foci}, [value])           *maktaba#value#Focus*
   Throws ERROR(BadValue) if {target} cannot be deconstructed the way {foci}
   expects.
 
-maktaba#value#Save({variables})                           *maktaba#value#Save*
+maktaba#value#Save({variable})                            *maktaba#value#Save*
+  Captures the state of a {variable} into a returned dict. The return value
+  can be passed to |maktaba#value#Restore| to restore the listed variable to
+  its captured state.
+  Throws ERROR(WrongType)
+  Throws ERROR(BadValue)
+
+maktaba#value#SaveAll({variables})                     *maktaba#value#SaveAll*
   Captures the state of a list of {variables} into a returned dict. The return
   value can be passed to |maktaba#value#Restore| to restore all listed
   variables to their captured state.
@@ -1441,7 +1448,8 @@ maktaba#value#Save({variables})                           *maktaba#value#Save*
 
 maktaba#value#Restore({state})                         *maktaba#value#Restore*
   Restores the previously-captured {state} of the set of variables. {state} is
-  a dict returned from a previous call to |maktaba#value#Save|.
+  a dict returned from a previous call to |maktaba#value#Save| or
+  |maktaba#value#SaveAll|.
   Throws ERROR(WrongType)
   Throws ERROR(BadValue)
 

@@ -39,7 +39,7 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
   " Force shell to /bin/sh since vim only works properly with POSIX shells.
   " If the shell is a whitelisted wrapper, override the wrapped shell via $SHELL
   " instead.
-  let l:shell_state = maktaba#value#Save(['&shell', '$SHELL'])
+  let l:shell_state = maktaba#value#SaveAll(['&shell', '$SHELL'])
   if &shell !~# s:usable_shell
     set shell=/bin/sh
   endif
