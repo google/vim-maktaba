@@ -10,6 +10,7 @@
 "   python print foo.bar
 " <
 " will print something like
+"
 "   <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'>
 function! maktaba#python#ImportModule(plugin, name) abort
   let l:path = maktaba#path#Join([a:plugin.location, 'python'])

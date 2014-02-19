@@ -1152,6 +1152,22 @@ maktaba#plugin#Source({file}, [optional])              *maktaba#plugin#Source*
 maktaba#plugin#HasFlag({flag})                        *maktaba#plugin#HasFlag*
   Whether or not the plugin has a flag named {flag}.
 
+maktaba#python#ImportModule({plugin}, {name})    *maktaba#python#ImportModule*
+  Imports python module {name} into vim from {plugin}. Checks for {name} in
+  the plugin's python/ subdirectory for the named module.
+  Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
+
+  For example:
+>
+    call maktaba#python#ImportModule(maktaba#plugin#Get('foo'), 'foo.bar')
+    python print foo.bar
+<
+  will print something like
+
+    <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'
+>
+<
+
 maktaba#rtp#Split([path])                                  *maktaba#rtp#Split*
   Split a string of comma-separated values into a list of values. Handles
   unescaping the commas. [path] The string to split.
