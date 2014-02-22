@@ -1123,6 +1123,20 @@ maktaba#plugin#Get({plugin})                              *maktaba#plugin#Get*
   if they haven't been explicitly registered with maktaba.
   Throws ERROR(NotFound) if the plugin object does not exist.
 
+maktaba#plugin#Register({dir}, [settings])           *maktaba#plugin#Register*
+  Registers the plugin located at {dir} with maktaba, unless it is already
+  registered. Should be used for plugins already installed on 'runtimepath'.
+  The appropriate maktaba plugin object is returned.
+
+  [settings], if given, must be a list of maktaba settings (see
+  |maktaba#setting#Create|). If the plugin is new, they will be applied as in
+  |maktaba#plugin#Install|. Otherwise, they will be applied before returning
+  the plugin object.
+
+  Throws ERROR(AlreadyExists) if the existing plugin comes from a different
+  directory.
+  Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
+
 maktaba#plugin#GetOrInstall({dir}, [settings])   *maktaba#plugin#GetOrInstall*
   Installs the plugin located at {dir}, unless it already exists. The
   appropriate maktaba plugin object is returned.

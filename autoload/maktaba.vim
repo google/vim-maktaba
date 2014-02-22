@@ -21,7 +21,7 @@
 " <sfile>:p:h:h is .../maktaba/
 let s:plugindir =  expand('<sfile>:p:h:h')
 if !exists('s:maktaba')
-  let s:maktaba = maktaba#plugin#GetOrInstall(s:plugindir)
+  let s:maktaba = maktaba#plugin#Register(s:plugindir)
   let s:maktaba.globals.installers = []
   let s:maktaba.globals.loghandlers = maktaba#reflist#Create()
 endif
