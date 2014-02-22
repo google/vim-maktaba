@@ -102,52 +102,6 @@ joining and escaping applied, you can access it through the GetCommand method.
   ~ run.sh foo:bar
 
 
-You can configure the command to be executed from a particular directory using
-the WithCwd method.
-
-  :call maktaba#syscall#Create(['echo', 'hi']).WithCwd('..').Call()
-  ! cd .. && echo hi 2> /tmp/* (glob)
-
-If you pass a file instead of a directory, the command will be executed in the
-directory containing that file.
-
-  :let g:tmpfile = tempname()
-  :call writefile([], g:tmpfile)
-  :let g:expected = 'Running command from ' . maktaba#path#Dirname(g:tmpfile)
-
-  :let g:cmd = maktaba#syscall#Create(['echo', 'something']).WithCwd(g:tmpfile)
-  :let g:out = g:cmd.Call()
-  ! cd (.*) && echo something 2> /tmp/.*
-  $ Running command from \1
-
-  :call maktaba#ensure#IsEqual(g:expected, g:out.stdout)
-
-If the directory is missing, WithCwd raises a NotFound error.
-
-  :function BadDirSyscall() abort<CR>
-  |  call maktaba#syscall#Create('echo hi').WithCwd('/does/not/exist')<CR>
-  |endfunction
-  :call maktaba#error#Try('BadDirSyscall')
-  ~ ERROR(NotFound): Directory /does/not/exist does not exist.
-
-
-You can chain commands using the And and Or methods.
-
-  :call maktaba#syscall#Create('true').And('echo SUCCESS').CallForeground(0)
-  ! true && echo SUCCESS
-  $ SUCCESS
-  :call maktaba#syscall#Create('false').Or('echo FAILURE').CallForeground(0)
-  ! false || echo FAILURE
-  $ FAILURE
-
-The chained command may also be another Syscall object.
-
-  :let g:success_syscall = maktaba#syscall#Create('echo SUCCESS')
-  :call maktaba#syscall#Create('true').And(g:success_syscall).CallForeground(0)
-  ! true && echo SUCCESS
-  $ SUCCESS
-
-
 The Call method will execute these commands in 'hidden' mode, using vim's
 system() function. It's ideal for quick system calls used in the plugin
 implementation, but should not be used for long-running user-driven commands
@@ -188,6 +142,69 @@ Unless throw_errors is disabled, that is.
   :let g:fail_syscall = maktaba#syscall#Create('false')
   :let g:out = g:fail_syscall.CallForeground(0, 0)
   ! false
+
+
+You can configure the command to be executed from a particular directory using
+the WithCwd method.
+
+  :call maktaba#syscall#Create(['echo', 'hi']).WithCwd('..').Call()
+  ! cd .. && echo hi 2> /tmp/* (glob)
+
+If you pass a file instead of a directory, the command will be executed in the
+directory containing that file.
+
+  :let g:tmpfile = tempname()
+  :call writefile([], g:tmpfile)
+  :let g:expected = 'Running command from ' . maktaba#path#Dirname(g:tmpfile)
+
+  :let g:cmd = maktaba#syscall#Create(['echo', 'something']).WithCwd(g:tmpfile)
+  :let g:out = g:cmd.Call()
+  ! cd (.*) && echo something 2> /tmp/.*
+  $ Running command from \1
+
+  :call maktaba#ensure#IsEqual(g:expected, g:out.stdout)
+
+If the directory is missing, WithCwd raises a NotFound error.
+
+  :function BadDirSyscall() abort<CR>
+  |  call maktaba#syscall#Create('echo hi').WithCwd('/does/not/exist')<CR>
+  |endfunction
+  :call maktaba#error#Try('BadDirSyscall')
+  ~ ERROR(NotFound): Directory /does/not/exist does not exist.
+
+
+For system calls that need input from STDIN, you can use the WithStdin method.
+
+  :let g:cmd = maktaba#syscall#Create(['cat']).WithStdin('something')
+  :call maktaba#ensure#IsEqual('something', g:cmd.Call().stdout)
+  ! cat 2> /tmp/.*
+
+This is only supported when used with the Call method. Attempting to use it with
+CallForeground will cause ERROR(NotImplemented) to be thrown.
+
+  :function ForegroundSyscallWithStdin() abort<CR>
+  |  let l:cmd = maktaba#syscall#Create(['cat']).WithStdin('something')<CR>
+  |  call l:cmd.CallForeground(0)<CR>
+  |endfunction
+  :call maktaba#error#Try('ForegroundSyscallWithStdin')
+  ~ ERROR(NotImplemented): Stdin value cannot be used with CallForeground.
+
+
+You can chain commands using the And and Or methods.
+
+  :call maktaba#syscall#Create('true').And('echo SUCCESS').CallForeground(0)
+  ! true && echo SUCCESS
+  $ SUCCESS
+  :call maktaba#syscall#Create('false').Or('echo FAILURE').CallForeground(0)
+  ! false || echo FAILURE
+  $ FAILURE
+
+The chained command may also be another Syscall object.
+
+  :let g:success_syscall = maktaba#syscall#Create('echo SUCCESS')
+  :call maktaba#syscall#Create('true').And(g:success_syscall).CallForeground(0)
+  ! true && echo SUCCESS
+  $ SUCCESS
 
 
 
