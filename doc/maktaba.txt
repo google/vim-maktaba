@@ -61,25 +61,25 @@ name is attached to a unique value. Names are in all caps. Example:
   echomsg g:animals.Names()  " This will echo ['DUCK', 'PIG', 'COW'].
 <
 
-Enum.Name({value})                                                 *Enum.Name*
+Enum.Name({value})                                               *Enum.Name()*
   Gets the name associated with {value}.
   Throws ERROR(NotFound) if no such name exists on the enum.
 
-Enum.Names()                                                      *Enum.Names*
+Enum.Names()                                                    *Enum.Names()*
   Gets all names on the enum, in value order.
 
-Enum.Value({name})                                                *Enum.Value*
+Enum.Value({name})                                              *Enum.Value()*
   Gets the value of the enum at {name}.
   Throws ERROR(NotFound) if no such name exists on the enum.
 
-Enum.Values()                                                    *Enum.Values*
+Enum.Values()                                                  *Enum.Values()*
   Gets all values on the enum, in order.
 
                                                                 *maktaba.Flag*
 The maktaba flag object. Exposes functions that operate on an individual
 maktaba flag.
 
-Flag.Get([foci])                                                    *Flag.Get*
+Flag.Get([foci])                                                  *Flag.Get()*
   Gets the value of the flag. You may give [foci] to focus on one particular
   part of the flag. For example:
 >
@@ -96,7 +96,7 @@ Flag.Get([foci])                                                    *Flag.Get*
   value, you must copy it and commit the copied value using |Flag.Set|.
   Throws ERROR(BadValue) if [foci] are invalid.
 
-Flag.GetCopy([foci])                                            *Flag.GetCopy*
+Flag.GetCopy([foci])                                          *Flag.GetCopy()*
   Gets a deep copy of the value of the flag. You may give [foci] to focus on
   one particular part of the flag. The following are equivalent:
 >
@@ -108,7 +108,7 @@ Flag.GetCopy([foci])                                            *Flag.GetCopy*
   won't change until you call |Flag.Set|.
   Throws ERROR(BadValue) if [foci] are invalid.
 
-Flag.Set({value}, [foci])                                           *Flag.Set*
+Flag.Set({value}, [foci])                                         *Flag.Set()*
   Sets the flag to {value}. If [foci] are given, they target a specific part
   of a (complex) flag to be set. For example,
 >
@@ -117,7 +117,7 @@ Flag.Set({value}, [foci])                                           *Flag.Set*
   will set value['a'][0]['b'] to 'leaf'.
   Throws ERROR(BadValue) when an invalid focus is requested.
 
-Flag.AddCallback({callback})                                *Flag.AddCallback*
+Flag.AddCallback({callback})                              *Flag.AddCallback()*
   Registers {callback}. It must refer to a function. The function must take
   one argument: the value of the flag. {callback} will be fired immediately
   with the current value of the flag. It will be fired again every time the
@@ -131,10 +131,10 @@ Flag.AddCallback({callback})                                *Flag.AddCallback*
   Throws ERROR(BadValue) if there's already a callback registered under that
   name.
 
-Flag.Callback()                                                *Flag.Callback*
+Flag.Callback()                                              *Flag.Callback()*
   Fires all callbacks in order.
 
-Flag.AddTranslator({translator})                          *Flag.AddTranslator*
+Flag.AddTranslator({translator})                        *Flag.AddTranslator()*
   Registers {translator}. {translator} must refer to a function that takes a
   single argument (the value of the flag). {translator} must return a value
   which will become the new value of the flag.
@@ -149,33 +149,33 @@ Flag.AddTranslator({translator})                          *Flag.AddTranslator*
   Throws ERROR(BadValue) if there's already a translator registered under that
   name.
 
-Flag.Translate({value})                                       *Flag.Translate*
+Flag.Translate({value})                                     *Flag.Translate()*
   Returns the value that the flag will have after being set to {value} (after
   running {value} through all registered translators).
 
                                                               *maktaba.Logger*
 Interface for a plugin to send log messages to maktaba.
 
-Logger.Debug({message}, [args...])                              *Logger.Debug*
+Logger.Debug({message}, [args...])                            *Logger.Debug()*
   Logs a {message} with [args...] at DEBUG level.
 
-Logger.Info({message}, [args...])                                *Logger.Info*
+Logger.Info({message}, [args...])                              *Logger.Info()*
   Logs a {message} with [args...] at INFO level.
 
-Logger.Warn({message}, [args...])                                *Logger.Warn*
+Logger.Warn({message}, [args...])                              *Logger.Warn()*
   Logs a {message} with [args...] at WARN level.
 
-Logger.Error({message}, [args...])                              *Logger.Error*
+Logger.Error({message}, [args...])                            *Logger.Error()*
   Logs a {message} with [args...] at ERROR level.
 
-Logger.Severe({message}, [args...])                            *Logger.Severe*
+Logger.Severe({message}, [args...])                          *Logger.Severe()*
   Logs a {message} with [args...] at SEVERE level.
 
                                                               *maktaba.Plugin*
 The maktaba plugin object. Exposes functions that operate on the plugin
 itself.
 
-Plugin.Load([file], [optional])                                  *Plugin.Load*
+Plugin.Load([file], [optional])                                *Plugin.Load()*
   If [file] is given, the plugin file plugin/<file>.vim will be sourced. An
   error will  be thrown if [file] does not exist unless [optional] is set. If
   [file] is omitted, then all plugin files that have not yet been sourced will
@@ -183,26 +183,26 @@ Plugin.Load([file], [optional])                                  *Plugin.Load*
   [optional] is 0 if omitted.
   Throws ERROR(NotFound) if [file] is given but is not found.
 
-Plugin.GenerateHelpTags()                            *Plugin.GenerateHelpTags*
+Plugin.GenerateHelpTags()                          *Plugin.GenerateHelpTags()*
   Generates help tags for the plugin. Returns 0 if there are no help tags.
   Returns 1 if helptags are generated successfully.
   Throws ERROR(Impossible) if help tags cannot be generated.
 
-Plugin.HasDir({dir})                                           *Plugin.HasDir*
+Plugin.HasDir({dir})                                         *Plugin.HasDir()*
   Tests whether the plugin has {dir}, either as a direct subdirectory or as a
   subirectory of the after/ directory. Cached for performance, so new paths
   will not be discovered if they're added to the plugin after the first check.
 
-Plugin.HasFiletypeData()                              *Plugin.HasFiletypeData*
+Plugin.HasFiletypeData()                            *Plugin.HasFiletypeData()*
   Tests wheter a plugin has a filetype-active directory (ftdetect, ftplugin,
   indent, or syntax).
 
-Plugin.AddonInfo()                                          *Plugin.AddonInfo*
+Plugin.AddonInfo()                                        *Plugin.AddonInfo()*
   Gets plugin metadata from plugin's addon-info.json file, if present.
   Otherwise, returns an empty dict.
   Throws ERROR(BadValue) if addon-info.json isn't valid JSON.
 
-Plugin.Flag({flag}, [value])                                     *Plugin.Flag*
+Plugin.Flag({flag}, [value])                                   *Plugin.Flag()*
   Gets or sets {flag}. If [value] is given, {flag} is set to [value].
   Otherwise, the value of {flag} is returned. If {flag} does not exist, the
   plugin flags file will be sourced. The following are equivalent:
@@ -229,11 +229,11 @@ Plugin.Flag({flag}, [value])                                     *Plugin.Flag*
 >
     maktaba#plugin#Get('myplugin').Flag('complex[key][0]')
 <
-  See |maktaba#setting#ParseHandle| for details.
+  See |maktaba#setting#ParseHandle()| for details.
   Throws ERROR(NotFound) if {flag} does not exist.
   Throws ERROR(BadValue) if {flag} is an invalid flag name.
 
-Plugin.MapPrefix({letter}, [throw])                         *Plugin.MapPrefix*
+Plugin.MapPrefix({letter}, [throw])                       *Plugin.MapPrefix()*
   Returns the user's desired map prefix for the plugin. If the user has not
   specified a map prefix, <leader>{letter} will be returned.
 
@@ -251,7 +251,7 @@ Plugin.MapPrefix({letter}, [throw])                         *Plugin.MapPrefix*
   Throws ERROR(BadValue) if the map prefix is invalid and [throw] is set.
   Throws ERROR(Unknown) if mappings have been disabled.
 
-Plugin.IsLibrary()                                          *Plugin.IsLibrary*
+Plugin.IsLibrary()                                        *Plugin.IsLibrary()*
   Checks that this plugin is a library plugin. In order to be a library
   plugin, the plugin must contain an autoload/ directory and must not contain
   ftplugin/, ftdetect/, syntax/, indent/, nor instant/ directories. If it
@@ -273,7 +273,7 @@ Valid unary operators are ! and ~. The former sets flags to zero, the latter
 inverts integer flags (0 becomes 1, everything else becomes 0).
 
 Flag handles consist of a flag name and optionally a number of foci, see
-|maktaba#setting#Handle| for details.
+|maktaba#setting#Handle()| for details.
 
 Valid binary operators are = += -= ^= $= and `=.
   * = sets a flag directly.
@@ -296,9 +296,9 @@ Values are parsed as follows:
 
 If no operator (unary or binary) is given, the setting will set that handle to
 1 when applied. If the '=' operator is used, but no value is given, the flag
-will be emptied (see |maktaba#value#EmptyValue|).
+will be emptied (see |maktaba#value#EmptyValue()|).
 
-Setting.Apply({plugin})                                        *Setting.Apply*
+Setting.Apply({plugin})                                      *Setting.Apply()*
   Applies the setting to {plugin}. Returns the new value of the affected flag,
   for convenience.
   Throws ERROR(NotFound) if {plugin} does not define the appropriate flag.
@@ -310,25 +310,25 @@ Setting.Apply({plugin})                                        *Setting.Apply*
 A maktaba representation of a system call, which is used to configure and
 execute a system command.
 
-Syscall.WithCwd({directory})                                 *Syscall.WithCwd*
+Syscall.WithCwd({directory})                               *Syscall.WithCwd()*
   Returns a copy of the |maktaba.Syscall| configured to be executed in
   {directory}.
   Throws ERROR(WrongType)
   Throws ERROR(NotFound) if {directory} is invalid.
 
-Syscall.And({cmd})                                               *Syscall.And*
+Syscall.And({cmd})                                             *Syscall.And()*
   Returns a new |maktaba.Syscall| that chains self and {cmd} together with a
   logical AND operation ("&&"). {cmd} may be any valid
-  |maktaba#syscall#Create| argument.
+  |maktaba#syscall#Create()| argument.
   Throws ERROR(WrongType)
 
-Syscall.Or({cmd})                                                 *Syscall.Or*
+Syscall.Or({cmd})                                               *Syscall.Or()*
   Returns a new |maktaba.Syscall| that chains self and {cmd} together with a
-  logical OR operation ("&&"). {cmd} may be any valid |maktaba#syscall#Create|
-  argument.
+  logical OR operation ("&&"). {cmd} may be any valid
+  |maktaba#syscall#Create()| argument.
   Throws ERROR(WrongType)
 
-Syscall.Call([throw_errors])                                    *Syscall.Call*
+Syscall.Call([throw_errors])                                  *Syscall.Call()*
   Executes the system call without showing output to the user. If
   [throw_errors] is 1, any exit code from the command will cause a ShellError
   to be thrown. Otherwise, the caller is responsible for checking
@@ -340,7 +340,7 @@ Syscall.Call([throw_errors])                                    *Syscall.Call*
   Throws ERROR(WrongType)
   Throws ERROR(ShellError) if the shell command returns an exit code.
 
-Syscall.CallForeground({pause}, [throw_errors])       *Syscall.CallForeground*
+Syscall.CallForeground({pause}, [throw_errors])     *Syscall.CallForeground()*
   Executes the system call in the foreground, showing the output to the user.
   If {pause} is 1, output will stay on the screen until the user presses
   Enter. If [throw_errors] is 1, any exit code from the command will cause a
@@ -353,17 +353,18 @@ Syscall.CallForeground({pause}, [throw_errors])       *Syscall.CallForeground*
   Throws ERROR(WrongType)
   Throws ERROR(ShellError) if the shell command returns an exit code.
 
-Syscall.GetCommand()                                      *Syscall.GetCommand*
-  Gets the literal command string that would be executed by |Syscall.Call| or
-  |Syscall.CallForeground|, with words joined and special characters escaped.
+Syscall.GetCommand()                                    *Syscall.GetCommand()*
+  Gets the literal command string that would be executed by |Syscall.Call()|
+  or |Syscall.CallForeground()|, with words joined and special characters
+  escaped.
 
 ==============================================================================
 FUNCTIONS                                                  *maktaba-functions*
 
-maktaba#Maktaba()                                            *maktaba#Maktaba*
+maktaba#Maktaba()                                          *maktaba#Maktaba()*
   Returns a handle to the maktaba plugin object.
 
-maktaba#IsAtLeastVersion({version})                 *maktaba#IsAtLeastVersion*
+maktaba#IsAtLeastVersion({version})               *maktaba#IsAtLeastVersion()*
   Use this function to query against the maktaba version. Returns true if the
   maktaba version is at or past {version}. For example:
 >
@@ -374,18 +375,18 @@ maktaba#IsAtLeastVersion({version})                 *maktaba#IsAtLeastVersion*
   <2.0.0 and another requiring >=2.1.0. Enforcing a maximum version is
   discouraged.
 
-maktaba#LateLoad([cycle])                                   *maktaba#LateLoad*
+maktaba#LateLoad([cycle])                                 *maktaba#LateLoad()*
   This function essentially mimics the vim plugin installation phase. All
   plugins installed by maktaba that have not been sourced will be sourced.
-  This will also cycle filetypes (see |maktaba#filetype#Cycle|) unless [cycle]
-  is set to 0.
+  This will also cycle filetypes (see |maktaba#filetype#Cycle()|) unless
+  [cycle] is set to 0.
   [cycle] is 1 if omitted.
 
-maktaba#autocmd#ClearGroup({augroup})             *maktaba#autocmd#ClearGroup*
+maktaba#autocmd#ClearGroup({augroup})           *maktaba#autocmd#ClearGroup()*
   Removes all autocmds in {augroup}, then removes {augroup}.
 
 maktaba#buffer#Overwrite({startline}, {endline}, {lines})
-                                                    *maktaba#buffer#Overwrite*
+                                                  *maktaba#buffer#Overwrite()*
   Replace the lines from {startline} to {endline} in the current buffer with
   {lines}. {startline} and {endline} are numbers. {endline} is inclusive
   following vim's precedent. {lines} is a list of strings.
@@ -400,7 +401,7 @@ maktaba#buffer#Overwrite({startline}, {endline}, {lines})
   Throws ERROR(BadValue) if {startline} is greater than {endline}.
 
 maktaba#buffer#Substitute({pattern}, [replacement], [flags], [firstline],
-  [lastline], [usecase], [searchdelimiter])        *maktaba#buffer#Substitute*
+  [lastline], [usecase], [searchdelimiter])      *maktaba#buffer#Substitute()*
   Performs a configuration-agnostic substitution in the current buffer. For
   the duration of the substitution, 'gdefault' is on, 'ignorecase' is off, and
   'smartcase' is off. These settings are restored after the substitution. The
@@ -418,10 +419,10 @@ maktaba#buffer#Substitute({pattern}, [replacement], [flags], [firstline],
   [searchdelimiter] The search delimiter to use. Must be accepted by |:s|.
   [searchdelimiter] is '/' if omitted.
 
-maktaba#command#GetOutput({command})               *maktaba#command#GetOutput*
+maktaba#command#GetOutput({command})             *maktaba#command#GetOutput()*
   Runs {command} silently, returns its output as a string.
 
-maktaba#compatibility#Disable()                *maktaba#compatibility#Disable*
+maktaba#compatibility#Disable()              *maktaba#compatibility#Disable()*
   Turns vi-compatibility mode off and issues a warning if it was on. Plugins
   which use maktaba should call this function after installing maktaba (or
   'set nocompatible' by other means). Maktaba does not support vi
@@ -429,90 +430,91 @@ maktaba#compatibility#Disable()                *maktaba#compatibility#Disable*
   maktaba may die loudly.
 
 maktaba#ensure#IsTrue({condition}, [message], [args...])
-                                                       *maktaba#ensure#IsTrue*
+                                                     *maktaba#ensure#IsTrue()*
   Checks that {condition} is nonzero. If not, throws Failure with [message],
   formatted with [args...].
   [message] is "No message given." if omitted.
   Throws ERROR(Failure) if {condition} is zero.
 
 maktaba#ensure#IsFalse({condition}, [message], [args...])
-                                                      *maktaba#ensure#IsFalse*
+                                                    *maktaba#ensure#IsFalse()*
   Checks that {condition} is zero. If not, throws Failure with [message],
   formatted with [args...].
   [message] is "No message given." if omitted.
   Throws ERROR(Failure) if {condition} is nonzero.
 
-maktaba#ensure#IsEqual({value}, {reference})          *maktaba#ensure#IsEqual*
+maktaba#ensure#IsEqual({value}, {reference})        *maktaba#ensure#IsEqual()*
   Ensures that {value} is equal to {reference}. Returns {value} for
-  convenience. Equality is checked using |maktaba#value#IsEqual|. Note that
+  convenience. Equality is checked using |maktaba#value#IsEqual()|. Note that
   {value} and {reference} MUST share a type: 1.0 does not equal 1! This is
   consistent with the behavior of instant() and count() rather than with the
   behavior of the '==' operator.
   Throws ERROR(WrongType) if {value} is not the same type as {reference}.
   Throws ERROR(BadValue) if {value} does not equal {reference}.
 
-maktaba#ensure#IsIn({value}, {values})                   *maktaba#ensure#IsIn*
+maktaba#ensure#IsIn({value}, {values})                 *maktaba#ensure#IsIn()*
   Ensures that {value} is in {values}. Returns {value} for convenience.
   Throws ERROR(BadValue) if {value} is not contained in {values}
 
-maktaba#ensure#Passes({value}, {predicate})            *maktaba#ensure#Passes*
+maktaba#ensure#Passes({value}, {predicate})          *maktaba#ensure#Passes()*
   Ensures that {value} passes {predicate}. {predicate} must be something
   callable (see |maktaba#function#Call|), and must take a single argument. It
   should return 1 or 0. On a 1, {value} is returned. On a 0, a BadValue error
   is thrown. Returns {value} for convenience.
   Throws ERROR(BadValue) if {value} does not pass {predicate}.
 
-maktaba#ensure#TypeMatches({value}, {reference})  *maktaba#ensure#TypeMatches*
+maktaba#ensure#TypeMatches({value}, {reference})
+                                                *maktaba#ensure#TypeMatches()*
   Ensures that {value} has the same type as {reference}. Returns {value} for
   convenience.
   Throws ERROR(WrongType)
 
 maktaba#ensure#TypeMatchesOneOf({value}, {values})
-                                             *maktaba#ensure#TypeMatchesOneOf*
+                                           *maktaba#ensure#TypeMatchesOneOf()*
   Ensures that {value} has the same type as one of the elements in {values}.
   Returns {value} for convenience
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsBool({value})                         *maktaba#ensure#IsBool*
+maktaba#ensure#IsBool({value})                       *maktaba#ensure#IsBool()*
   Ensures that {value} is 0 or 1, returns it for convenience.
   Throws ERROR(BadValue) if {value} is a number but not 0 or 1.
   Throws ERROR(WrongType) if {value} is not a number.
 
-maktaba#ensure#IsNumber({value})                     *maktaba#ensure#IsNumber*
+maktaba#ensure#IsNumber({value})                   *maktaba#ensure#IsNumber()*
   Ensures that {value} is a number, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsString({value})                     *maktaba#ensure#IsString*
+maktaba#ensure#IsString({value})                   *maktaba#ensure#IsString()*
   Ensures that {value} is a string, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsFuncref({value})                   *maktaba#ensure#IsFuncref*
+maktaba#ensure#IsFuncref({value})                 *maktaba#ensure#IsFuncref()*
   Ensures that {value} is a funcref, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsList({value})                         *maktaba#ensure#IsList*
+maktaba#ensure#IsList({value})                       *maktaba#ensure#IsList()*
   Ensures that {value} is a list, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsDict({value})                         *maktaba#ensure#IsDict*
+maktaba#ensure#IsDict({value})                       *maktaba#ensure#IsDict()*
   Ensures that {value} is a dictionary, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsFloat({value})                       *maktaba#ensure#IsFloat*
+maktaba#ensure#IsFloat({value})                     *maktaba#ensure#IsFloat()*
   Ensures that {value} is a float, returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsNumeric({value})                   *maktaba#ensure#IsNumeric*
+maktaba#ensure#IsNumeric({value})                 *maktaba#ensure#IsNumeric()*
   Ensures that {value} is numeric (float or number), returns it for
   convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsCollection({value})             *maktaba#ensure#IsCollection*
+maktaba#ensure#IsCollection({value})           *maktaba#ensure#IsCollection()*
   Ensures that {value} is a collection (list or dict), returns it for
   convenience.
   Throws ERROR(WrongType)
 
-maktaba#ensure#IsCallable({value})                 *maktaba#ensure#IsCallable*
+maktaba#ensure#IsCallable({value})               *maktaba#ensure#IsCallable()*
   Ensures that {value} is callable (string or funcref). Returns it for
   convenience.  This DOES NOT assert that the function denoted by {value}
   actually exists. It mereley ensures that {value} is the correct TYPE for
@@ -521,53 +523,53 @@ maktaba#ensure#IsCallable({value})                 *maktaba#ensure#IsCallable*
   Throws ERROR(BadValue) if {value} is a dict but does not appear to be a
   funcdict.
 
-maktaba#ensure#IsEnum({value})                         *maktaba#ensure#IsEnum*
+maktaba#ensure#IsEnum({value})                       *maktaba#ensure#IsEnum()*
   Ensures that {value} is a maktaba enum object, returns it for convenience.
   Throws ERROR(WrongType) if {value} is not a dictionary.
   Throws ERROR(BadValue) if {value} does not appear to be a maktaba enum
   object.
 
-maktaba#ensure#Matches({value}, {regex})              *maktaba#ensure#Matches*
+maktaba#ensure#Matches({value}, {regex})            *maktaba#ensure#Matches()*
   Ensures that {value} is a string matching {regex}. Case sensitive matching
   is used. Returns {value} for convenience.
   Throws ERROR(WrongType)
   Throws ERROR(BadValue)
 
-maktaba#ensure#PathExists({path})                  *maktaba#ensure#PathExists*
+maktaba#ensure#PathExists({path})                *maktaba#ensure#PathExists()*
   Ensures {path} exists on the filesystem. Returns {path} for convenience.
   Throws ERROR(NotFound) otherwise.
 
-maktaba#ensure#IsDirectory({path})                *maktaba#ensure#IsDirectory*
+maktaba#ensure#IsDirectory({path})              *maktaba#ensure#IsDirectory()*
   Ensures {path} is an existing directory. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a file.
 
-maktaba#ensure#IsFile({path})                          *maktaba#ensure#IsFile*
+maktaba#ensure#IsFile({path})                        *maktaba#ensure#IsFile()*
   Ensures {path} is an existing file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
 
-maktaba#ensure#FileReadable({path})              *maktaba#ensure#FileReadable*
+maktaba#ensure#FileReadable({path})            *maktaba#ensure#FileReadable()*
   Ensures {path} is a readable file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
   Throws ERROR(NotAuthorized) if {path} cannot be read.
 
-maktaba#ensure#FileWritable({path})              *maktaba#ensure#FileWritable*
+maktaba#ensure#FileWritable({path})            *maktaba#ensure#FileWritable()*
   Ensures {path} is a writable file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
   Throws ERROR(NotAuthorized) if {path} cannot be written.
 
-maktaba#ensure#IsAbsolutePath({path})          *maktaba#ensure#IsAbsolutePath*
+maktaba#ensure#IsAbsolutePath({path})        *maktaba#ensure#IsAbsolutePath()*
   Ensures {path} is an absolute path. Returns {path} for convenience.
   Throws ERROR(BadValue) if {path} is not absolute.
 
-maktaba#ensure#IsRelativePath({path})          *maktaba#ensure#IsRelativePath*
+maktaba#ensure#IsRelativePath({path})        *maktaba#ensure#IsRelativePath()*
   Ensures {path} is a relative path. Returns {path} for convenience.
   Throws ERROR(BadValue) if {path} is not relative.
 
-maktaba#enum#Create({names})                             *maktaba#enum#Create*
+maktaba#enum#Create({names})                           *maktaba#enum#Create()*
   Creates an enum object from {names}. {names} may be a list of names (in
   which case they will be valued 0, 1, etc.) or a dictionary of {name: value}.
   Names and values must be unique. Names must be uppercase. {names} may not be
@@ -581,25 +583,25 @@ maktaba#enum#Create({names})                             *maktaba#enum#Create*
 <
   Throws ERROR(BadValue) if {names} is invalid.
 
-maktaba#error#Warn({message}, [args...])                  *maktaba#error#Warn*
+maktaba#error#Warn({message}, [args...])                *maktaba#error#Warn()*
   Prints {message} in a red warning bar for the user. {message} will be
   formatted with [args...], as in |printf()|.
 
-maktaba#error#Shout({message}, [args...])                *maktaba#error#Shout*
+maktaba#error#Shout({message}, [args...])              *maktaba#error#Shout()*
   Prints {message} in an angry red error bar for the user. Don't use
   |:echoerr|! It doesn't make that red error bar and it prints out the line in
   the code where the error occured. It's for debugging, not messaging! If
   [args...] are given they will be used to expand {message} as in |printf()|.
 
 maktaba#error#Exception({type}, {message}, {fmtargs})
-                                                     *maktaba#error#Exception*
+                                                   *maktaba#error#Exception()*
   Simple function used for making exception functions. This is very similar to
-  |maktaba#error#Message| in that it throws
+  |maktaba#error#Message()| in that it throws
 >
     ERROR({type}): {message}
 <
   The only difference is that the {fmtargs} is a required list argument,
-  whereas |maktaba#error#Message| uses varargs. This function exists to make
+  whereas |maktaba#error#Message()| uses varargs. This function exists to make
   it easy to write exception functions without messing with vararg logic. For
   example:
 >
@@ -611,7 +613,7 @@ maktaba#error#Exception({type}, {message}, {fmtargs})
   {type} must contain only letters, numbers, underscores, and hyphens.
   Throws ERROR(BadValue) if {type} contains invalid characters.
 
-maktaba#error#Message({type}, {message}, [args...])    *maktaba#error#Message*
+maktaba#error#Message({type}, {message}, [args...])  *maktaba#error#Message()*
   Makes an error message in the Google vimscript error format. The error
   message will look like:
 >
@@ -622,13 +624,13 @@ maktaba#error#Message({type}, {message}, [args...])    *maktaba#error#Message*
   {type} must contain only letters, numbers, underscores, and hyphens.
   Throws ERROR(BadValue) if {type} contains invalid characters.
 
-maktaba#error#Split({exception})                         *maktaba#error#Split*
+maktaba#error#Split({exception})                       *maktaba#error#Split()*
   Breaks {exception} message into the error type and the error message.
   Returns both (in a list of length 2).
   Throws ERROR(BadValue) if {exception} is not a vim nor maktaba exception.
 
-maktaba#error#Try({func}, [exceptions], [default])         *maktaba#error#Try*
-  Runs {func}. Catches [exceptions] and |maktaba#error#Shout|s them. Other
+maktaba#error#Try({func}, [exceptions], [default])       *maktaba#error#Try()*
+  Runs {func}. Catches [exceptions] and |maktaba#error#Shout()|s them. Other
   exceptions are allowed to pass through. If an exception is caught and
   shouted, [default] is returned.
 
@@ -652,15 +654,15 @@ maktaba#error#Try({func}, [exceptions], [default])         *maktaba#error#Try*
   [exceptions] is .* if omitted.
   [default] is 0 if omitted.
 
-maktaba#error#TryCommand({command}, [exceptions])   *maktaba#error#TryCommand*
-  Like |maktaba#error#Try|, but executes {command} instead of calling a
+maktaba#error#TryCommand({command}, [exceptions]) *maktaba#error#TryCommand()*
+  Like |maktaba#error#Try()|, but executes {command} instead of calling a
   function.
   [exceptions] is .* if omitted.
 
-maktaba#filetype#IsEnabled()                      *maktaba#filetype#IsEnabled*
+maktaba#filetype#IsEnabled()                    *maktaba#filetype#IsEnabled()*
   Returns 1 if filetype detection is enabled in vim, 0 otherwise.
 
-maktaba#filetype#Cycle([reload])                      *maktaba#filetype#Cycle*
+maktaba#filetype#Cycle([reload])                    *maktaba#filetype#Cycle()*
   Enables new filetypes. This function should be called when plugins have been
   loaded after normal plugin load time is completed (in which case
   ftdetect/ftplugin/indent/syntax files would otherwise be ignored). It acts
@@ -678,16 +680,17 @@ maktaba#filetype#Cycle([reload])                      *maktaba#filetype#Cycle*
 
   [reload] is 0 if omitted.
 
-maktaba#flags#Create({name}, [default])                 *maktaba#flags#Create*
+maktaba#flags#Create({name}, [default])               *maktaba#flags#Create()*
   Creates a |maktaba.Flag| object for a flag named {name}. The flag will be
   initialized to [default].
   [default] is 0 if omitted.
 
-maktaba#function#Create({func}, [arglist], [dict])   *maktaba#function#Create*
-  Creates a funcdict object that can be applied with |maktaba#function#Apply|.
-  When applied, {func} will be applied with [arglist], a list of arguments. If
-  {func} is already a funcdict, it will be passed the arguments in [arglist]
-  AFTER the arguments that are already pending.
+maktaba#function#Create({func}, [arglist], [dict]) *maktaba#function#Create()*
+  Creates a funcdict object that can be applied with
+  |maktaba#function#Apply()|. When applied, {func} will be applied with
+  [arglist], a list of arguments. If {func} is already a funcdict, it will be
+  passed the arguments in [arglist] AFTER the arguments that are already
+  pending.
 
   If [dict] is given it must be a dictionary, which will be passed as the
   dictionary context to {func} when applied. (In this case, {func} must be a
@@ -706,10 +709,10 @@ maktaba#function#Create({func}, [arglist], [dict])   *maktaba#function#Create*
   [arglist] is [] if omitted.
   [dict] is 0 if omitted.
 
-maktaba#function#Call({func}, [arglist], [dict])       *maktaba#function#Call*
+maktaba#function#Call({func}, [arglist], [dict])     *maktaba#function#Call()*
   Applies {func} (optionally to [arglist], optionally with [dict] as its
   dictionary context). {func} may be a funcref, a string describing a
-  function, or a maktaba funcdict (see |maktaba#function#Create|).
+  function, or a maktaba funcdict (see |maktaba#function#Create()|).
 
   If {func} is a funcdict that has arguments pending, [arglist] will be sent
   to the function APPENDED to the pending arguments.
@@ -721,7 +724,7 @@ maktaba#function#Call({func}, [arglist], [dict])       *maktaba#function#Call*
   [arglist] is [] if omitted.
   [dict] is 0 if omitted.
 
-maktaba#function#Method({dict}, {method})            *maktaba#function#Method*
+maktaba#function#Method({dict}, {method})          *maktaba#function#Method()*
   Creates a funcdict that is {method} on {dict}, with {dict} bound as the
   dictionary context.
 
@@ -739,8 +742,8 @@ maktaba#function#Method({dict}, {method})            *maktaba#function#Method*
 
   Throws ERROR(NotFound) if {dict} has no such {method}.
 
-maktaba#function#Apply({func}, [args...])             *maktaba#function#Apply*
-  Applies {func} to [args...]. This is like |maktaba#function#Call|, but
+maktaba#function#Apply({func}, [args...])           *maktaba#function#Apply()*
+  Applies {func} to [args...]. This is like |maktaba#function#Call()|, but
   allows you to pass arguments in naturally rather than wrapping them in a
   list.
 
@@ -748,7 +751,7 @@ maktaba#function#Apply({func}, [args...])             *maktaba#function#Apply*
   because one argument is spent to specify {func}, this function can only send
   nineteen arguments on. If this is too limiting, use |#Call|.
 
-maktaba#function#WithArgs({func}, [arg...])        *maktaba#function#WithArgs*
+maktaba#function#WithArgs({func}, [arg...])      *maktaba#function#WithArgs()*
   Given callable {func}, creates a function object that will be called with
   [arg...] when it is applied. If {func} is a funcdict with pending arguments,
   then when {func} is applied [arg...] will be sent to the inner function
@@ -760,14 +763,14 @@ maktaba#function#WithArgs({func}, [arg...])        *maktaba#function#WithArgs*
 
   This will always create a new funcdict. {func} will not be modified.
 
-maktaba#function#WithContext({func}, {dict})    *maktaba#function#WithContext*
+maktaba#function#WithContext({func}, {dict})  *maktaba#function#WithContext()*
   Creates a funcdict that will call {func} with dictionary context {dict} when
   applied.
 
   This will always create a new funcdict. {func} will not be modified.
 
 maktaba#function#FromExpr({expr}, [arglist], [dict])
-                                                   *maktaba#function#FromExpr*
+                                                 *maktaba#function#FromExpr()*
   Creates a funcdict that evaluates and returns {expr} when applied. {expr}
   may reference numbered arguments (|a:1|, a:2, ... through a:19). {expr}
   itself is available as a:expr. [arglist] will be queued as the initial
@@ -782,7 +785,7 @@ maktaba#function#FromExpr({expr}, [arglist], [dict])
   dictionary context for the resulting function. In that case, {expr} may also
   make use of |self|.
 
-maktaba#function#Compose({g}, {f})                  *maktaba#function#Compose*
+maktaba#function#Compose({g}, {f})                *maktaba#function#Compose()*
   Creates a composition of {g} and {f}.
 
   This creates a function object that, when applied, will apply {g} to the
@@ -803,7 +806,7 @@ maktaba#function#Compose({functions...})
 <
   computes H(G(F(x))).
 
-maktaba#function#Map({list}, {func})                    *maktaba#function#Map*
+maktaba#function#Map({list}, {func})                  *maktaba#function#Map()*
   Replaces each item of {list} with the result of applying {func} to that
   item. This is like |map|, except {func} may be any maktaba callable and
   where a new list is created. Unlike the builtin map() function, {list} WILL
@@ -814,7 +817,7 @@ maktaba#function#Map({list}, {func})                    *maktaba#function#Map*
     map({list}, 'maktaba#function#Call({func}, [v:val])')
 <
 
-maktaba#function#Filter({list}, {func})              *maktaba#function#Filter*
+maktaba#function#Filter({list}, {func})            *maktaba#function#Filter()*
   Applies {func} to each item in {list}, and removes those for which {func}
   returns 0. This is like |filter|, except {func} may be any maktaba callable
   and a new list is created. Unlike the builtin filter() function, {list} WILL
@@ -825,7 +828,7 @@ maktaba#function#Filter({list}, {func})              *maktaba#function#Filter*
     filter({list}, 'maktaba#function#Call({func}, [v:val])')
 <
 
-maktaba#function#Reduce({list}, {initial}, {func})   *maktaba#function#Reduce*
+maktaba#function#Reduce({list}, {initial}, {func}) *maktaba#function#Reduce()*
   Reduces {list} to a single value, using {initial} and {func}. {func} must be
   a function that takes two values.
 
@@ -835,14 +838,14 @@ maktaba#function#Reduce({list}, {initial}, {func})   *maktaba#function#Reduce*
 
   If {list} is empty, {initial} will be returned.
 
-maktaba#function#Reduce1({list}, {func})            *maktaba#function#Reduce1*
-  Like |maktaba#function#Reduce|, except {list} must be non-empty. The first
+maktaba#function#Reduce1({list}, {func})          *maktaba#function#Reduce1()*
+  Like |maktaba#function#Reduce()|, except {list} must be non-empty. The first
   item of {list} will be used as the initial value, the remainder of {list}
   will be reduced.
 
   Throws ERROR(BadValue) if {list} is empty.
 
-maktaba#function#Sort({list}, {func})                  *maktaba#function#Sort*
+maktaba#function#Sort({list}, {func})                *maktaba#function#Sort()*
   Sorts {list} IN PLACE, using {func} to determine the order of items in the
   list. {func} must take two arguments and return either 0 (if they are
   equal), 1 (if the first item comes after the second item), or -1 (if the
@@ -853,14 +856,14 @@ maktaba#function#Sort({list}, {func})                  *maktaba#function#Sort*
   This is like the builtin |sort()| function, except {func} may be any maktaba
   callable.
 
-maktaba#function#Sorted({list}, {func})              *maktaba#function#Sorted*
+maktaba#function#Sorted({list}, {func})            *maktaba#function#Sorted()*
   Returns a new list that is a sorted copy of {list}. {func} is used to
   determine the sort order, as in |sort()|.
 
-maktaba#library#Import({library})                     *maktaba#library#Import*
+maktaba#library#Import({library})                   *maktaba#library#Import()*
   Imports {library}.
 
-  NOTICE: You probably want |maktaba#library#Require| instead. When calling
+  NOTICE: You probably want |maktaba#library#Require()| instead. When calling
   this function, YOU ARE EXPECTED TO CATCH ERRORS and format the error
   messages nicely for the user. (See |maktaba#error#Shout|). Otherwise the
   user will see ugly stack traces.
@@ -876,8 +879,8 @@ maktaba#library#Import({library})                     *maktaba#library#Import*
   This function will act as follows:
 
     1. Check whether {library} has already been installed via
-      |maktaba#plugin#Install|.
-    2. Try each installer registered my |maktaba#library#AddInstaller|, in
+      |maktaba#plugin#Install()|.
+    2. Try each installer registered my |maktaba#library#AddInstaller()|, in
       order of registration.
 
   The maktaba plugin object will be returned.
@@ -885,26 +888,26 @@ maktaba#library#Import({library})                     *maktaba#library#Import*
   Throws ERROR(NotALibrary) if {library} is not a library plugin.
   Throws ERROR(NotFound) if {library} cannot be installed by any installer.
 
-maktaba#library#Require({library})                   *maktaba#library#Require*
-  Requires that {library} be imported. (See |maktaba#library#Import|).
+maktaba#library#Require({library})                 *maktaba#library#Require()*
+  Requires that {library} be imported. (See |maktaba#library#Import()|).
 
-  Works just like |maktaba#library#Import|, except errors will be caught and
+  Works just like |maktaba#library#Import()|, except errors will be caught and
   printed in a user-friendly manner (shielding the user from ugly stack
   dumps). This function returns 1 on success and 0 on failure. Use this
-  instead of |maktaba#library#Import| when you don't care to grab a handle to
-  the imported plugin object (which is usually).
+  instead of |maktaba#library#Import()| when you don't care to grab a handle
+  to the imported plugin object (which is usually).
 
   Throws ERROR(NotALibrary) if {library} describes a non-library plugin.
 
 maktaba#library#AddInstaller({name}, {installer})
-                                                *maktaba#library#AddInstaller*
+                                              *maktaba#library#AddInstaller()*
   Adds a library installer.
 
   {installer} should be a callable that takes a single argument (the name of a
   library). {installer} must take one two actions.
 
     1. Return the installed maktaba plugin object (see
-      |maktaba#plugin#Install|.
+      |maktaba#plugin#Install()|.
     2. Throw a NotFound error if the plugin cannot be found.
 
   {installer} need not worry about verifying that the installed plugin is
@@ -916,27 +919,27 @@ maktaba#library#AddInstaller({name}, {installer})
   Throws ERROR(BadValue) if there's already an installer registered under
   {name}.
 
-maktaba#library#RemoveInstaller({name})      *maktaba#library#RemoveInstaller*
+maktaba#library#RemoveInstaller({name})    *maktaba#library#RemoveInstaller()*
   Removes the library installer named {name}.
   Throws ERROR(NotFound) if no such installer exists.
 
-maktaba#list#RemoveItem({list}, {item})              *maktaba#list#RemoveItem*
+maktaba#list#RemoveItem({list}, {item})            *maktaba#list#RemoveItem()*
   Removes the first instance of {item} from {list}. {list} is returned for
   convenience. This is different from |remove()|, which removes a certain
   index from a list. {list} is modified in place and returned for convenience.
   Throws ERROR(NotFound) if {item} is not in {list}.
 
-maktaba#list#RemoveDuplicates({list})          *maktaba#list#RemoveDuplicates*
+maktaba#list#RemoveDuplicates({list})        *maktaba#list#RemoveDuplicates()*
   Removes duplicates in {list} in-place. {list} is returned for convenience.
 
-maktaba#list#RemoveAll({list}, {item})                *maktaba#list#RemoveAll*
+maktaba#list#RemoveAll({list}, {item})              *maktaba#list#RemoveAll()*
   Removes all instances of {item} from {list}. {list} is modified in place and
   returned for convenience.
 
-maktaba#log#Logger({context})                             *maktaba#log#Logger*
+maktaba#log#Logger({context})                           *maktaba#log#Logger()*
   Creates a |maktaba.Logger| interface for {context}.
 
-maktaba#log#AddHandler({handler}, [fire_recent])      *maktaba#log#AddHandler*
+maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   Registers {handler} to receive log messages. {handler} must refer to a
   function that takes 4 arguments: level (number), timestamp (number), context
   (string), and message (string).
@@ -950,13 +953,13 @@ maktaba#log#AddHandler({handler}, [fire_recent])      *maktaba#log#AddHandler*
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
 
-maktaba#path#IsAbsolute({path})                      *maktaba#path#IsAbsolute*
+maktaba#path#IsAbsolute({path})                    *maktaba#path#IsAbsolute()*
   Whether {path} is absolute.
 
-maktaba#path#IsRelative({path})                      *maktaba#path#IsRelative*
+maktaba#path#IsRelative({path})                    *maktaba#path#IsRelative()*
   Whether {path} is relative.
 
-maktaba#path#Join({components})                            *maktaba#path#Join*
+maktaba#path#Join({components})                          *maktaba#path#Join()*
   Joins the list {components} together using the system separator character.
   Works like python's os.path.join in that
 >
@@ -964,10 +967,10 @@ maktaba#path#Join({components})                            *maktaba#path#Join*
 <
   is '/absolute'
 
-maktaba#path#Split({path})                                *maktaba#path#Split*
+maktaba#path#Split({path})                              *maktaba#path#Split()*
   Splits {path} on the system separator character.
 
-maktaba#path#Basename({path})                          *maktaba#path#Basename*
+maktaba#path#Basename({path})                        *maktaba#path#Basename()*
   The basename of {path}. Trailing slash matters. Consider:
 >
     :echomsg maktaba#path#Basename('/path/to/file')
@@ -975,7 +978,7 @@ maktaba#path#Basename({path})                          *maktaba#path#Basename*
 <
   The first echoes 'file', the second echoes ''.
 
-maktaba#path#Dirname({path})                            *maktaba#path#Dirname*
+maktaba#path#Dirname({path})                          *maktaba#path#Dirname()*
   The dirname of {path}. Trailing slash matters. Consider:
 >
     :echomsg maktaba#path#Basename('/path/to/file')
@@ -983,28 +986,28 @@ maktaba#path#Dirname({path})                            *maktaba#path#Dirname*
 <
   The first echoes '/path/to', the second echoes '/path/to/dir'
 
-maktaba#path#GetDirectory({path})                  *maktaba#path#GetDirectory*
+maktaba#path#GetDirectory({path})                *maktaba#path#GetDirectory()*
   Gets the directory path of {path}. If {path} appears to point to a file, the
   parent directory will be returned. Otherwise, {path} will be returned. In
   both cases, the returned {path} will have a tailing slash.
 
-maktaba#path#MakeRelative({root}, {path})          *maktaba#path#MakeRelative*
+maktaba#path#MakeRelative({root}, {path})        *maktaba#path#MakeRelative()*
   Returns a relative path from {root} to {path}. Both paths must be absolute.
   {root} is assumed to be a directory. In windows, both paths must be in the
   same drive.
   Throws ERROR(BadValue) unless both paths are absolute.
 
-maktaba#path#Exists({path})                              *maktaba#path#Exists*
+maktaba#path#Exists({path})                            *maktaba#path#Exists()*
   Checks whether {path} (a file or directory) exists on the filesystem.
 
-maktaba#path#MakeDirectory({dir})                 *maktaba#path#MakeDirectory*
+maktaba#path#MakeDirectory({dir})               *maktaba#path#MakeDirectory()*
   Makes {dir}. Returns 0 if {dir} already exists. Returns 1 if {dir} is
   created. This function is similar to |mkdir()| with the 'p' flag, but works
   around a Vim7.3 bug where mkdir chokes on trailing slashes.
   Throws ERROR(BadValue) if {dir} is a file.
   Throws ERROR(NotAuthorized) if {dir} cannot be created.
 
-maktaba#plugin#Enter({file})                            *maktaba#plugin#Enter*
+maktaba#plugin#Enter({file})                          *maktaba#plugin#Enter()*
   This function is used to both control when plugin files are entered, and get
   a handle to the current plugin object. It should be called from the top of
   an autoload/*.vim, plugin/*.vim, ftplugin/*.vim, or instant/*.vim file as
@@ -1036,22 +1039,22 @@ maktaba#plugin#Enter({file})                            *maktaba#plugin#Enter*
   "loaded". If you feel you must adhere to this convention, be sure to set the
   appropriate g:loaded_* variable when appropriate.
 
-maktaba#plugin#Detect()                                *maktaba#plugin#Detect*
+maktaba#plugin#Detect()                              *maktaba#plugin#Detect()*
   Scans 'runtimepath' for any unregistered plugins and registers them with
   maktaba. May trigger instant/ hooks for newly-registered plugins.
 
-maktaba#plugin#RegisteredPlugins()          *maktaba#plugin#RegisteredPlugins*
+maktaba#plugin#RegisteredPlugins()        *maktaba#plugin#RegisteredPlugins()*
   A list of all installed plugins in alphabetical order. Automatically detects
-  unregistered plugins using |maktaba#plugin#Detect|.
+  unregistered plugins using |maktaba#plugin#Detect()|.
 
-maktaba#plugin#IsRegistered({plugin})            *maktaba#plugin#IsRegistered*
+maktaba#plugin#IsRegistered({plugin})          *maktaba#plugin#IsRegistered()*
   1 if {plugin} was registered with maktaba#plugin#Register. This is more
   reliable for determining if a Maktaba compatible plugin by the name of
   {plugin} was registered, but can not be used to dependency check non-Maktaba
   plugins. Detects plugins added to 'runtimepath' even if they haven't been
   explicitly registered with maktaba.
 
-maktaba#plugin#CanonicalName({plugin})          *maktaba#plugin#CanonicalName*
+maktaba#plugin#CanonicalName({plugin})        *maktaba#plugin#CanonicalName()*
   The canonical name of {plugin}. This is the name of the plugin directory
   with any "vim-" prefix or ".vim" suffix stripped off: both "vim-unimpaired"
   and "unimpaired.vim" would become simply "unimpaired".
@@ -1061,7 +1064,7 @@ maktaba#plugin#CanonicalName({plugin})          *maktaba#plugin#CanonicalName*
   then maktaba can't handle a plugin named "plugins/myplugin". Make sure your
   plugins have sufficiently different names!
 
-maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
+maktaba#plugin#Install({dir}, [settings])           *maktaba#plugin#Install()*
   Installs the plugin located at {dir}. Installation entails adding the plugin
   to the runtimepath, loading its flags.vim file, and sourcing any files in
   its instant/ directory.
@@ -1072,7 +1075,7 @@ maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
   should be the last component in the directory path. If the plugin doesn't
   have an explicit name declared in addon-info.json, the plugin name will be
   the name of this directory with all invalid characters converted to
-  underscores (see |maktaba#plugin#CanonicalName|).
+  underscores (see |maktaba#plugin#CanonicalName()|).
 
   If the plugin contains a plugin/ directory it will have a special "plugin"
   dictionary flag that controls which plugin files are loaded. For example, if
@@ -1115,29 +1118,29 @@ maktaba#plugin#Install({dir}, [settings])             *maktaba#plugin#Install*
   Throws ERROR(AlreadyExists) if the plugin already exists.
   Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
 
-maktaba#plugin#Get({plugin})                              *maktaba#plugin#Get*
+maktaba#plugin#Get({plugin})                            *maktaba#plugin#Get()*
   Gets the plugin object associated with {plugin}. {plugin} may either be the
   name of the plugin directory, or the canonicalized plugin name (with any
   "vim-" prefix or ".vim" suffix stripped off). See
-  |maktaba#plugin#CanonicalName|. Detects plugins added to 'runtimepath' even
-  if they haven't been explicitly registered with maktaba.
+  |maktaba#plugin#CanonicalName()|. Detects plugins added to 'runtimepath'
+  even if they haven't been explicitly registered with maktaba.
   Throws ERROR(NotFound) if the plugin object does not exist.
 
-maktaba#plugin#GetOrInstall({dir}, [settings])   *maktaba#plugin#GetOrInstall*
+maktaba#plugin#GetOrInstall({dir}, [settings]) *maktaba#plugin#GetOrInstall()*
   Installs the plugin located at {dir}, unless it already exists. The
   appropriate maktaba plugin object is returned.
 
   [settings], if given, must be a list of maktaba settings (see
   |maktaba#setting#Create|). If the plugin is new, they will be applied as in
-  |maktaba#plugin#Install|. Otherwise, they will be applied before returning
+  |maktaba#plugin#Install()|. Otherwise, they will be applied before returning
   the plugin object.
 
-  See also |maktaba#plugin#Install|.
+  See also |maktaba#plugin#Install()|.
   Throws ERROR(AlreadyExists) if the existing plugin comes from a different
   directory.
   Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
 
-maktaba#plugin#Source({file}, [optional])              *maktaba#plugin#Source*
+maktaba#plugin#Source({file}, [optional])            *maktaba#plugin#Source()*
   Sources {file}, which should be a list specifying the location of a file
   from the plugin root. For example, if you want to source
   plugin/commands.vim, call this function on ['plugin', 'commands']. The
@@ -1149,10 +1152,10 @@ maktaba#plugin#Source({file}, [optional])              *maktaba#plugin#Source*
   Throws ERROR(NotAuthorized) if {file} cannot be read.
   Throws ERROR(NotFound) if {file} does not describe a plugin file.
 
-maktaba#plugin#HasFlag({flag})                        *maktaba#plugin#HasFlag*
+maktaba#plugin#HasFlag({flag})                      *maktaba#plugin#HasFlag()*
   Whether or not the plugin has a flag named {flag}.
 
-maktaba#python#ImportModule({plugin}, {name})    *maktaba#python#ImportModule*
+maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
   Imports python module {name} into vim from {plugin}. Checks for {name} in
   the plugin's python/ subdirectory for the named module.
   Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
@@ -1168,16 +1171,16 @@ maktaba#python#ImportModule({plugin}, {name})    *maktaba#python#ImportModule*
 >
 <
 
-maktaba#rtp#Split([path])                                  *maktaba#rtp#Split*
+maktaba#rtp#Split([path])                                *maktaba#rtp#Split()*
   Split a string of comma-separated values into a list of values. Handles
   unescaping the commas. [path] The string to split.
   [path] is |runtimepath| if omitted.
 
-maktaba#rtp#Join({paths})                                   *maktaba#rtp#Join*
+maktaba#rtp#Join({paths})                                 *maktaba#rtp#Join()*
   Joins {paths}, a list of strings, into a comma-separated strings. Handles
   the escaping of commas in {paths}.
 
-maktaba#rtp#Add({path})                                      *maktaba#rtp#Add*
+maktaba#rtp#Add({path})                                    *maktaba#rtp#Add()*
   Adds {path} to the runtimepath.
 
   In vanilla vim, the runtime path is sorted as follows:
@@ -1197,13 +1200,13 @@ maktaba#rtp#Add({path})                                      *maktaba#rtp#Add*
 
   If you have more than one directory of files that you'd like to run
   before/after all plugins, it is recommended that you add that directory
-  after all plugins and/or sort the runtimepath yourself. |maktaba#rtp#Split|
-  and |maktaba#rtp#Join| may be of some use.
+  after all plugins and/or sort the runtimepath yourself.
+  |maktaba#rtp#Split()| and |maktaba#rtp#Join()| may be of some use.
 
-maktaba#rtp#Remove({path})                                *maktaba#rtp#Remove*
+maktaba#rtp#Remove({path})                              *maktaba#rtp#Remove()*
   Removes {path} from the runtimepath.
 
-maktaba#rtp#LeafDirs()                                  *maktaba#rtp#LeafDirs*
+maktaba#rtp#LeafDirs()                                *maktaba#rtp#LeafDirs()*
   Returns a dictionary of {leaf path} for runtimepath directories that appear
   to be plugins. The key is the name of the leaf directory, the path is the
   precise position of the leaf directory (as given in the runtimepath).
@@ -1224,14 +1227,14 @@ maktaba#rtp#LeafDirs()                                  *maktaba#rtp#LeafDirs*
   non-user non-after runtimepath components actually correspond to valid
   plugins.
 
-maktaba#rtp#HasLeafDir({leaf})                        *maktaba#rtp#HasLeafDir*
+maktaba#rtp#HasLeafDir({leaf})                      *maktaba#rtp#HasLeafDir()*
   Returns 1 if it looks like {leaf} exists on the runtimepath. This is a
   guess, and should not be treated as a guarantee. If you have a directory
   named like {leaf} on your runtimepath, or if {leaf} looks like it's a normal
   vim runtime directory, then this function may return a false
   positive/negative.
 
-maktaba#rtp#Load({dir})                                     *maktaba#rtp#Load*
+maktaba#rtp#Load({dir})                                   *maktaba#rtp#Load()*
   Mimics the normal vim load sequence for {dir}, which will be added to the
   runtimepath if it is not already there. This should be done only on
   directories that were not present for the normal vim load sequence.
@@ -1245,16 +1248,16 @@ maktaba#rtp#Load({dir})                                     *maktaba#rtp#Load*
   Throws ERROR(NotFound) if {dir} does not exist.
   Throws ERROR(BadValue) if {dir} does not describe a directory.
 
-maktaba#rtp#DirDefinesFiletypes({dir})       *maktaba#rtp#DirDefinesFiletypes*
+maktaba#rtp#DirDefinesFiletypes({dir})     *maktaba#rtp#DirDefinesFiletypes()*
   Whether or not runtimepath directory {dir} defines a new filetype.
 
-maktaba#setting#ParseHandle({text})              *maktaba#setting#ParseHandle*
+maktaba#setting#ParseHandle({text})            *maktaba#setting#ParseHandle()*
   Parses a flag handle off of {text}, returns a tuple containing [flagname,
-  foci, leftover]. See |maktaba#setting#Handle|; the only difference is that
+  foci, leftover]. See |maktaba#setting#Handle()|; the only difference is that
   this function returns the leftover text after parsing instead of requiring
   that {text} exactly describe a flag handle.
 
-maktaba#setting#Handle({handle})                      *maktaba#setting#Handle*
+maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
   Parses {handle} into a tuple [flagname, foci] where foci is a list of
   numbers and strings. An example may make this clear:
 >
@@ -1278,7 +1281,7 @@ maktaba#setting#Handle({handle})                      *maktaba#setting#Handle*
   [consume] is 0 if omitted.
   Throws ERROR(BadValue) if {handle} is invalid.
 
-maktaba#setting#Parse({text})                          *maktaba#setting#Parse*
+maktaba#setting#Parse({text})                        *maktaba#setting#Parse()*
   Parses a setting from {text}. Returns a tuple [setting, leftover] containing
   first the parsed setting object and second the remaining text. See
   |maktaba#setting#Create()| for details, the only difference is that this
@@ -1289,17 +1292,17 @@ maktaba#setting#Parse({text})                          *maktaba#setting#Parse*
   another parse immediately.
   Throws ERROR(BadValue) if {text} has invalid syntax.
 
-maktaba#setting#Create({text})                        *maktaba#setting#Create*
+maktaba#setting#Create({text})                      *maktaba#setting#Create()*
   Creates a maktaba setting from {text}.
   Throws ERROR(BadValue) if {text} has invalid syntax.
 
-maktaba#setting#ParseAll({text})                    *maktaba#setting#ParseAll*
+maktaba#setting#ParseAll({text})                  *maktaba#setting#ParseAll()*
   Parses a list of settings from {text}. Settings must be separated by spaces
-  or tabs. This is the same as repeating |maktaba#setting#Parse| until {text}
-  is empty.
+  or tabs. This is the same as repeating |maktaba#setting#Parse()| until
+  {text} is empty.
   Throws ERROR(BadValue) if {text} does not describe valid settings.
 
-maktaba#string#Strip({string}, [chars])                 *maktaba#string#Strip*
+maktaba#string#Strip({string}, [chars])               *maktaba#string#Strip()*
   Returns {string} stripped of [chars] from both ends. [chars] should be a
   string of characters. THE ORDER OF [chars] DOES NOT MATTER: stripping will
   continue so long as the prefix/suffix contains one of [chars]. For example:
@@ -1308,32 +1311,33 @@ maktaba#string#Strip({string}, [chars])                 *maktaba#string#Strip*
 <
   [chars] is " \t\n\r" if omitted.
 
-maktaba#string#StripLeading({string}, [chars])   *maktaba#string#StripLeading*
+maktaba#string#StripLeading({string}, [chars]) *maktaba#string#StripLeading()*
   Returns {string} stripped of [chars] (a string of characters) from the
   front. THE ORDER OF [chars] DOES NOT MATTER: stripping will continue so long
-  as the prefix contains one of [chars]. See also |maktaba#string#Strip|.
+  as the prefix contains one of [chars]. See also |maktaba#string#Strip()|.
   [chars] is " \t\n\r" if omitted.
 
-maktaba#string#StripTrailing({string}, [chars]) *maktaba#string#StripTrailing*
+maktaba#string#StripTrailing({string}, [chars])
+                                              *maktaba#string#StripTrailing()*
   Returns {string} stripped of [chars] (a string of characters) from the end.
   THE ORDER OF [chars] DOES NOT MATTER: stripping will continue so long as the
-  suffix contains one of [chars]. See also |maktaba#string#Strip|.
+  suffix contains one of [chars]. See also |maktaba#string#Strip()|.
   [chars] is " \t\n\r" if omitted.
 
-maktaba#string#StartsWith({string}, {prefix})      *maktaba#string#StartsWith*
+maktaba#string#StartsWith({string}, {prefix})    *maktaba#string#StartsWith()*
   Whether or not {string} starts with {prefix}.
 
-maktaba#string#EndsWith({string}, {suffix})          *maktaba#string#EndsWith*
+maktaba#string#EndsWith({string}, {suffix})        *maktaba#string#EndsWith()*
   Whether or not {string} ends with {suffix}.
 
-maktaba#syscall#Create({cmd})                         *maktaba#syscall#Create*
+maktaba#syscall#Create({cmd})                       *maktaba#syscall#Create()*
   Creates a |maktaba.Syscall| object that can be used to execute {cmd} with
-  |Syscall.Call|. {cmd} may be a pre-escaped string, a list of words to be
+  |Syscall.Call()|. {cmd} may be a pre-escaped string, a list of words to be
   automatically escaped and joined. Also accepts an existing Syscall object
   and returns it for convenience.
   Throws ERROR(WrongType)
 
-maktaba#test#Override({target}, {replacement})         *maktaba#test#Override*
+maktaba#test#Override({target}, {replacement})       *maktaba#test#Override()*
   Overides the function {target} such that when it is called, {replacement} is
   called instead. This is particularly useful for overloading autoloaded
   functions, which can only be done in files that are named correctly.
@@ -1350,24 +1354,24 @@ maktaba#test#Override({target}, {replacement})         *maktaba#test#Override*
   adequately named temporary file. As such, {replacement} MUST be a string,
   funcref, or funcdict usable from any given scope (i.e., not script-local).
 
-maktaba#user#Name()                                        *maktaba#user#Name*
+maktaba#user#Name()                                      *maktaba#user#Name()*
   Gets the user's name.
 
-maktaba#user#CacheDir()                                *maktaba#user#CacheDir*
+maktaba#user#CacheDir()                              *maktaba#user#CacheDir()*
   Gets a directory that can be used for cache files. Respects $XDG_CACHE_HOME
   if present.
 
-maktaba#user#DataDir()                                  *maktaba#user#DataDir*
+maktaba#user#DataDir()                                *maktaba#user#DataDir()*
   Gets a directory that can be used for data files. Respects $XDG_DATA_HOME if
   present.
 
-maktaba#user#ConfigDir()                              *maktaba#user#ConfigDir*
+maktaba#user#ConfigDir()                            *maktaba#user#ConfigDir()*
   Gets a directory that can be used for config files. Respects
   $XDG_CONFIG_HOME if present.
   Throws ERROR(NotAuthorized) if the directory does not exist and cannot be
   created.
 
-maktaba#value#IsEqual({a}, {b})                        *maktaba#value#IsEqual*
+maktaba#value#IsEqual({a}, {b})                      *maktaba#value#IsEqual()*
   Tests whether values {a} and {b} are equal. This works around a number of
   limitations in vimscript's == operator. Unlike with the == operator,
     1. String comparisons are case sensitive.
@@ -1379,59 +1383,59 @@ maktaba#value#IsEqual({a}, {b})                        *maktaba#value#IsEqual*
   consistent with the behavior of equality established by instant() and
   count(), but may be surprising to some users.
 
-maktaba#value#IsIn({value}, {list})                       *maktaba#value#IsIn*
+maktaba#value#IsIn({value}, {list})                     *maktaba#value#IsIn()*
   Whether {value} is in {list}.
 
-maktaba#value#EmptyValue({value})                   *maktaba#value#EmptyValue*
+maktaba#value#EmptyValue({value})                 *maktaba#value#EmptyValue()*
   Returns the empty value for {value}. This is 0, 0.0, '', [], {}, or 'empty',
   depending upon the value type.
 
-maktaba#value#TypeName({value})                       *maktaba#value#TypeName*
+maktaba#value#TypeName({value})                     *maktaba#value#TypeName()*
   Returns the type of {value} as a string. One of "number", "string",
   "funcref", "list", "dictionary", or "float". See also |type()|.
 
-maktaba#value#TypeMatches({value}, {reference})    *maktaba#value#TypeMatches*
+maktaba#value#TypeMatches({value}, {reference})  *maktaba#value#TypeMatches()*
   1 if {value} has the same type as {reference}, 0 otherwise.
 
 maktaba#value#TypeMatchesOneOf({value}, {references})
-                                              *maktaba#value#TypeMatchesOneOf*
+                                            *maktaba#value#TypeMatchesOneOf()*
   1 if {value} has the same type as one of the elements in {references}. 0
   otherwise.
 
-maktaba#value#IsNumber({value})                       *maktaba#value#IsNumber*
+maktaba#value#IsNumber({value})                     *maktaba#value#IsNumber()*
   1 if {value} is a vimscript "number" (more commonly known as "integer", 0
   otherwise. Remember that vimscript calls integers "numbers".
 
-maktaba#value#IsString({value})                       *maktaba#value#IsString*
+maktaba#value#IsString({value})                     *maktaba#value#IsString()*
   1 if {value} is a string, 0 otherwise.
 
-maktaba#value#IsFuncref({value})                     *maktaba#value#IsFuncref*
+maktaba#value#IsFuncref({value})                   *maktaba#value#IsFuncref()*
   1 if {value} is a funcref, 0 otherwise.
 
-maktaba#value#IsList({value})                           *maktaba#value#IsList*
+maktaba#value#IsList({value})                         *maktaba#value#IsList()*
   1 if {value} is a list, 0 otherwise.
 
-maktaba#value#IsDict({value})                           *maktaba#value#IsDict*
+maktaba#value#IsDict({value})                         *maktaba#value#IsDict()*
   1 if {value} is a dict, 0 otherwise.
 
-maktaba#value#IsFloat({value})                         *maktaba#value#IsFloat*
+maktaba#value#IsFloat({value})                       *maktaba#value#IsFloat()*
   1 if {value} is a floating point number, 0 otherwise.
 
-maktaba#value#IsNumeric({value})                     *maktaba#value#IsNumeric*
+maktaba#value#IsNumeric({value})                   *maktaba#value#IsNumeric()*
   1 if {value} is numeric (integer or float, which vimscript stupidly refers
   to as "number" and "float"). 0 otherwise.
 
-maktaba#value#IsCollection({value})               *maktaba#value#IsCollection*
+maktaba#value#IsCollection({value})             *maktaba#value#IsCollection()*
   1 if {value} is a collection type (list or dict). 0 otherwise.
 
-maktaba#value#IsCallable({value})                   *maktaba#value#IsCallable*
+maktaba#value#IsCallable({value})                 *maktaba#value#IsCallable()*
   1 if {value} is a callable type (string or function), 0 otherwise. This DOES
   NOT guarantee that the function indicated by {value} actually exists.
 
-maktaba#value#IsEnum({value})                           *maktaba#value#IsEnum*
+maktaba#value#IsEnum({value})                         *maktaba#value#IsEnum()*
   1 if {value} is a maktaba enum type, 0 otherwise.
 
-maktaba#value#Focus({target}, {foci}, [value])           *maktaba#value#Focus*
+maktaba#value#Focus({target}, {foci}, [value])         *maktaba#value#Focus()*
   Focuses on a part of {target} specified by {foci}. That object will either
   be returned, or set to [value] if [value] is given (in which case {target}
   is returned). Examples will make this clearer:
@@ -1448,24 +1452,24 @@ maktaba#value#Focus({target}, {foci}, [value])           *maktaba#value#Focus*
   Throws ERROR(BadValue) if {target} cannot be deconstructed the way {foci}
   expects.
 
-maktaba#value#Save({variable})                            *maktaba#value#Save*
+maktaba#value#Save({variable})                          *maktaba#value#Save()*
   Captures the state of a {variable} into a returned dict. The return value
-  can be passed to |maktaba#value#Restore| to restore the listed variable to
+  can be passed to |maktaba#value#Restore()| to restore the listed variable to
   its captured state.
   Throws ERROR(WrongType)
   Throws ERROR(BadValue)
 
-maktaba#value#SaveAll({variables})                     *maktaba#value#SaveAll*
+maktaba#value#SaveAll({variables})                   *maktaba#value#SaveAll()*
   Captures the state of a list of {variables} into a returned dict. The return
-  value can be passed to |maktaba#value#Restore| to restore all listed
+  value can be passed to |maktaba#value#Restore()| to restore all listed
   variables to their captured state.
   Throws ERROR(WrongType)
   Throws ERROR(BadValue)
 
-maktaba#value#Restore({state})                         *maktaba#value#Restore*
+maktaba#value#Restore({state})                       *maktaba#value#Restore()*
   Restores the previously-captured {state} of the set of variables. {state} is
-  a dict returned from a previous call to |maktaba#value#Save| or
-  |maktaba#value#SaveAll|.
+  a dict returned from a previous call to |maktaba#value#Save()| or
+  |maktaba#value#SaveAll()|.
   Throws ERROR(WrongType)
   Throws ERROR(BadValue)
 
