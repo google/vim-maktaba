@@ -34,6 +34,20 @@ call vam#ActivateAddons(['glaive', 'vtd'])
 call maktaba#plugin#Detect()
 ```
 
+# Plugins Using Maktaba
+
+Several vim plugins are
+[already using maktaba](https://github.com/google/maktaba/wiki/Plugins-Using-Maktaba).
+As a user, you can generally expect these plugins to be configurable using
+[Glaive](https://github.com/google/glaive) and be more well-behaved in terms of
+things like defining unwanted global mappings and variables and avoiding
+annoying side-effects like moving your cursor.
+
+Plugin authors should consider developing plugins using maktaba to simplify
+code, support modular plugins with hassle-free dependency management, and avoid
+common pitfalls. If you've written a plugin using maktaba, please add it to the
+list above and share feedback.
+
 # Further reading
 
 In the `vroom/` directory you'll find literate test files that walk you through
