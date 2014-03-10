@@ -316,6 +316,12 @@ Syscall.WithCwd({directory})                               *Syscall.WithCwd()*
   Throws ERROR(WrongType)
   Throws ERROR(NotFound) if {directory} is invalid.
 
+Syscall.WithStdin({input})                               *Syscall.WithStdin()*
+  Configures {input} to be passed via stdin to the command. Only supported for
+  |Syscall.Call()|. Calling |Syscall.CallForeground()| on a Syscall with stdin
+  specified will cause |ERROR(NotImplemented)| to be thrown.
+  Throws ERROR(WrongType)
+
 Syscall.And({cmd})                                             *Syscall.And()*
   Returns a new |maktaba.Syscall| that chains self and {cmd} together with a
   logical AND operation ("&&"). {cmd} may be any valid
@@ -352,6 +358,7 @@ Syscall.CallForeground({pause}, [throw_errors])     *Syscall.CallForeground()*
     * stderr: the shell command's entire stderr string, if available.
   Throws ERROR(WrongType)
   Throws ERROR(ShellError) if the shell command returns an exit code.
+  Throws ERROR(NotImplemented) if stdin has been specified for this Syscall.
 
 Syscall.GetCommand()                                    *Syscall.GetCommand()*
   Gets the literal command string that would be executed by |Syscall.Call()|
@@ -1528,6 +1535,9 @@ For when someone tries to do something they shouldn't.
 
                                                              *ERROR(NotFound)*
 For when someone expected something to be there, and it wasn't.
+
+                                                       *ERROR(NotImplemented)*
+For attempts to use functionality that is not yet supported.
 
                                                             *ERROR(WrongType)*
 For when someone tried to use the wrong type of arguments.

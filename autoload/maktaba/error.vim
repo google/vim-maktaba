@@ -142,6 +142,14 @@ endfunction
 
 ""
 " @exception
+" For attempts to use functionality that is not yet supported.
+function! maktaba#error#NotImplemented(message, ...) abort
+  return maktaba#error#Exception('NotImplemented', a:message, a:000)
+endfunction
+
+
+""
+" @exception
 " For when someone tried to use the wrong type of arguments.
 function! maktaba#error#WrongType(message, ...) abort
   return maktaba#error#Exception('WrongType', a:message, a:000)
