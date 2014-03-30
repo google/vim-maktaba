@@ -734,7 +734,7 @@ function! maktaba#plugin#AddonInfo() dict abort
       " versions with strange settings.
       let self._addon_info = s:EvalJSON(join(readfile(l:addon_info_path), ''))
     catch /E48[45]:/
-      " File missing or unreadable. Assume no dependencies.
+      " File missing or unreadable. Assume no addon info.
       let self._addon_info = {}
     endtry
   endif
