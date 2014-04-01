@@ -1284,8 +1284,6 @@ maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
   You're encouraged to use this function when you're exposing complex flags to
   users. Flag handles are part of the maktaba setting syntax. See
   |maktaba#setting#Create()| for more.
-
-  [consume] is 0 if omitted.
   Throws ERROR(BadValue) if {handle} is invalid.
 
 maktaba#setting#Parse({text})                        *maktaba#setting#Parse()*

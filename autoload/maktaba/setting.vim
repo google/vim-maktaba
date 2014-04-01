@@ -522,9 +522,7 @@ endfunction
 "
 " You're encouraged to use this function when you're exposing complex flags to
 " users. Flag handles are part of the maktaba setting syntax. See
-" |maktaba#setting#Create()| for more.
-"
-" @default consume=0
+" @function(#Create) for more.
 " @throws BadValue if {handle} is invalid.
 function! maktaba#setting#Handle(handle) abort
   let [l:flagname, l:foci, l:rest] = maktaba#setting#ParseHandle(a:handle)
