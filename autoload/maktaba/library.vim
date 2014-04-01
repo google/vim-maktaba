@@ -112,8 +112,8 @@ endfunction
 " {installer} need not worry about verifying that the installed plugin is
 " actually a library plugin, that is handled by maktaba.
 "
-" This function returns a function which, when applied, unregisters {callback}.
-" Hold on to it if you expect you'll need to remove {callback}.
+" This function returns a function which, when applied, unregisters
+" {installer}. Hold on to it if you expect you'll need to remove {installer}.
 "
 " @throws BadValue if there's already an installer registered under {name}.
 function! maktaba#library#AddInstaller(name, F) abort
