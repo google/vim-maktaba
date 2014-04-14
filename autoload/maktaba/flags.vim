@@ -158,8 +158,9 @@ endfunction
 " run every time the flag changes. Translators are fired in order of their
 " registration. Callbacks are fired AFTER translation occurs.
 "
-" This function returns a function which, when called, unregisters {callback}.
-" Hold on to it if you expect you'll need to remove {callback}.
+" This function returns a function which, when called, unregisters
+" {translator}. Hold on to it if you expect you'll need to remove
+" {translator}.
 " @throws BadValue if there's already a translator registered under that name.
 function! maktaba#flags#AddTranslator(F) dict abort
   call maktaba#ensure#IsCallable(a:F)

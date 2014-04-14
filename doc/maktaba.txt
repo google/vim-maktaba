@@ -144,8 +144,9 @@ Flag.AddTranslator({translator})                        *Flag.AddTranslator()*
   will be run every time the flag changes. Translators are fired in order of
   their registration. Callbacks are fired AFTER translation occurs.
 
-  This function returns a function which, when called, unregisters {callback}.
-  Hold on to it if you expect you'll need to remove {callback}.
+  This function returns a function which, when called, unregisters
+  {translator}. Hold on to it if you expect you'll need to remove
+  {translator}.
   Throws ERROR(BadValue) if there's already a translator registered under that
   name.
 
@@ -921,7 +922,7 @@ maktaba#library#AddInstaller({name}, {installer})
   actually a library plugin, that is handled by maktaba.
 
   This function returns a function which, when applied, unregisters
-  {callback}. Hold on to it if you expect you'll need to remove {callback}.
+  {installer}. Hold on to it if you expect you'll need to remove {installer}.
 
   Throws ERROR(BadValue) if there's already an installer registered under
   {name}.
@@ -1284,8 +1285,6 @@ maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
   You're encouraged to use this function when you're exposing complex flags to
   users. Flag handles are part of the maktaba setting syntax. See
   |maktaba#setting#Create()| for more.
-
-  [consume] is 0 if omitted.
   Throws ERROR(BadValue) if {handle} is invalid.
 
 maktaba#setting#Parse({text})                        *maktaba#setting#Parse()*
