@@ -1,4 +1,5 @@
-*helloworld* - Time-honored greeting
+*helloworld.txt*	Time-honored greeting
+                                                                  *helloworld*
 
 ==============================================================================
 CONTENTS                                                 *helloworld-contents*
