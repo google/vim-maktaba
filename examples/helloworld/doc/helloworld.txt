@@ -1,5 +1,5 @@
 *helloworld.txt*	Time-honored greeting
-                                                                  *helloworld*
+Google                                                            *helloworld*
 
 ==============================================================================
 CONTENTS                                                 *helloworld-contents*
