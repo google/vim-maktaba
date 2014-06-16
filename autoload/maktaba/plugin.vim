@@ -48,7 +48,7 @@ endfunction
 " This is The Way to store a plugin location, by convention:
 " Fully expanded path with trailing forward slash at the end.
 function! s:Fullpath(location) abort
-  return fnamemodify(a:location, ':p:h') . '/'
+  return substitute(fnamemodify(a:location, ':p'), '\v[\/]*$', '/', '')
 endfunction
 
 
