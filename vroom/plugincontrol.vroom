@@ -88,13 +88,14 @@ possible after the plugin is activated.
 Similarly for ftplugin/ files, which are automatically activated by vim when it
 opens a buffer of the given filetype.
 
+  :edit! foo
   :let g:ftplugin_a = PluginPath(['ftplugin', 'a.vim'])
   :call maktaba#ensure#IsTrue(maktaba#plugin#Enter(g:ftplugin_a)[1])
   :call maktaba#ensure#IsFalse(maktaba#plugin#Enter(g:ftplugin_a)[1])
 
 However, these are tied to the buffer, and can be entered once per buffer.
 
-  :edit! foo
+  :edit! bar
   :call maktaba#ensure#IsTrue(maktaba#plugin#Enter(g:ftplugin_a)[1])
 
 Finally, we have autoload files. Vim sources these automatically as needed, and

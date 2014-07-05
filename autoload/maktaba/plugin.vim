@@ -223,10 +223,10 @@ function! maktaba#plugin#Enter(file) abort
 
   if l:filedir ==# 'ftplugin'
     call extend(l:controller, {l:handle : []}, 'keep')
-    if index(l:controller[l:handle], bufnr('.')) >= 0
+    if index(l:controller[l:handle], bufnr('%')) >= 0
       return [l:plugin, 0]
     endif
-    call add(l:controller[l:handle], bufnr('.'))
+    call add(l:controller[l:handle], bufnr('%'))
     return [l:plugin, 1]
   endif
 
