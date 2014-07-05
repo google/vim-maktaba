@@ -1,23 +1,22 @@
-let s:is_windows = exists('+shellslash')
-let s:use_backslash = s:is_windows && !&shellslash
+let s:is_backslash_platform = exists('+shellslash')
+let s:use_backslash = s:is_backslash_platform && !&shellslash
 let s:slash = s:use_backslash ? '\' : '/'
 
 let s:root_frontslash = '\v^/'
 let s:root_backslash = '\v^\\'
 
-" \\@<!%(\\\\)* matches any number of double-backslashes not preceded by
-" a backslash.
-let s:unescaped_backslash = '\v\\@<!%(\\\\)*\zs\\'
-let s:unescaped_frontslash = '\v\\@<!%(\\\\)*\zs/'
-
-if !s:is_windows
-  let s:unescaped_slash = s:unescaped_frontslash
-elseif s:use_backslash
-  let s:unescaped_slash = s:unescaped_backslash
+if !s:is_backslash_platform
+  " Unescaped frontslash.
+  " \\@<!%(\\\\)* matches any number of double-backslashes not preceded by
+  " a backslash.
+  let s:unescaped_slash = '\v\\@<!%(\\\\)*\zs/'
 else
-  let s:unescaped_slash = printf(
-      \ '\v%%(%s|%s)$', s:unescaped_frontslash, s:unescaped_backslash)
+  " Unescaped frontslash or backslash.
+  " Even platforms that use backslashes as separators accept forward slashes.
+  " See http://en.wikipedia.org/wiki/Path_(computing)#Representations_of_paths_by_operating_system_and_shell.
+  let s:unescaped_slash = '\v\\@<!%(\\\\)*\zs[/\\]'
 endif
+let g:unescaped_slash = s:unescaped_slash
 let s:trailing_slash = s:unescaped_slash . '$'
 
 let s:drive_backslash = '\v^\a:\\\\'
@@ -42,7 +41,7 @@ endfunction
 " like D:\\, and also / or D:// if shellslash is set.
 " The root of a relative path is empty.
 function! maktaba#path#RootComponent(path) abort
-  if !s:is_windows
+  if !s:is_backslash_platform
     " This regex matches / alone.
     return matchstr(a:path, s:root_frontslash)
   endif
