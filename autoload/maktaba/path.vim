@@ -36,6 +36,7 @@ function! s:Join(left, right) abort
 endfunction
 
 
+""
 " Returns the root component of {path}.
 " In unix, / is the only root.
 " In windows, the root can be \ (which vim treats as the default drive), a drive

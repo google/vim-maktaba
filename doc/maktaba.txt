@@ -961,6 +961,12 @@ maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
 
+maktaba#path#RootComponent({path})              *maktaba#path#RootComponent()*
+  Returns the root component of {path}. In unix, / is the only root. In
+  windows, the root can be \ (which vim treats as the default drive), a drive
+  like D:\\, and also / or D:// if shellslash is set. The root of a relative
+  path is empty.
+
 maktaba#path#IsAbsolute({path})                    *maktaba#path#IsAbsolute()*
   Whether {path} is absolute.
 
@@ -989,8 +995,8 @@ maktaba#path#Basename({path})                        *maktaba#path#Basename()*
 maktaba#path#Dirname({path})                          *maktaba#path#Dirname()*
   The dirname of {path}. Trailing slash matters. Consider:
 >
-    :echomsg maktaba#path#Dirname('/path/to/file')
-    :echomsg maktaba#path#Dirname('/path/to/dir/')
+    :echomsg maktaba#path#Basename('/path/to/file')
+    :echomsg maktaba#path#Basename('/path/to/dir/')
 <
   The first echoes '/path/to', the second echoes '/path/to/dir'
 
