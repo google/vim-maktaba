@@ -961,6 +961,12 @@ maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
 
+maktaba#path#AsDir({path})                              *maktaba#path#AsDir()*
+  Returns {path} with trailing slash (forward or backslash, depending on
+  platform). Maktaba uses paths with trailing slashes to unambiguously denote
+  directory paths, so utilities like |maktaba#path#Dirname()| don't try to
+  interpret them as file paths.
+
 maktaba#path#RootComponent({path})              *maktaba#path#RootComponent()*
   Returns the root component of {path}. In unix, / is the only root. In
   windows, the root can be \ (which vim treats as the default drive), a drive
