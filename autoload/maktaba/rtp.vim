@@ -36,17 +36,28 @@ endfunction
 
 
 ""
-" Split a string of comma-separated values into a list of values.
+" Returns {path} with trailing slashes safely removed.
+" Used by @function(#Join) since 'runtimepath' typically stores paths without
+" trailing slashes.
+function! s:StripTrailingSlash(path) abort
+  " Uses maktaba#path#AsDir to ensure a single trailing slash, then removes it.
+  return maktaba#path#AsDir(a:path)[:-2]
+endfunction
+
+
+""
+" Split [paths], a string of comma-separated path entries, into a list of paths.
 " Handles unescaping the commas.
-" [path] The string to split.
-" @default path=|runtimepath|
+" Paths will be canonicalized using @function(#AsDir) so they're unambiguously
+" interpreted as directory paths.
+" @default paths='runtimepath'
 function! maktaba#rtp#Split(...) abort
-  let l:path = get(a:, 1, &runtimepath)
-  if l:path !=# s:cache_string
-    let s:cache_string = l:path
+  let l:paths = get(a:, 1, &runtimepath)
+  if l:paths !=# s:cache_string
+    let s:cache_string = l:paths
     let s:cache_list = map(
-        \ split(l:path, s:unescaped_comma),
-        \ "substitute(v:val, s:escaped_char, '\\1', 'g')")
+        \ split(l:paths, s:unescaped_comma),
+        \ "maktaba#path#AsDir(substitute(v:val, s:escaped_char, '\\1', 'g'))")
   endif
   return copy(s:cache_list)
 endfunction
@@ -55,9 +66,16 @@ endfunction
 ""
 " Joins {paths}, a list of strings, into a comma-separated strings.
 " Handles the escaping of commas in {paths}.
+"
+" Trailing slashes will be stripped, following the precedent of vim itself not
+" including trailing slashes. This is also safer since trailing backslashes on
+" Windows are a source of bugs, and it doesn't lead to ambiguity since all paths
+" should be dirs. Note that @function(#Split) converts paths back to canoncial
+" representation, with trailing slashes included.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)
-  return join(map(a:paths, "escape(v:val, '\,')"), ',')
+  return join(
+      \ map(copy(a:paths), "escape(s:StripTrailingSlash(v:val), '\,')"), ',')
 endfunction
 
 
@@ -87,9 +105,10 @@ function! maktaba#rtp#Add(path) abort
   call maktaba#ensure#IsString(a:path)
   let l:rtp = maktaba#rtp#Split(&runtimepath)
   let l:end = len(l:rtp) == 0 ? 1 : -1
-  call maktaba#list#RemoveAll(l:rtp, a:path)
-  call insert(l:rtp, a:path, 1)
-  let l:after = maktaba#path#Join([a:path, 'after'])
+  let l:path = maktaba#path#AsDir(a:path)
+  call maktaba#list#RemoveAll(l:rtp, l:path)
+  call insert(l:rtp, l:path, 1)
+  let l:after = maktaba#path#AsDir(maktaba#path#Join([l:path, 'after']))
   if isdirectory(l:after)
     call maktaba#list#RemoveAll(l:rtp, l:after)
     call insert(l:rtp, l:after, l:end)
@@ -105,7 +124,7 @@ endfunction
 function! maktaba#rtp#Remove(path) abort
   call maktaba#ensure#IsString(a:path)
   let l:rtp = maktaba#rtp#Split(&runtimepath)
-  call maktaba#list#RemoveAll(l:rtp, a:path)
+  call maktaba#list#RemoveAll(l:rtp, maktaba#path#AsDir(a:path))
   let &runtimepath = maktaba#rtp#Join(l:rtp)
   let s:cache_string = &runtimepath
   let s:cache_list = l:rtp

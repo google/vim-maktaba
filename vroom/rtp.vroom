@@ -11,12 +11,12 @@ some jankyness (especially if you have directories with commas in the name).
 
 The most important tools are tools to split and join the runtimepath.
 
-  :let &runtimepath .= ',/your/home/vim/directory,/some/system/vim/files,/etc/'
+  :let &runtimepath .= ',/your/home/vim/directory,/some/system/vim/files,/etc'
   :echomsg string(maktaba#rtp#Split()[-3:])
-  ~ ['/your/home/vim/directory', '/some/system/vim/files', '/etc/']
+  ~ ['/your/home/vim/directory/', '/some/system/vim/files/', '/etc/']
 
   :let g:rejoined = maktaba#rtp#Join(maktaba#rtp#Split())
-  :call maktaba#ensure#IsEqual(g:rejoined, &runtimepath)
+  :call maktaba#ensure#IsEqual(&runtimepath, g:rejoined)
 
 maktaba#rtp uses a runtimepath cache, which makes splitting/joining the
 runtimepath faster if you don't modify it in between calls. Let's do a quick
@@ -25,7 +25,7 @@ manually between calls:
 
   :set runtimepath+=new/directory
   :let g:rejoined = maktaba#rtp#Join(maktaba#rtp#Split())
-  :call maktaba#ensure#IsEqual(g:rejoined, &runtimepath)
+  :call maktaba#ensure#IsEqual(&runtimepath, g:rejoined)
 
 Good.
 
@@ -34,7 +34,7 @@ maktaba#rtp#Split gracefully handles commas in directories:
   :echomsg maktaba#rtp#Join(['/real/files', '/who/even/does,this'])
   ~ /real/files,/who/even/does\,this
   :echomsg maktaba#rtp#Split('/real/files,/who/even/does\,this')[1]
-  ~ /who/even/does,this
+  ~ /who/even/does,this/
 
 Though we still recommend that you never ever do this.
 
@@ -72,14 +72,14 @@ second-last:
   :let g:realplugin = maktaba#path#Join([g:repo, 'myplugin'])
   :call maktaba#rtp#Add(g:realplugin)
   :let g:secondlast = maktaba#rtp#Split()[-2]
-  :call maktaba#ensure#Matches(g:secondlast, '\Vfakeplugins/myplugin/after\$')
+  :call maktaba#ensure#Matches(g:secondlast, '\Vfakeplugins/myplugin/after/\$')
 
 maktaba#rtp#Add will not add duplicate paths.
 
   :call maktaba#rtp#Add('/your/cool/plugin')
   :let g:rtpsave = &runtimepath
   :call maktaba#rtp#Add('/your/cool/plugin')
-  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+  :call maktaba#ensure#IsEqual(g:rtpsave, &runtimepath)
 
 
 
@@ -88,7 +88,7 @@ You can also remove from the runtimepath.
   :let g:save = &runtimepath
   :call maktaba#rtp#Add('/some/weird/path')
   :call maktaba#rtp#Remove('/some/weird/path')
-  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+  :call maktaba#ensure#IsEqual(g:rtpsave, &runtimepath)
 
 All instances of the given path are removed.
 
@@ -96,7 +96,7 @@ All instances of the given path are removed.
   :set rtp+=/some/weird/path
   :set rtp+=/some/weird/path
   :call maktaba#rtp#Remove('/some/weird/path')
-  :call maktaba#ensure#IsEqual(&runtimepath, g:rtpsave)
+  :call maktaba#ensure#IsEqual(g:rtpsave, &runtimepath)
 
 This function will not complain if the given path was not present.
 
@@ -127,7 +127,7 @@ leaf directory to the containing directory. This can be useful for people trying
 to manage plugins (or find plugin files).
 
   :echomsg maktaba#rtp#LeafDirs()['one']
-  ~ plugins/one
+  ~ plugins/one/
 
 As a shortcut, you can use maktaba#rtp#HasLeafDir to check whether a specific
 directory is a leaf directory on the runtimepath.
