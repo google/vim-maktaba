@@ -98,13 +98,27 @@ the last component of the path:
   :echomsg string(maktaba#path#Basename('/path/to/dir/'))
   ~ ''
 
-Dirname gets all but the last components of the path (in path form, without
-a trailing slash):
+Dirname gets all but the last components of the path (in path form, without a
+trailing slash):
 
   :echomsg string(maktaba#path#Dirname('/path/to/file'))
   ~ '/path/to'
   :echomsg string(maktaba#path#Dirname('/path/to/dir/'))
   ~ '/path/to/dir'
+
+For both utilities, callers are encouraged to use canonical dir representation
+(with a trailing slash) for directory paths, to disambiguate them from file
+paths. You can use maktaba#path#AsDir to canonicalize a given directory path.
+
+  :echomsg maktaba#path#AsDir('foo/bar')
+  ~ foo/bar/
+
+This will use the correct trailing slash for the system (this vroom file
+currently assumes a Linux platform using forward slashes). It will ensure only
+a single trailing slash is present.
+
+  :echomsg maktaba#path#AsDir('foo/bar///')
+  ~ foo/bar/
 
 
 

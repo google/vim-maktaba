@@ -961,6 +961,12 @@ maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
 
+maktaba#path#AsDir({path})                              *maktaba#path#AsDir()*
+  Returns {path} with trailing slash (forward or backslash, depending on
+  platform). Maktaba uses paths with trailing slashes to unambiguously denote
+  directory paths, so utilities like |maktaba#path#Dirname()| don't try to
+  interpret them as file paths.
+
 maktaba#path#RootComponent({path})              *maktaba#path#RootComponent()*
   Returns the root component of {path}. In unix, / is the only root. In
   windows, the root can be \ (which vim treats as the default drive), a drive
@@ -1185,14 +1191,22 @@ maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
 >
 <
 
-maktaba#rtp#Split([path])                                *maktaba#rtp#Split()*
-  Split a string of comma-separated values into a list of values. Handles
-  unescaping the commas. [path] The string to split.
-  [path] is |runtimepath| if omitted.
+maktaba#rtp#Split([paths])                               *maktaba#rtp#Split()*
+  Split [paths], a string of comma-separated path entries, into a list of
+  paths. Handles unescaping the commas. Paths will be canonicalized using
+  |maktaba#rtp#AsDir()| so they're unambiguously interpreted as directory
+  paths.
+  [paths] is 'runtimepath' if omitted.
 
 maktaba#rtp#Join({paths})                                 *maktaba#rtp#Join()*
   Joins {paths}, a list of strings, into a comma-separated strings. Handles
   the escaping of commas in {paths}.
+
+  Trailing slashes will be stripped, following the precedent of vim itself not
+  including trailing slashes. This is also safer since trailing backslashes on
+  Windows are a source of bugs, and it doesn't lead to ambiguity since all
+  paths should be dirs. Note that |maktaba#rtp#Split()| converts paths back to
+  canoncial representation, with trailing slashes included.
 
 maktaba#rtp#Add({path})                                    *maktaba#rtp#Add()*
   Adds {path} to the runtimepath.

@@ -18,6 +18,7 @@ else
 endif
 let g:unescaped_slash = s:unescaped_slash
 let s:trailing_slash = s:unescaped_slash . '$'
+let s:trailing_slashes = s:unescaped_slash . '+$'
 
 let s:drive_backslash = '\v^\a:\\\\'
 let s:drive_frontslash = '\v^\a://'
@@ -32,6 +33,17 @@ function! s:Join(left, right) abort
     return a:right
   endif
   return a:left . s:slash . a:right
+endfunction
+
+
+""
+" Returns {path} with trailing slash (forward or backslash, depending on
+" platform).
+" Maktaba uses paths with trailing slashes to unambiguously denote directory
+" paths, so utilities like @function(#Dirname) don't try to interpret them as
+" file paths.
+function! maktaba#path#AsDir(path) abort
+  return substitute(a:path, s:trailing_slashes, '', 'g') . s:slash
 endfunction
 
 
@@ -162,8 +174,7 @@ function! maktaba#path#GetDirectory(path) abort
   if !isdirectory(a:path) && maktaba#path#Exists(a:path)
     let l:path = fnamemodify(l:path, ':h')
   endif
-  " Ensures a trailing slash.
-  return s:Join(l:path, '')
+  return maktaba#path#AsDir(l:path)
 endfunction
 
 
