@@ -1,3 +1,4 @@
+""
 " @section Error Handling, exceptions
 " Maktaba provides utilities for error handling in vim.
 " Unfortunately, error handling in vim is insane.
