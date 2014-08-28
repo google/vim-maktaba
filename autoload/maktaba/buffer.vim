@@ -29,6 +29,33 @@ function! maktaba#buffer#Overwrite(startline, endline, lines) abort
   call maktaba#ensure#IsNumber(a:endline)
   call maktaba#ensure#IsList(a:lines)
 
+  if a:startline < 1
+    throw maktaba#error#BadValue(
+        \ 'Startline must be positive, not %d.',
+        \ a:startline)
+  endif
+  if a:startline > line('$')
+    throw maktaba#error#BadValue(
+        \ 'Startline must be a valid line number, not %d.',
+        \ a:startline)
+  endif
+  if a:endline < 1
+    throw maktaba#error#BadValue(
+        \ 'Endline must be positive, not %d.',
+        \ a:endline)
+  endif
+  if a:endline > line('$')
+    throw maktaba#error#BadValue(
+        \ 'Endline must be a valid line number, not %d.',
+        \ a:endline)
+  endif
+  if a:startline > a:endline
+    throw maktaba#error#BadValue(
+        \ 'Startline %d greater than endline %d.',
+        \ a:startline,
+        \ a:endline)
+  endif
+
   " If python is available, use difflib-based python implementation, which can
   " overwrite only modified chunks and leave equal chunks undisturbed.
   if has('python')
@@ -41,12 +68,6 @@ function! maktaba#buffer#Overwrite(startline, endline, lines) abort
   endif
 
   " Otherwise, fall back to pure-vimscript implementation.
-  if a:startline > a:endline
-    throw maktaba#error#BadValue(
-        \ 'Startline %d greater than endline %d',
-        \ a:startline,
-        \ a:endline)
-  endif
   " If lines already match, don't modify buffer.
   if getline(a:startline, a:endline) == a:lines
     return
