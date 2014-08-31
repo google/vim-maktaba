@@ -81,6 +81,26 @@ matches the replacement text, nothing is changed:
   :echomsg b:changedtick == g:changedtick
   ~ 1
 
+Overwrite checks that the start and end lines are valid line numbers, and that
+the start line isn't after the end line:
+
+  :let g:overwrite = maktaba#function#Create('maktaba#buffer#Overwrite')
+  :call maktaba#error#Try(g:overwrite.WithArgs(0, 3, []))
+  ~ ERROR(BadValue): Startline must be positive, not 0.
+  :call maktaba#error#Try(g:overwrite.WithArgs(-1, 3, []))
+  ~ ERROR(BadValue): Startline must be positive, not -1.
+  :call maktaba#error#Try(g:overwrite.WithArgs(7, 8, []))
+  ~ ERROR(BadValue): Startline must be a valid line number, not 7.
+  :call maktaba#error#Try(g:overwrite.WithArgs(1, 0, []))
+  ~ ERROR(BadValue): Endline must be positive, not 0.
+  :call maktaba#error#Try(g:overwrite.WithArgs(6, 7, []))
+  ~ ERROR(BadValue): Endline must be a valid line number, not 7.
+  :call maktaba#error#Try(g:overwrite.WithArgs(6, 5, []))
+  ~ ERROR(BadValue): Startline 6 greater than endline 5.
+  :call maktaba#buffer#Overwrite(6, 6, [])
+  :echomsg line('$')
+  ~ 5
+
 
 
 Vim's :substitute (better known as :s) is one of its most powerful features.
