@@ -197,6 +197,10 @@ function! maktaba#path#MakeRelative(root, path) abort
     call remove(l:rootparts, 0)
   endwhile
 
+  if empty(l:rootparts) && empty(l:pathparts)
+    return '.'
+  endif
+
   " l:rootparts now contains the directories we must traverse to reach the
   " common ancestor of root and path. Replacing those with '..' takes us to the
   " common ancestor. Then the remaining l:pathparts take us to the destination.

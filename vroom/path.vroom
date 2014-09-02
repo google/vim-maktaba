@@ -151,6 +151,9 @@ makes one absolute path relative to another.
   |    '/deep/in/the/heart/of/texas')
   ~ ../../../../heart/of/texas
 
+  :echomsg maktaba#path#MakeRelative('/point/A/', '/point/A/')
+  ~ .
+
 Your paths had better be absolute before trying this.
 
   :let g:makerel = maktaba#function#Create('maktaba#path#MakeRelative')
