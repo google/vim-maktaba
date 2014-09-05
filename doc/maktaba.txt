@@ -1289,6 +1289,7 @@ maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
 >
     :echomsg maktaba#setting#Handle('flag')
     ~ ['flag', []]
+
     :echomsg maktaba#setting#Handle('flag[list][3][val]')
     ~ ['flag', ['list', 3, 'val']]
 <
