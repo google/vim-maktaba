@@ -743,36 +743,48 @@ endfunction
 
 
 ""
+" @usage {flag}
 " @dict Plugin
-" Gets or sets {flag}. If [value] is given, {flag} is set to [value]. Otherwise,
-" the value of {flag} is returned.
-" If {flag} does not exist, the plugin flags file will be sourced.
-" The following are equivalent:
-" >
+" Returns the value of {flag}.
+" See @function(maktaba#setting#Handle) for {flag} syntax.
+"
+" The following are equivalent: >
 "   maktaba#plugin#Get('myplugin').Flag('foo')
 "   maktaba#plugin#Get('myplugin').flags.foo.Get()
 " <
-" As are these:
+"
+" You may access a portion of a flag (a specific value in a dict flag, or
+" a specific item in a list flag) using a fairly natural square bracket
+" syntax: >
+"   maktaba#plugin#Get('myplugin').Flag('plugin[autocmds]')
+" <
+" This is equivalent to: >
+"   maktaba#plugin#Get('myplugin').flags.plugin.Get()['autocmds']
+" <
+" This syntax can be chained: >
+"   maktaba#plugin#Get('myplugin').Flag('complex[key][0]')
+" <
+"
+" The plugin flags file will be sourced before determining if the flag exists.
+"
+" @throws BadValue if {flag} is an invalid flag name.
+" @throws NotFound if {flag} does not exist.
+"
+" @usage {flag} {value}
+" @dict Plugin
+" Sets {flag} to {value}.
+" See @function(maktaba#setting#Handle) for {flag} syntax.
+"
+" The following are equivalent:
 " >
 "   maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
 "   maktaba#plugin#Get('myplugin').flags.foo.Set('bar')
 " <
 "
-" You may access a portion of a flag (a specific value in a dict flag, or
-" a specific item in a list flag) using a fairly natural square bracket syntax:
-" >
+" Also supports dict flag syntax: >
 "   maktaba#plugin#Get('myplugin').Flag('plugin[autocmds]', 1)
 " <
-" This is equivalent to:
-" >
-"   maktaba#plugin#Get('myplugin').flags.plugin.Get()['autocmds'] = 1
-" <
-" This syntax can be chained:
-" >
-"   maktaba#plugin#Get('myplugin').Flag('complex[key][0]')
-" <
-" See @function(maktaba#setting#ParseHandle) for details.
-" @throws NotFound if {flag} does not exist.
+"
 " @throws BadValue if {flag} is an invalid flag name.
 function! maktaba#plugin#Flag(flag, ...) dict abort
   let [l:flag, l:foci] = maktaba#setting#Handle(a:flag)
@@ -785,7 +797,7 @@ function! maktaba#plugin#Flag(flag, ...) dict abort
   elseif a:0 == 0
     return self.flags[l:flag].Get(l:foci)
   else
-    return self.flags[l:flag].Set(a:1, l:foci)
+    call self.flags[l:flag].Set(a:1, l:foci)
   endif
 endfunction
 
