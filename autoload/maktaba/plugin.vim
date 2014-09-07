@@ -748,7 +748,7 @@ endfunction
 " Returns the value of {flag}.
 " See @function(maktaba#setting#Handle) for {flag} syntax.
 "
-" The following are equivalent: >
+" The following are roughly equivalent: >
 "   maktaba#plugin#Get('myplugin').Flag('foo')
 "   maktaba#plugin#Get('myplugin').flags.foo.Get()
 " <
@@ -775,7 +775,7 @@ endfunction
 " Sets {flag} to {value}.
 " See @function(maktaba#setting#Handle) for {flag} syntax.
 "
-" The following are equivalent:
+" The following are equivalent (assuming the flag "foo" already exists):
 " >
 "   maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
 "   maktaba#plugin#Get('myplugin').flags.foo.Set('bar')

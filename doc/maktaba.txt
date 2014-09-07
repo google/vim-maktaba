@@ -207,7 +207,7 @@ Plugin.Flag({flag})                                            *Plugin.Flag()*
   Returns the value of {flag}. See |maktaba#setting#Handle()| for {flag}
   syntax.
 
-  The following are equivalent:
+  The following are roughly equivalent:
 >
     maktaba#plugin#Get('myplugin').Flag('foo')
     maktaba#plugin#Get('myplugin').flags.foo.Get()
@@ -236,7 +236,7 @@ Plugin.Flag({flag})                                            *Plugin.Flag()*
 Plugin.Flag({flag}, {value})
   Sets {flag} to {value}. See |maktaba#setting#Handle()| for {flag} syntax.
 
-  The following are equivalent:
+  The following are equivalent (assuming the flag "foo" already exists):
 >
     maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
     maktaba#plugin#Get('myplugin').flags.foo.Set('bar')
