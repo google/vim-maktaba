@@ -98,6 +98,8 @@ joining and escaping applied, you can access it through the GetCommand method.
   ~ tail --lines=3 somefile
   :echomsg maktaba#syscall#Create(['echo', '-n', 'w3iR|) Th|ng']).GetCommand()
   ~ echo -n 'w3iR|) Th|ng'
+  :echomsg maktaba#syscall#Create(['dothing', '--name', '']).GetCommand()
+  ~ dothing --name ''
   :echomsg maktaba#syscall#Create(['run.sh', 'foo:bar']).GetCommand()
   ~ run.sh foo:bar
 
