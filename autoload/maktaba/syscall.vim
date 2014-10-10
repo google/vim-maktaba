@@ -20,7 +20,7 @@ endfunction
 " (anything besides letters, numbers, or [-=/.:_]) or is empty (in which case
 " it needs to be quoted so it counts as an argument).
 function! s:SoftShellEscape(word) abort
-  if !empty(a:word) && a:word =~# '\m^[-=/.:_a-zA-Z0-9]*$'
+  if a:word =~# '\m^[-=/.:_[:alnum:]]\+$'
     " Simple value, no need to escape.
     return a:word
   endif
