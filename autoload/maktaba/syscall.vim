@@ -16,10 +16,11 @@ endfunction
 
 
 ""
-" Escapes a string for the shell, but only if it contains special characters.
-" Special characters are anything besides letters, numbers, or [-=/.:_].
+" Escapes a string for the shell, but only if it contains special characters
+" (anything besides letters, numbers, or [-=/.:_]) or is empty (in which case
+" it needs to be quoted so it counts as an argument).
 function! s:SoftShellEscape(word) abort
-  if a:word =~# '\m^[-=/.:_a-zA-Z0-9]*$'
+  if a:word =~# '\m^[-=/.:_[:alnum:]]\+$'
     " Simple value, no need to escape.
     return a:word
   endif
@@ -251,7 +252,6 @@ function! maktaba#syscall#GetCommand() abort dict
     return self.cmd
   endif
   let l:words = map(self.cmd, 'maktaba#string#Strip(v:val)')
-  let l:words = filter(l:words, '!empty(v:val)')
   let l:words = map(l:words, 's:SoftShellEscape(v:val)')
   return join(l:words)
 endfunction
