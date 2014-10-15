@@ -119,8 +119,9 @@ Finally, there's a pair of utility functions to check the directory names of
 files on the runtimepath.
 
   :let &runtimepath = g:maktabadir . ',plugins/one,plugins/two/,plugins/three'
-  :echomsg string(sort(keys(maktaba#rtp#LeafDirs())))
-  ~ ['maktaba', 'one', 'three', 'two']
+  :let g:maktaba_dirname = maktaba#path#Split(g:maktabadir)[-1]
+  :let g:leafdirs = sort([g:maktaba_dirname, 'one', 'two', 'three'])
+  :call maktaba#ensure#IsEqual(g:leafdirs, sort(keys(maktaba#rtp#LeafDirs())))
 
 The actual return value of maktaba#rtp#LeafDirs is a dictionary mapping each
 leaf directory to the containing directory. This can be useful for people trying
@@ -141,8 +142,8 @@ maktaba#rtp#LeafDirs for details.
 
   :let &runtimepath = '/home/you/.vim,/home/you/.vim/runtime,/a/real/plugin,' .
   | g:maktabadir
-  :echomsg string(keys(maktaba#rtp#LeafDirs()))
-  ~ ['plugin', 'maktaba']
+  :let g:leafdirs = sort(['plugin', g:maktaba_dirname])
+  :call maktaba#ensure#IsEqual(g:leafdirs, sort(keys(maktaba#rtp#LeafDirs())))
 
 This can be useful for guessing whether or not a plugin is installed. Note,
 however, that not every runtimepath directory is a plugin.
