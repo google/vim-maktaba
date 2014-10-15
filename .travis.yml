@@ -1,5 +1,8 @@
 before_script:
   - wget https://github.com/google/vroom/releases/download/v0.11.0/vroom_0.11.0-1_all.deb
   - sudo dpkg -i vroom_0.11.0-1_all.deb
+  - sudo apt-get install vim-gnome
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
 script:
   - vroom --crawl ./vroom/
