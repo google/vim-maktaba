@@ -51,6 +51,8 @@ replace them with underscores.
   :let g:weirdpath = maktaba#path#Join([g:repo, 'weird¬p…l✓u↓g⏎i‽n'])
   :let g:weirdplugin = maktaba#plugin#Install(g:weirdpath)
 
+  :echomsg g:weirdplugin.name
+  ~ weird¬p…l✓u↓g⏎i‽n
   :call maktaba#ensure#IsTrue(g:installed_weird_p_l_u_g_i_n)
 
 In general, you should use maktaba#plugin#IsRegistered to check whether a plugin
