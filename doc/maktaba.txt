@@ -1187,9 +1187,7 @@ maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
 <
   will print something like
 
-    <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'
->
-<
+    <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'>
 
 maktaba#rtp#Split([paths])                               *maktaba#rtp#Split()*
   Split [paths], a string of comma-separated path entries, into a list of
@@ -1291,6 +1289,7 @@ maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
 >
     :echomsg maktaba#setting#Handle('flag')
     ~ ['flag', []]
+
     :echomsg maktaba#setting#Handle('flag[list][3][val]')
     ~ ['flag', ['list', 3, 'val']]
 <
