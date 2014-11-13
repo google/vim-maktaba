@@ -115,21 +115,29 @@ endfunction
 
 ""
 " @dict Flag
-" @usage callback
 " Registers {callback}. It must refer to a function. The function must take one
-" argument: the value of the flag. {callback} will be fired immediately with the
-" current value of the flag. It will be fired again every time the flag changes.
+" argument: the value of the flag. {callback} will (by default) be fired
+" immediately with the current value of the flag. It will be fired again every
+" time the flag changes.
 "
 " Callbacks are fired AFTER translation occurs. Callbacks are fired in order of
 " their registration.
 "
 " This function returns a function which, when applied, unregisters {callback}.
 " Hold on to it if you expect you'll need to remove {callback}.
+"
+" If [fire_immediately] is zero, {callback} will only be fired when the
+" current value of the flag changes.
+" @default fire_immediately=1
 " @throws BadValue if there's already a callback registered under that name.
-function! maktaba#flags#AddCallback(F) dict abort
+function! maktaba#flags#AddCallback(F, ...) dict abort
   call maktaba#ensure#IsCallable(a:F)
+  let l:fire_immediately = get(a:, 1, 1)
+
   let l:remover = self._callbacks.Add(a:F)
-  call maktaba#function#Apply(a:F, self._value)
+  if l:fire_immediately
+    call maktaba#function#Apply(a:F, self._value)
+  endif
   return l:remover
 endfunction
 

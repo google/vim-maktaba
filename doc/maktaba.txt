@@ -117,17 +117,21 @@ Flag.Set({value}, [foci])                                         *Flag.Set()*
   will set value['a'][0]['b'] to 'leaf'.
   Throws ERROR(BadValue) when an invalid focus is requested.
 
-Flag.AddCallback({callback})                              *Flag.AddCallback()*
+Flag.AddCallback({callback}, [fire_immediately])          *Flag.AddCallback()*
   Registers {callback}. It must refer to a function. The function must take
-  one argument: the value of the flag. {callback} will be fired immediately
-  with the current value of the flag. It will be fired again every time the
-  flag changes.
+  one argument: the value of the flag. {callback} will (by default) be fired
+  immediately with the current value of the flag. It will be fired again every
+  time the flag changes.
 
   Callbacks are fired AFTER translation occurs. Callbacks are fired in order
   of their registration.
 
   This function returns a function which, when applied, unregisters
   {callback}. Hold on to it if you expect you'll need to remove {callback}.
+
+  If [fire_immediately] is zero, {callback} will only be fired when the
+  current value of the flag changes.
+  [fire_immediately] is 1 if omitted.
   Throws ERROR(BadValue) if there's already a callback registered under that
   name.
 

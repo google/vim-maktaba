@@ -90,7 +90,7 @@ and they are also called after the flag is set at any point thereafter:
   :call g:full.Set(8)
   ~ HEY THE VALUE IS 8
 
-Notice that the callback function recieves the new value as a parameter.
+Notice that the callback function receives the new value as a parameter.
 
 Callbacks are applied in the order that you register them.
 
@@ -100,12 +100,26 @@ Callbacks are applied in the order that you register them.
   :let g:rmsecond = g:full.AddCallback('Second')
   ~ FIRST! Wait...
 
-Remember tha callbacks are fired once when they're attached, AND at every change
+Remember that callbacks are fired once when they're attached, AND at every change
 thereafter.
 
   :call g:full.Set(3)
   ~ HEY THE VALUE IS 3
   ~ FIRST! Wait...
+
+The fire-when-attached behavior can also be suppressed by setting the
+fire_immediately parameter to zero. This is useful if your callback should only
+fire when a value is changed from the current value.
+
+  :function! Changed(value) abort
+  :  echomsg 'Changed!'
+  :endfunction
+  :call g:full.AddCallback('Changed', 0)
+
+  :call g:full.Set(1)
+  ~ HEY THE VALUE IS 1
+  ~ FIRST! Wait...
+  ~ Changed!
 
 You may have noticed that AddCallback returns a function. This function can be
 used to remove a registered callback:
@@ -113,12 +127,13 @@ used to remove a registered callback:
   :call maktaba#function#Apply(g:rmsecond)
   :call g:full.Set(4)
   ~ HEY THE VALUE IS 4
+  ~ Changed!
 
 
 
-Flags may also have translators. These functions receieve the value being set to
+Flags may also have translators. These functions receive the value being set to
 the flag and translate it to a different value. The flag will actually be set to
-the return value of the last translator. Translators are called in order, whith
+the return value of the last translator. Translators are called in order, with
 the return value of the first being passed to the second, and so on. The API is
 similar to the callback API.
 
@@ -129,7 +144,7 @@ similar to the callback API.
   :echomsg g:somestring.Get()
   ~ MYSTRING
 
-Notice that translators (and callbacks, as it were) are fired immeditaly upon
+Notice that translators (and callbacks, as it were) are fired immediately upon
 being attached. This makes sure that your value is never stale when you have
 translators attached. They're also fired every time you set the flag afterwards,
 of course:
@@ -197,5 +212,5 @@ has ever been a clean value), once translators are registered.
 
 In general, plugin authors will interact with flags via the plugin Flag
 function, and users will interact with flags via plugins like Glaive. You really
-only need to touch the flag objects when you want to set up tarnslators and
+only need to touch the flag objects when you want to set up translators and
 callbacks.
