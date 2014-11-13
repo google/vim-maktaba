@@ -107,12 +107,27 @@ thereafter.
   ~ HEY THE VALUE IS 3
   ~ FIRST! Wait...
 
+The fire-when-attached behavior can also be suppressed by setting the
+fire_immediately parameter to zero. This is useful if your callback should only
+fire when a value is changed from the current value.
+
+  :function! Changed(value) abort
+  :  echomsg 'Changed!'
+  :endfunction
+  :call g:full.AddCallback('Changed', 0)
+
+  :call g:full.Set(1)
+  ~ HEY THE VALUE IS 1
+  ~ FIRST! Wait...
+  ~ Changed!
+
 You may have noticed that AddCallback returns a function. This function can be
 used to remove a registered callback:
 
   :call maktaba#function#Apply(g:rmsecond)
   :call g:full.Set(4)
   ~ HEY THE VALUE IS 4
+  ~ Changed!
 
 
 
