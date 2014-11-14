@@ -48,7 +48,9 @@ endfunction
 " This is The Way to store a plugin location, by convention:
 " Fully expanded path with trailing forward slash at the end.
 function! s:Fullpath(location) abort
-  return fnamemodify(a:location, ':p:h') . '/'
+  let l:path = maktaba#path#AsDir(fnamemodify(a:location, ':p'))
+  " Replace trailing path separator with forward slash.
+  return maktaba#path#Dirname(l:path) . '/'
 endfunction
 
 
