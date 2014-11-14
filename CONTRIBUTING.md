@@ -39,6 +39,7 @@ again.
   1. Any significant changes should almost always be accompanied by tests. The
      project already has good test coverage, so look at some of the existing
      tests (in the `vroom/` directory) if you're unsure how to go about it.
+     These can be executed using [vroom](https://github.com/google/vroom).
 
   1. Do your best to have [well-formed commit messages][] for each change.
      This provides consistency throughout the project, and ensures that commit
