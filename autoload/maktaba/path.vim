@@ -151,8 +151,8 @@ endfunction
 ""
 " The dirname of {path}. Trailing slash matters. Consider:
 " >
-"   :echomsg maktaba#path#Basename('/path/to/file')
-"   :echomsg maktaba#path#Basename('/path/to/dir/')
+"   :echomsg maktaba#path#Dirname('/path/to/file')
+"   :echomsg maktaba#path#Dirname('/path/to/dir/')
 " <
 " The first echoes '/path/to', the second echoes '/path/to/dir'
 function! maktaba#path#Dirname(path) abort
