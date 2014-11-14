@@ -129,10 +129,9 @@ endfunction
 " If [fire_immediately] is zero, {callback} will only be fired when the
 " current value of the flag changes.
 " @default fire_immediately=1
-" @throws BadValue if there's already a callback registered under that name.
 function! maktaba#flags#AddCallback(F, ...) dict abort
   call maktaba#ensure#IsCallable(a:F)
-  let l:fire_immediately = get(a:, 1, 1)
+  let l:fire_immediately = maktaba#ensure#IsBool(get(a:, 1, 1))
 
   let l:remover = self._callbacks.Add(a:F)
   if l:fire_immediately
@@ -169,7 +168,6 @@ endfunction
 " This function returns a function which, when called, unregisters
 " {translator}. Hold on to it if you expect you'll need to remove
 " {translator}.
-" @throws BadValue if there's already a translator registered under that name.
 function! maktaba#flags#AddTranslator(F) dict abort
   call maktaba#ensure#IsCallable(a:F)
   let l:remover = self._translators.Add(a:F)
