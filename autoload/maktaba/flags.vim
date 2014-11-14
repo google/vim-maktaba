@@ -132,7 +132,7 @@ endfunction
 " @throws BadValue if there's already a callback registered under that name.
 function! maktaba#flags#AddCallback(F, ...) dict abort
   call maktaba#ensure#IsCallable(a:F)
-  let l:fire_immediately = get(a:, 1, 1)
+  let l:fire_immediately = maktaba#ensure#IsBool(get(a:, 1, 1))
 
   let l:remover = self._callbacks.Add(a:F)
   if l:fire_immediately
