@@ -1,5 +1,5 @@
 Maktaba has some utilities that help you deal with system paths in
-a machine-independant way. Mostly, this involves manipulating filepaths and
+a machine-independent way. Mostly, this involves manipulating filepaths and
 figuring out which directions the slashes go. This is nontrivial in vim thanks
 to the 'shellslash' setting (which allows windows users to use unix-style
 slashes).

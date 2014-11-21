@@ -7,7 +7,7 @@ that maktaba plugin files will run when vim setup is complete.
 
 Second, it checks that vi-compatibility mode is OFF. Maktaba is does not support
 vi-compatibility mode! If you're installing maktaba manually, make sure you turn
-off vi comatibility. The maktaba#CheckCompatibility function will do this for
+off vi compatibility. The maktaba#CheckCompatibility function will do this for
 you, and will print a nice warning message if you were in the wrong mode.
 
   :call maktaba#compatibility#Disable()

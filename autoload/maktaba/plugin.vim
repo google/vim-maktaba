@@ -701,7 +701,7 @@ endfunction
 ""
 " @dict Plugin
 " Tests whether the plugin has {dir}, either as a direct subdirectory or as
-" a subirectory of the after/ directory.
+" a subdirectory of the after/ directory.
 " Cached for performance, so new paths will not be discovered if they're added
 " to the plugin after the first check.
 function! maktaba#plugin#HasDir(dir) dict abort
@@ -713,7 +713,7 @@ endfunction
 
 ""
 " @dict Plugin
-" Tests wheter a plugin has a filetype-active directory (ftdetect, ftplugin,
+" Tests whether a plugin has a filetype-active directory (ftdetect, ftplugin,
 " indent, or syntax).
 function! maktaba#plugin#HasFiletypeData() dict abort
   return maktaba#rtp#DirDefinesFiletypes(self.location)

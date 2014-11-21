@@ -26,6 +26,11 @@ flag that can be configured using |Glaive| or a plugin manager that uses the
 maktaba setting API. It also supports entirely disabling commands from being
 defined by clearing the plugin[commands] flag.
 
+                                                             *helloworld:name*
+Determines who the greeting will be addressed to when |:Hello| is executed
+without an explicit name argument.
+Default: 'world' `
+
                                                  *helloworld:plugin[commands]*
 Configures whether plugin/commands.vim should be loaded.
 Default: 1 `
@@ -33,11 +38,6 @@ Default: 1 `
                                                  *helloworld:plugin[mappings]*
 Configures whether plugin/mappings.vim should be loaded.
 Default: 0 `
-
-                                                             *helloworld:name*
-Determines who the greeting will be addressed to when |:Hello| is executed
-without an explicit name argument.
-Default: 'world' `
 
 ==============================================================================
 COMMANDS                                                 *helloworld-commands*

@@ -121,5 +121,5 @@ used on all the various levels:
 |  instant/flags.vim file.
 2. Plugin code should access flags via the Flag function. In general, plugins
 |  should not set their own flags: they should set defaults and leave them be.
-3. Users change the values of flags, generaly by interacting with commands
+3. Users change the values of flags, generally by interacting with commands
 |  in plugins like Glaive, which put a user frontend on the maktaba flags API.

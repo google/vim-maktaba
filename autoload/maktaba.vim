@@ -14,7 +14,7 @@
 " recommends users install a configuration plugin like |Glaive|, or a plugin
 " manager with configuration support, to manage plugin flags.
 "
-" Also included are a univesal logging framework, error handling utilities, and
+" Also included are a universal logging framework, error handling utilities, and
 " a number of tools that make writing vimscript both safer and easier.
 
 

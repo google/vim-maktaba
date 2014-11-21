@@ -1,4 +1,4 @@
-" NOTE: Variables in this regex that start with captial letters may be funcrefs.
+" NOTE: Variables in this regex that start with capital letters may be funcrefs.
 " DO NOT change them to start with lowercase letters.
 
 " Parser regexes.
@@ -40,7 +40,7 @@ let s:leadingwhite = '\v^\s+'
 " * -= subtracts from numbers and removes from lists and dictionaries.
 " * ^= prepends to lists and strings.
 " * $= appends to lists and strings.
-" * `= sets a flag to the result of appling the function named by the value.
+" * `= sets a flag to the result of applying the function named by the value.
 "
 " Values are parsed as follows:
 " 1. Values in single or double quotes are parsed as strings.
@@ -141,7 +141,7 @@ endfunction
 " for convenience.
 " @throws NotFound if {plugin} does not define the appropriate flag.
 " @throws WrongType if the flag is not of a type the setting requires.
-" @throws BadValue if the flag has a value innapropriate for the setting.
+" @throws BadValue if the flag has a value inappropriate for the setting.
 function! maktaba#setting#Apply(plugin) dict abort
   let l:flag = self._GetFlag(a:plugin)
   try
@@ -204,7 +204,7 @@ function! maktaba#setting#AddTo(flag) dict abort
     return
   endif
   if maktaba#value#IsNumeric(l:Target)
-    " Floats and integers can be added indiscriminantly.
+    " Floats and integers can be added indiscriminately.
     call maktaba#ensure#IsNumeric(self._value)
   else
     " Everything else must be added to something of the same type.
@@ -514,11 +514,11 @@ endfunction
 " <
 " More specifically, this parses a flag name and a series of foci in square
 " brackets. A flag name may contain alphanumeric characters and underscores.
-" Flag names may also contain, BUT NOT END WITH, the following charcaters:
+" Flag names may also contain, BUT NOT END WITH, the following characters:
 " - . / : #
 "
 " Foci are kept in square brackets. They are not allowed to contain square
-" brackets. They should describe either dictionary keys or list indicies.
+" brackets. They should describe either dictionary keys or list indices.
 "
 " You're encouraged to use this function when you're exposing complex flags to
 " users. Flag handles are part of the maktaba setting syntax. See

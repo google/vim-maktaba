@@ -38,9 +38,9 @@ have not been noticed. If we edit a .newtype file, nothing happens:
   :e file.newtype
   @messages
 
-We have to load filetype files in a separate phase. Why doesn't the Load funtion
-handle this automatically? The answer is somewhat technical: loading new
-filetypes involves wiping out all filetype detection (and all syntax
+We have to load filetype files in a separate phase. Why doesn't the Load
+function handle this automatically? The answer is somewhat technical: loading
+new filetypes involves wiping out all filetype detection (and all syntax
 highlighting, and all indent code, and so on) and reloading EVERYTHING from
 scratch. This is just the way vim does things: it's a very global operation. If
 you're loading a whole bunch of plugins then you only want to reload filetype

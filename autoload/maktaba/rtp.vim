@@ -70,7 +70,7 @@ endfunction
 " Trailing slashes will be stripped, following the precedent of vim itself not
 " including trailing slashes. This is also safer since trailing backslashes on
 " Windows are a source of bugs, and it doesn't lead to ambiguity since all paths
-" should be dirs. Note that @function(#Split) converts paths back to canoncial
+" should be dirs. Note that @function(#Split) converts paths back to canonical
 " representation, with trailing slashes included.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)

@@ -161,7 +161,7 @@ maktaba#plugin#Get to get another:
   :call maktaba#ensure#IsEqual(maktaba#plugin#Get('myplugin'), g:plugin)
 
 This all works as you might expect, but none of it is very interesting. Let's
-see what the plugin object can do. It posesses some boring data, such as name
+see what the plugin object can do. It possesses some boring data, such as name
 and location:
 
   :echomsg g:plugin.name

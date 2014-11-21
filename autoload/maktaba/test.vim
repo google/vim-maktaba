@@ -1,4 +1,4 @@
-" Copied from maktaba/path.vim, which Overide may not depend upon.
+" Copied from maktaba/path.vim, which Override may not depend upon.
 let s:is_windows = exists('+shellslash')
 let s:use_backslash = s:is_windows && !&shellslash
 let s:slash = s:use_backslash ? '\' : '/'
@@ -24,7 +24,7 @@ let s:apply_function_lines = [
 
 
 ""
-" Overides the function {target} such that when it is called, {replacement} is
+" Overrides the function {target} such that when it is called, {replacement} is
 " called instead. This is particularly useful for overloading autoloaded
 " functions, which can only be done in files that are named correctly.
 " (name#spaced#Function must be defined in .../name/spaced.vim).

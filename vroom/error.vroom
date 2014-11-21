@@ -113,7 +113,7 @@ piping varargs around.
 
 Sometimes it is necessary to deconstruct an error message into the type and the
 message. This is especially useful when you want to catch an error, attach
-additional context, and re-throw it. Note that it's usually preferrable to wrap
+additional context, and re-throw it. Note that it's usually preferable to wrap
 errors, but sometimes destructuring an exception can really clean up your
 messages. maktaba#error#Split is there when you need it.
 

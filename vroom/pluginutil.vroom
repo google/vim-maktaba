@@ -88,7 +88,7 @@ one more plugin:
   :let g:ftpath = maktaba#path#Join([g:repo, 'ftplugin'])
   :let g:ftplugin = maktaba#plugin#Install(g:ftpath)
 
-Each plugin has a HasDir funtion which lets you know if a plugin has a specific
+Each plugin has a HasDir function which lets you know if a plugin has a specific
 directory, either as a direct subdirectory or in an after/ directory. You might
 want to verify the following statements in the plugins in the fakeplugin
 directory.

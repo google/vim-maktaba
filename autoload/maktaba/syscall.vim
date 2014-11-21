@@ -5,7 +5,6 @@ if !exists('s:usable_shell')
 endif
 
 
-" TODO(jhoak): correctly handle <cword>, <cfile>, etc.,
 ""
 " Escape the special chars in a {string}.  This is useful for when "execute
 " '!foo'" is used. The \ is then removed again by the :! command.  See helpdocs

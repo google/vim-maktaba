@@ -32,7 +32,7 @@ dictionary context (for dictionary functions).
 
 If you happen to know that you're holding a maktaba function object (and not
 some other callable, such as a funcref or a string naming a function) you can
-apply the funtion using the attached "apply" method.
+apply the function using the attached "apply" method.
 
   :echomsg g:getter.Apply('one')
   ~ alpha
@@ -41,7 +41,7 @@ apply the funtion using the attached "apply" method.
 
 Normally, though, you can't know whether you're dealing with a maktaba function
 dictionary, a vimscript funcref, or a simple string naming a function. When
-that's the case, you can use the makatab#function#Call function which works
+that's the case, you can use the maktaba#function#Call function which works
 with any of the above.
 
   :echomsg maktaba#function#Call(g:getter, ['three'])
@@ -80,7 +80,7 @@ Sometimes you want to use dict functions:
   :echomsg g:getone.Apply()
   ~ alpha
 
-It's also worth noting that, if a function requries no arguments, you can leave
+It's also worth noting that, if a function requires no arguments, you can leave
 the arglist off of #Apply entirely.
 
   :echomsg maktaba#function#Call(g:getone)

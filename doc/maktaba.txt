@@ -23,7 +23,7 @@ Maktaba introduces a concept of a |maktaba.Flag| for configuration, and
 recommends users install a configuration plugin like |Glaive|, or a plugin
 manager with configuration support, to manage plugin flags.
 
-Also included are a univesal logging framework, error handling utilities, and
+Also included are a universal logging framework, error handling utilities, and
 a number of tools that make writing vimscript both safer and easier.
 
 ==============================================================================
@@ -132,8 +132,6 @@ Flag.AddCallback({callback}, [fire_immediately])          *Flag.AddCallback()*
   If [fire_immediately] is zero, {callback} will only be fired when the
   current value of the flag changes.
   [fire_immediately] is 1 if omitted.
-  Throws ERROR(BadValue) if there's already a callback registered under that
-  name.
 
 Flag.Callback()                                              *Flag.Callback()*
   Fires all callbacks in order.
@@ -151,8 +149,6 @@ Flag.AddTranslator({translator})                        *Flag.AddTranslator()*
   This function returns a function which, when called, unregisters
   {translator}. Hold on to it if you expect you'll need to remove
   {translator}.
-  Throws ERROR(BadValue) if there's already a translator registered under that
-  name.
 
 Flag.Translate({value})                                     *Flag.Translate()*
   Returns the value that the flag will have after being set to {value} (after
@@ -195,11 +191,11 @@ Plugin.GenerateHelpTags()                          *Plugin.GenerateHelpTags()*
 
 Plugin.HasDir({dir})                                         *Plugin.HasDir()*
   Tests whether the plugin has {dir}, either as a direct subdirectory or as a
-  subirectory of the after/ directory. Cached for performance, so new paths
+  subdirectory of the after/ directory. Cached for performance, so new paths
   will not be discovered if they're added to the plugin after the first check.
 
 Plugin.HasFiletypeData()                            *Plugin.HasFiletypeData()*
-  Tests wheter a plugin has a filetype-active directory (ftdetect, ftplugin,
+  Tests whether a plugin has a filetype-active directory (ftdetect, ftplugin,
   indent, or syntax).
 
 Plugin.AddonInfo()                                        *Plugin.AddonInfo()*
@@ -302,7 +298,7 @@ Valid binary operators are = += -= ^= $= and `=.
   * -= subtracts from numbers and removes from lists and dictionaries.
   * ^= prepends to lists and strings.
   * $= appends to lists and strings.
-  * `= sets a flag to the result of appling the function named by the value.
+  * `= sets a flag to the result of applying the function named by the value.
 
 Values are parsed as follows:
   1. Values in single or double quotes are parsed as strings.
@@ -323,7 +319,7 @@ Setting.Apply({plugin})                                      *Setting.Apply()*
   for convenience.
   Throws ERROR(NotFound) if {plugin} does not define the appropriate flag.
   Throws ERROR(WrongType) if the flag is not of a type the setting requires.
-  Throws ERROR(BadValue) if the flag has a value innapropriate for the
+  Throws ERROR(BadValue) if the flag has a value inappropriate for the
   setting.
 
                                                              *maktaba.Syscall*
@@ -544,8 +540,8 @@ maktaba#ensure#IsCollection({value})           *maktaba#ensure#IsCollection()*
 maktaba#ensure#IsCallable({value})               *maktaba#ensure#IsCallable()*
   Ensures that {value} is callable (string or funcref). Returns it for
   convenience.  This DOES NOT assert that the function denoted by {value}
-  actually exists. It mereley ensures that {value} is the correct TYPE for
-  |maktaba#function#Call|.
+  actually exists. It merely ensures that {value} is the correct TYPE for
+  |maktaba#function#Call()|.
   Throws ERROR(WrongType) if {value} is not a string, funcref, nor dict.
   Throws ERROR(BadValue) if {value} is a dict but does not appear to be a
   funcdict.
@@ -617,7 +613,7 @@ maktaba#error#Warn({message}, [args...])                *maktaba#error#Warn()*
 maktaba#error#Shout({message}, [args...])              *maktaba#error#Shout()*
   Prints {message} in an angry red error bar for the user. Don't use
   |:echoerr|! It doesn't make that red error bar and it prints out the line in
-  the code where the error occured. It's for debugging, not messaging! If
+  the code where the error occurred. It's for debugging, not messaging! If
   [args...] are given they will be used to expand {message} as in |printf()|.
 
 maktaba#error#Exception({type}, {message}, {fmtargs})
@@ -1020,8 +1016,8 @@ maktaba#path#Basename({path})                        *maktaba#path#Basename()*
 maktaba#path#Dirname({path})                          *maktaba#path#Dirname()*
   The dirname of {path}. Trailing slash matters. Consider:
 >
-    :echomsg maktaba#path#Basename('/path/to/file')
-    :echomsg maktaba#path#Basename('/path/to/dir/')
+    :echomsg maktaba#path#Dirname('/path/to/file')
+    :echomsg maktaba#path#Dirname('/path/to/dir/')
 <
   The first echoes '/path/to', the second echoes '/path/to/dir'
 
@@ -1223,7 +1219,7 @@ maktaba#rtp#Join({paths})                                 *maktaba#rtp#Join()*
   including trailing slashes. This is also safer since trailing backslashes on
   Windows are a source of bugs, and it doesn't lead to ambiguity since all
   paths should be dirs. Note that |maktaba#rtp#Split()| converts paths back to
-  canoncial representation, with trailing slashes included.
+  canonical representation, with trailing slashes included.
 
 maktaba#rtp#Add({path})                                    *maktaba#rtp#Add()*
   Adds {path} to the runtimepath.
@@ -1314,11 +1310,11 @@ maktaba#setting#Handle({handle})                    *maktaba#setting#Handle()*
 <
   More specifically, this parses a flag name and a series of foci in square
   brackets. A flag name may contain alphanumeric characters and underscores.
-  Flag names may also contain, BUT NOT END WITH, the following charcaters:
+  Flag names may also contain, BUT NOT END WITH, the following characters:
   . / : #
 
   Foci are kept in square brackets. They are not allowed to contain square
-  brackets. They should describe either dictionary keys or list indicies.
+  brackets. They should describe either dictionary keys or list indices.
 
   You're encouraged to use this function when you're exposing complex flags to
   users. Flag handles are part of the maktaba setting syntax. See
@@ -1382,8 +1378,8 @@ maktaba#syscall#Create({cmd})                       *maktaba#syscall#Create()*
   Throws ERROR(WrongType)
 
 maktaba#test#Override({target}, {replacement})       *maktaba#test#Override()*
-  Overides the function {target} such that when it is called, {replacement} is
-  called instead. This is particularly useful for overloading autoloaded
+  Overrides the function {target} such that when it is called, {replacement}
+  is called instead. This is particularly useful for overloading autoloaded
   functions, which can only be done in files that are named correctly.
   (name#spaced#Function must be defined in .../name/spaced.vim).
 
