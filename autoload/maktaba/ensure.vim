@@ -181,8 +181,8 @@ endfunction
 ""
 " Ensures that {value} is callable (string or funcref). Returns it for
 " convenience.  This DOES NOT assert that the function denoted by {value}
-" actually exists. It mereley ensures that {value} is the correct TYPE for
-" |maktaba#function#Call|.
+" actually exists. It merely ensures that {value} is the correct TYPE for
+" @function(maktaba#function#Call).
 " @throws WrongType if {value} is not a string, funcref, nor dict.
 " @throws BadValue if {value} is a dict but does not appear to be a funcdict.
 function! maktaba#ensure#IsCallable(Value) abort

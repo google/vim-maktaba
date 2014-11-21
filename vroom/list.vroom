@@ -12,7 +12,7 @@ will be modified.
 
 
 For example, here's the maktaba#list#RemoveItem function, which removes the
-first occurance of an item from a list.
+first occurrence of an item from a list.
 
   :let g:list = [3, 1, 2, 1]
   :call maktaba#list#RemoveItem(g:list, 1)
@@ -32,7 +32,7 @@ The modified list is returned for convenience.
 
 
 
-The maktaba#list#RemoveAll function is similar, but removes all occurrances of
+The maktaba#list#RemoveAll function is similar, but removes all occurrences of
 an item in the list.
 
   :let g:list = [3, 1, 2, 1]

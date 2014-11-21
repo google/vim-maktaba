@@ -75,7 +75,7 @@ endfunction
 ""
 " Prints {message} in an angry red error bar for the user.
 " Don't use |:echoerr|! It doesn't make that red error bar and it prints out the
-" line in the code where the error occured. It's for debugging, not messaging!
+" line in the code where the error occurred. It's for debugging, not messaging!
 " If [args...] are given they will be used to expand {message} as in |printf()|.
 function! maktaba#error#Shout(message, ...) abort
   call call('s:EchoHighlighted', ['ErrorMsg', a:message] + a:000)

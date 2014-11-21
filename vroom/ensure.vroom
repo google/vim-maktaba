@@ -91,7 +91,7 @@ This is not recommended, but is often convenient when writing tests.
 
 
 
-You can also make assertions about the type of a value, analagously to
+You can also make assertions about the type of a value, analogously to
 maktaba#value:
 
   :call maktaba#ensure#TypeMatches(100, 0)

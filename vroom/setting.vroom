@@ -1,5 +1,5 @@
 Global plugin settings are a soul-rending, albeit heretofore necessary, evil.
-They're global, for one thing: you've got to remeber to confine them to ad-hoc
+They're global, for one thing: you've got to remember to confine them to ad-hoc
 namespaces. There's no way to enforce consistency in naming: Sooner or later you
 have to set g:SomePluginsCamelCasedSetting, g:inconsistent_under_scores,
 g:too_trse, or g:settings_named_such_that_they_barely_fit_on_one_line.
@@ -18,7 +18,7 @@ variable, right? Well, no. See, your code lives in a plugin/ directory
 somewhere, and the user configures your plugin via their .vimrc file, and their
 vimrc runs before your global setting is defined. They can *override* your list,
 but they cannot extend it. Global settings are hobbled. This makes it difficult
-for plugin authors to provide robust defaults for complex configuraitons, and
+for plugin authors to provide robust defaults for complex configurations, and
 frustrating for users who just want to tweak the defaults.
 
 Last but not least, global settings are opaque to both developers and users.
@@ -173,7 +173,7 @@ setting and the remainder of the string.
 
 
 
-As a shorcut, you can also use maktaba#setting#ParseAll to parse an entire
+As a shortcut, you can also use maktaba#setting#ParseAll to parse an entire
 whitespace-separated string of settings at once.
 
   :let [g:inc, g:dec] = maktaba#setting#ParseAll('number+=1 number-=1')
@@ -258,7 +258,7 @@ REGARDLESS of the original type of the flag. Observe:
   :call Is(1, Apply('dict'))
   :call Is(1, Apply('function'))
 
-They're all numbers now, despite their names and their orignial types.
+They're all numbers now, despite their names and their original types.
 
 
 
@@ -276,7 +276,7 @@ original type of the flag. Observe:
   :call Is(0, Apply('!dict'))
   :call Is(0, Apply('!function'))
 
-They're all numbers now, despite their names and their orignial types.
+They're all numbers now, despite their names and their original types.
 
 
 

@@ -41,7 +41,7 @@ sanitary:
 |  <Plug> is a map sequence that cannot be typed, but which can be mapped to. If
 |  you have complicated key mappings that are hard to replicate, but you don't
 |  know what keys the user wants to map them to, then you should use <Plug> to
-|  make the mappings avialable WITHOUT actually changing the user's mappings.
+|  make the mappings available WITHOUT actually changing the user's mappings.
 |  For example:
 |
 |    :noremap <unique> <Plug>myplugin-stutter 6j5k4j3k2j1k
@@ -59,7 +59,7 @@ sanitary:
 
 3. If you really must define key mappings, then you should place them all under
 |  a SINGLE LETTER underneath the user's chosen mapleader. For example, if you
-|  are writting a sorting plugin, you should consider placing all mappings under
+|  are writing a sorting plugin, you should consider placing all mappings under
 |  <leader>s: <leader>su to sort up, <leader>sd to sort down, and so on. This at
 |  least limits the amount of damage you can do to the user's existing mappings.
 |  Ideally, you should do this in a way that's configurable by the user.

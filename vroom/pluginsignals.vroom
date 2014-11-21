@@ -39,7 +39,7 @@ is on the runtimepath) and plugin LOADING (when the plugin files are sourced).
 For example, autoloaded functions are available after installation, before any
 plugin has time to set their g:loaded_* variable.
 
-Maktaba works aroud this issue by setting a different global variable,
+Maktaba works around this issue by setting a different global variable,
 g:installed_{plugin}, signaling that the plugin is installed (but perhaps not
 yet loaded).
 
