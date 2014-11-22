@@ -100,7 +100,7 @@ function! s:ValueParseError(setting, exception) abort
   let [l:type, l:msg] = maktaba#error#Split(a:exception)
   return maktaba#error#Message(
       \ l:type,
-      \ 'Could not parse value on setting "%s": %s.'
+      \ 'Could not parse value on setting "%s": %s.',
       \ a:setting,
       \ l:msg)
 endfunction
