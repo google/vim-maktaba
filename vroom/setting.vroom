@@ -141,22 +141,30 @@ return the new value of the flag, for convenience.
 If you apply a setting to a plugin that tries to access an invalid flag, you'll
 get errors.
 
+  :function TryMethod(dict, funcname, ...) abort<CR>
+  |  let l:func = maktaba#function#Method(a:dict, a:funcname)<CR>
+  |  return maktaba#error#Try(maktaba#function#Create(l:func, a:000))<CR>
+  |endfunction
   :let g:setting = maktaba#setting#Create('badflag=hah')
-  :let g:apply = maktaba#function#Method(g:setting, 'Apply')
-  :call maktaba#error#Try(g:apply.WithArgs(g:plugin))
+  :call TryMethod(g:setting, 'Apply', g:plugin)
   ~ ERROR(NotFound): Flag "badflag" not defined in fullplugin.
 
 In fact, you'll get informative error messages for all manner of invalid
 settings.
 
-  :let g:create = maktaba#function#Create('maktaba#setting#Create', [])
-  :call maktaba#error#Try(g:create.WithArgs('bad=flag=yes'))
+  :function Try(funcname, ...) abort<CR>
+  |  return maktaba#error#Try(maktaba#function#Create(a:funcname, a:000))<CR>
+  |endfunction
+  :call Try('maktaba#setting#Create', 'bad=flag=yes')
   ~ ERROR(BadValue): Junk after setting "bad=flag": "=yes".* (glob)
-  :call maktaba#error#Try(g:create.WithArgs('junk=w#!rd'))
+  :call Try('maktaba#setting#Create', 'junk=w#!rd')
   ~ ERROR(BadValue): Junk after setting "junk=w": "#!rd".* (glob)
-  :call maktaba#error#Try(g:create.WithArgs('!!nope'))
+  :call Try('maktaba#setting#Create', 'bad=foo::bar')
+  ~ ERROR(BadValue): Could not parse value on setting "bad=": ":bar" contains
+  | invalid characters. (Did you forget quotes?).
+  :call Try('maktaba#setting#Create', '!!nope')
   ~ ERROR(BadValue): No flag name (or invalid flag prefix) in setting "!!nope".
-  :call maktaba#error#Try(g:create.WithArgs('=3'))
+  :call Try('maktaba#setting#Create', '=3')
   ~ ERROR(BadValue): No flag name (or invalid flag prefix) in setting "=3".
 
 You can also use maktaba#setting#Parse to parse a single setting from a string
