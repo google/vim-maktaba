@@ -3,7 +3,8 @@
 " the maktaba#setting API. Maktaba will make sure this file is sourced
 " immediately when the plugin is installed so that flags are defined and
 " initialized to their default values before users configure them. See
-" go/write-maktaba-plugin for details.
+" https://github.com/google/vim-maktaba/wiki/Creating-Vim-Plugins-with-Maktaba
+" for details.
 
 ""
 " @section Introduction, intro
