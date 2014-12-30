@@ -59,6 +59,9 @@ function! maktaba#buffer#Overwrite(startline, endline, lines) abort
   " If python is available, use difflib-based python implementation, which can
   " overwrite only modified chunks and leave equal chunks undisturbed.
   if has('python')
+    " TODO: This can throw NotFound if the module fails to load, in which case
+    " we perhaps want to log a warning and fall back to the Vimscript
+    " implementation.
     call maktaba#python#ImportModule(s:plugin, 'maktaba')
     python maktaba.OverwriteBufferLines(
         \ int(vim.eval('a:startline')),

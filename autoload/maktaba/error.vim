@@ -99,6 +99,7 @@ endfunction
 "
 " {type} must contain only letters, numbers, underscores, and hyphens.
 " @throws BadValue if {type} contains invalid characters.
+" @throws WrongType if {type} is not a string.
 function! maktaba#error#Exception(type, message, fmtargs) abort
   call maktaba#ensure#Matches(a:type, s:errortype)
   if empty(a:fmtargs)
@@ -120,6 +121,7 @@ endfunction
 "
 " {type} must contain only letters, numbers, underscores, and hyphens.
 " @throws BadValue if {type} contains invalid characters.
+" @throws WrongType if {type} is not a string.
 function! maktaba#error#Message(type, message, ...) abort
   return maktaba#error#Exception(a:type, a:message, a:000)
 endfunction
@@ -250,6 +252,9 @@ endfunction
 "
 " @default exceptions=.*
 " @default default=0
+" @throws BadValue if {func} is not a funcdict.
+" @throws WrongType if {func} is not callable, or if [exceptions] is neither a
+" regex nor a list.
 function! maktaba#error#Try(F, ...) abort
   let l:exceptions = maktaba#ensure#TypeMatchesOneOf(get(a:, 1, '.*'), [[], ''])
   if maktaba#value#IsList(l:exceptions)
@@ -272,6 +277,7 @@ endfunction
 ""
 " Like @function(#Try), but executes {command} instead of calling a function.
 " @default exceptions=.*
+" @throws WrongType if [exceptions] is neither a regex nor a list.
 function! maktaba#error#TryCommand(command, ...) abort
   let l:exceptions = maktaba#ensure#TypeMatchesOneOf(get(a:, 1, '.*'), [[], ''])
   if type(l:exceptions) == type([])

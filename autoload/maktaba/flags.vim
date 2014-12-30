@@ -63,6 +63,7 @@ endfunction
 " Flag values are locked. If you need to do complex manipulation on a flag
 " value, you must copy it and commit the copied value using |Flag.Set|.
 " @throws BadValue if [foci] are invalid.
+" @throws WrongType if [foci] contains the wrong types to index the flag.
 function! maktaba#flags#Get(...) dict abort
   return maktaba#value#Focus(self._value, get(a:, 1, []))
 endfunction
@@ -80,6 +81,7 @@ endfunction
 " are locked. Remember that if you change the copy the flag itself won't change
 " until you call |Flag.Set|.
 " @throws BadValue if [foci] are invalid.
+" @throws WrongType if [foci] contains the wrong types to index the flag.
 function! maktaba#flags#GetCopy(...) dict abort
   return deepcopy(call('maktaba#flags#Get', a:000, self))
 endfunction
@@ -94,6 +96,7 @@ endfunction
 " <
 " will set value['a'][0]['b'] to 'leaf'.
 " @throws BadValue when an invalid focus is requested.
+" @throws WrongType if [foci] contains the wrong types to index the flag.
 function! maktaba#flags#Set(Value, ...) dict abort
   let l:foci = maktaba#ensure#IsList(get(a:, 1, []))
   if empty(l:foci)
@@ -129,6 +132,8 @@ endfunction
 " If [fire_immediately] is zero, {callback} will only be fired when the
 " current value of the flag changes.
 " @default fire_immediately=1
+" @throws WrongType if {callback} is not callable.
+" @throws BadValue if {callback} is not a funcdict.
 function! maktaba#flags#AddCallback(F, ...) dict abort
   call maktaba#ensure#IsCallable(a:F)
   let l:fire_immediately = maktaba#ensure#IsBool(get(a:, 1, 1))
@@ -168,6 +173,8 @@ endfunction
 " This function returns a function which, when called, unregisters
 " {translator}. Hold on to it if you expect you'll need to remove
 " {translator}.
+" @throws WrongType if {callback} is not callable.
+" @throws BadValue if {callback} is not a funcdict.
 function! maktaba#flags#AddTranslator(F) dict abort
   call maktaba#ensure#IsCallable(a:F)
   let l:remover = self._translators.Add(a:F)
