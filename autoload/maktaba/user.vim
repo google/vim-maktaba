@@ -5,8 +5,9 @@ function! maktaba#user#Name()
 endfunction
 
 ""
-" Gets a directory that can be used for cache files.
+" Gets a directory that can be used for cache files, creating it if necessary.
 " Respects $XDG_CACHE_HOME if present.
+" @throws NotAuthorized if the directory does not exist and cannot be created.
 function! maktaba#user#CacheDir()
   if !empty($XDG_CACHE_HOME)
     let l:dir = maktaba#path#Join([$XDG_CACHE_HOME, 'vim'])
@@ -22,8 +23,9 @@ function! maktaba#user#CacheDir()
 endfunction
 
 ""
-" Gets a directory that can be used for data files.
+" Gets a directory that can be used for data files, creating it if necessary.
 " Respects $XDG_DATA_HOME if present.
+" @throws NotAuthorized if the directory does not exist and cannot be created.
 function! maktaba#user#DataDir()
   if !empty($XDG_DATA_HOME)
     let l:dir = maktaba#path#Join([$XDG_DATA_HOME, 'vim'])
@@ -37,7 +39,8 @@ function! maktaba#user#DataDir()
 endfunction
 
 ""
-" Gets a directory that can be used for config files.
+" Gets a directory that can be used for config files, creating it if
+" necessary.
 " Respects $XDG_CONFIG_HOME if present.
 " @throws NotAuthorized if the directory does not exist and cannot be created.
 function! maktaba#user#ConfigDir()

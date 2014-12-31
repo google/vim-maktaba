@@ -73,6 +73,8 @@ endif
 " There is no equivalent function for checking an upper bound. This is designed
 " to prevent unsatisfiable dependencies such as one plugin requiring <2.0.0 and
 " another requiring >=2.1.0. Enforcing a maximum version is discouraged.
+" @throws BadValue if {version} is not a valid Maktaba version number.
+" @throws WrongType
 function! maktaba#IsAtLeastVersion(version) abort
   call maktaba#ensure#Matches(a:version, '\v^\d+\.\d+\.\d+')
   " Extract MAJOR.MINOR.PATCH, ignoring any additional labels like "rc1".

@@ -53,6 +53,8 @@ endfunction
 "   echomsg g:animals.PIG  " This will echo 1.
 " <
 " @throws BadValue if {names} is invalid.
+" @throws WrongType if {names} is not a collection, or contains names that are
+"     not strings.
 function! maktaba#enum#Create(names) abort
   if empty(a:names)
     throw maktaba#error#BadValue('Enum must have at least one name.')
@@ -123,6 +125,8 @@ endfunction
 " @dict Enum
 " Gets the value of the enum at {name}.
 " @throws NotFound if no such name exists on the enum.
+" @throws BadValue if {name} is not a valid enum name.
+" @throws WrongType if {name} is not a string.
 function! maktaba#enum#Value(name) dict abort
   call s:EnsureEnumName(a:name)
   if has_key(self, a:name)

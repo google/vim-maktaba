@@ -6,6 +6,7 @@ let s:EmptyFn = function('empty')
 " formatted with [args...].
 " @default message="No message given."
 " @throws Failure if {condition} is zero.
+" @throws WrongType if {condition} is not a number.
 function! maktaba#ensure#IsTrue(condition, ...) abort
   call maktaba#ensure#IsNumber(a:condition)
   if a:condition
@@ -21,6 +22,7 @@ endfunction
 " formatted with [args...].
 " @default message="No message given."
 " @throws Failure if {condition} is nonzero.
+" @throws WrongType if {condition} is not a number.
 function! maktaba#ensure#IsFalse(condition, ...) abort
   let l:args = [!maktaba#ensure#IsNumber(a:condition)] + a:000
   return call('maktaba#ensure#IsTrue', l:args)
@@ -52,6 +54,7 @@ endfunction
 " Ensures that {value} is in {values}.
 " Returns {value} for convenience.
 " @throws BadValue if {value} is not contained in {values}
+" @throws BadValue if {values} is not a list.
 function! maktaba#ensure#IsIn(Value, values) abort
   if maktaba#value#IsIn(a:Value, a:values)
     return a:Value
@@ -69,6 +72,7 @@ endfunction
 " should return 1 or 0. On a 1, {value} is returned. On a 0, a BadValue error is
 " thrown. Returns {value} for convenience.
 " @throws BadValue if {value} does not pass {predicate}.
+" @throws WrongType if {predicate} is not callable.
 function! maktaba#ensure#Passes(Value, P) abort
   call maktaba#ensure#IsCallable(a:P)
   if maktaba#function#Apply(a:P, a:Value)
@@ -230,6 +234,7 @@ endfunction
 ""
 " Ensures {path} exists on the filesystem. Returns {path} for convenience.
 " @throws NotFound otherwise.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#PathExists(path) abort
   call maktaba#ensure#IsString(a:path)
   if maktaba#path#Exists(a:path)
@@ -243,6 +248,7 @@ endfunction
 " Ensures {path} is an existing directory. Returns {path} for convenience.
 " @throws NotFound if {path} does not exist.
 " @throws BadValue if {path} is a file.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#IsDirectory(path) abort
   call maktaba#ensure#IsString(a:path)
   if maktaba#path#Exists(a:path)
@@ -259,6 +265,7 @@ endfunction
 " Ensures {path} is an existing file. Returns {path} for convenience.
 " @throws NotFound if {path} does not exist.
 " @throws BadValue if {path} is a directory.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#IsFile(path) abort
   call maktaba#ensure#IsString(a:path)
   if maktaba#path#Exists(a:path)
@@ -276,6 +283,7 @@ endfunction
 " @throws NotFound if {path} does not exist.
 " @throws BadValue if {path} is a directory.
 " @throws NotAuthorized if {path} cannot be read.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#FileReadable(path) abort
   call maktaba#ensure#IsFile(a:path)
   if filereadable(a:path)
@@ -290,6 +298,7 @@ endfunction
 " @throws NotFound if {path} does not exist.
 " @throws BadValue if {path} is a directory.
 " @throws NotAuthorized if {path} cannot be written.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#FileWritable(path) abort
   call maktaba#ensure#IsFile(a:path)
   if filewritable(a:path)
@@ -302,6 +311,7 @@ endfunction
 ""
 " Ensures {path} is an absolute path. Returns {path} for convenience.
 " @throws BadValue if {path} is not absolute.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#IsAbsolutePath(path) abort
   call maktaba#ensure#IsString(a:path)
   if maktaba#path#IsAbsolute(a:path)
@@ -314,6 +324,7 @@ endfunction
 ""
 " Ensures {path} is a relative path. Returns {path} for convenience.
 " @throws BadValue if {path} is not relative.
+" @throws WrongType if {path} is not a string.
 function! maktaba#ensure#IsRelativePath(path) abort
   call maktaba#ensure#IsString(a:path)
   if maktaba#path#IsRelative(a:path)

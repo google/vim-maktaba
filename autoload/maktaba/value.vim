@@ -69,6 +69,7 @@ endfunction
 
 ""
 " Whether {value} is in {list}.
+" @throws BadValue if {list} is not a list.
 function! maktaba#value#IsIn(Value, list)
   return index(maktaba#ensure#IsList(a:list), a:Value) >= 0
 endfunction
@@ -224,6 +225,7 @@ endfunction
 " The only real reason to use this code is because it destructures {target} in
 " a safe way, throwing exceptions if the implicit assumptions aren't met.
 " @throws BadValue if {target} cannot be deconstructed the way {foci} expects.
+" @throws WrongType if {foci} contains the wrong types to index {target}.
 function! maktaba#value#Focus(Target, foci, ...) abort
   call maktaba#ensure#IsList(a:foci)
   if a:0 == 0

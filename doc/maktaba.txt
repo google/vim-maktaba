@@ -71,6 +71,8 @@ Enum.Names()                                                    *Enum.Names()*
 Enum.Value({name})                                              *Enum.Value()*
   Gets the value of the enum at {name}.
   Throws ERROR(NotFound) if no such name exists on the enum.
+  Throws ERROR(BadValue) if {name} is not a valid enum name.
+  Throws ERROR(WrongType) if {name} is not a string.
 
 Enum.Values()                                                  *Enum.Values()*
   Gets all values on the enum, in order.
@@ -95,6 +97,8 @@ Flag.Get([foci])                                                  *Flag.Get()*
   Flag values are locked. If you need to do complex manipulation on a flag
   value, you must copy it and commit the copied value using |Flag.Set|.
   Throws ERROR(BadValue) if [foci] are invalid.
+  Throws ERROR(WrongType) if [foci] contains the wrong types to index the
+  flag.
 
 Flag.GetCopy([foci])                                          *Flag.GetCopy()*
   Gets a deep copy of the value of the flag. You may give [foci] to focus on
@@ -107,6 +111,8 @@ Flag.GetCopy([foci])                                          *Flag.GetCopy()*
   values are locked. Remember that if you change the copy the flag itself
   won't change until you call |Flag.Set|.
   Throws ERROR(BadValue) if [foci] are invalid.
+  Throws ERROR(WrongType) if [foci] contains the wrong types to index the
+  flag.
 
 Flag.Set({value}, [foci])                                         *Flag.Set()*
   Sets the flag to {value}. If [foci] are given, they target a specific part
@@ -116,6 +122,8 @@ Flag.Set({value}, [foci])                                         *Flag.Set()*
 <
   will set value['a'][0]['b'] to 'leaf'.
   Throws ERROR(BadValue) when an invalid focus is requested.
+  Throws ERROR(WrongType) if [foci] contains the wrong types to index the
+  flag.
 
 Flag.AddCallback({callback}, [fire_immediately])          *Flag.AddCallback()*
   Registers {callback}. It must refer to a function. The function must take
@@ -132,6 +140,8 @@ Flag.AddCallback({callback}, [fire_immediately])          *Flag.AddCallback()*
   If [fire_immediately] is zero, {callback} will only be fired when the
   current value of the flag changes.
   [fire_immediately] is 1 if omitted.
+  Throws ERROR(WrongType) if {callback} is not callable.
+  Throws ERROR(BadValue) if {callback} is not a funcdict.
 
 Flag.Callback()                                              *Flag.Callback()*
   Fires all callbacks in order.
@@ -149,6 +159,8 @@ Flag.AddTranslator({translator})                        *Flag.AddTranslator()*
   This function returns a function which, when called, unregisters
   {translator}. Hold on to it if you expect you'll need to remove
   {translator}.
+  Throws ERROR(WrongType) if {callback} is not callable.
+  Throws ERROR(BadValue) if {callback} is not a funcdict.
 
 Flag.Translate({value})                                     *Flag.Translate()*
   Returns the value that the flag will have after being set to {value} (after
@@ -397,6 +409,8 @@ maktaba#IsAtLeastVersion({version})               *maktaba#IsAtLeastVersion()*
   designed to prevent unsatisfiable dependencies such as one plugin requiring
   <2.0.0 and another requiring >=2.1.0. Enforcing a maximum version is
   discouraged.
+  Throws ERROR(BadValue) if {version} is not a valid Maktaba version number.
+  Throws ERROR(WrongType)
 
 maktaba#LateLoad([cycle])                                 *maktaba#LateLoad()*
   This function essentially mimics the vim plugin installation phase. All
@@ -458,6 +472,7 @@ maktaba#ensure#IsTrue({condition}, [message], [args...])
   formatted with [args...].
   [message] is "No message given." if omitted.
   Throws ERROR(Failure) if {condition} is zero.
+  Throws ERROR(WrongType) if {condition} is not a number.
 
 maktaba#ensure#IsFalse({condition}, [message], [args...])
                                                     *maktaba#ensure#IsFalse()*
@@ -465,6 +480,7 @@ maktaba#ensure#IsFalse({condition}, [message], [args...])
   formatted with [args...].
   [message] is "No message given." if omitted.
   Throws ERROR(Failure) if {condition} is nonzero.
+  Throws ERROR(WrongType) if {condition} is not a number.
 
 maktaba#ensure#IsEqual({value}, {reference})        *maktaba#ensure#IsEqual()*
   Ensures that {value} is equal to {reference}. Returns {value} for
@@ -478,6 +494,7 @@ maktaba#ensure#IsEqual({value}, {reference})        *maktaba#ensure#IsEqual()*
 maktaba#ensure#IsIn({value}, {values})                 *maktaba#ensure#IsIn()*
   Ensures that {value} is in {values}. Returns {value} for convenience.
   Throws ERROR(BadValue) if {value} is not contained in {values}
+  Throws ERROR(BadValue) if {values} is not a list.
 
 maktaba#ensure#Passes({value}, {predicate})          *maktaba#ensure#Passes()*
   Ensures that {value} passes {predicate}. {predicate} must be something
@@ -485,6 +502,7 @@ maktaba#ensure#Passes({value}, {predicate})          *maktaba#ensure#Passes()*
   should return 1 or 0. On a 1, {value} is returned. On a 0, a BadValue error
   is thrown. Returns {value} for convenience.
   Throws ERROR(BadValue) if {value} does not pass {predicate}.
+  Throws ERROR(WrongType) if {predicate} is not callable.
 
 maktaba#ensure#TypeMatches({value}, {reference})
                                                 *maktaba#ensure#TypeMatches()*
@@ -561,36 +579,43 @@ maktaba#ensure#Matches({value}, {regex})            *maktaba#ensure#Matches()*
 maktaba#ensure#PathExists({path})                *maktaba#ensure#PathExists()*
   Ensures {path} exists on the filesystem. Returns {path} for convenience.
   Throws ERROR(NotFound) otherwise.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#IsDirectory({path})              *maktaba#ensure#IsDirectory()*
   Ensures {path} is an existing directory. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a file.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#IsFile({path})                        *maktaba#ensure#IsFile()*
   Ensures {path} is an existing file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#FileReadable({path})            *maktaba#ensure#FileReadable()*
   Ensures {path} is a readable file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
   Throws ERROR(NotAuthorized) if {path} cannot be read.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#FileWritable({path})            *maktaba#ensure#FileWritable()*
   Ensures {path} is a writable file. Returns {path} for convenience.
   Throws ERROR(NotFound) if {path} does not exist.
   Throws ERROR(BadValue) if {path} is a directory.
   Throws ERROR(NotAuthorized) if {path} cannot be written.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#IsAbsolutePath({path})        *maktaba#ensure#IsAbsolutePath()*
   Ensures {path} is an absolute path. Returns {path} for convenience.
   Throws ERROR(BadValue) if {path} is not absolute.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#ensure#IsRelativePath({path})        *maktaba#ensure#IsRelativePath()*
   Ensures {path} is a relative path. Returns {path} for convenience.
   Throws ERROR(BadValue) if {path} is not relative.
+  Throws ERROR(WrongType) if {path} is not a string.
 
 maktaba#enum#Create({names})                           *maktaba#enum#Create()*
   Creates an enum object from {names}. {names} may be a list of names (in
@@ -605,6 +630,9 @@ maktaba#enum#Create({names})                           *maktaba#enum#Create()*
     echomsg g:animals.PIG  " This will echo 1.
 <
   Throws ERROR(BadValue) if {names} is invalid.
+  Throws ERROR(WrongType) if {names} is not a collection, or contains names
+  that are
+      not strings.
 
 maktaba#error#Warn({message}, [args...])                *maktaba#error#Warn()*
   Prints {message} in a red warning bar for the user. {message} will be
@@ -635,6 +663,7 @@ maktaba#error#Exception({type}, {message}, {fmtargs})
 
   {type} must contain only letters, numbers, underscores, and hyphens.
   Throws ERROR(BadValue) if {type} contains invalid characters.
+  Throws ERROR(WrongType) if {type} is not a string.
 
 maktaba#error#Message({type}, {message}, [args...])  *maktaba#error#Message()*
   Makes an error message in the Google vimscript error format. The error
@@ -646,6 +675,7 @@ maktaba#error#Message({type}, {message}, [args...])  *maktaba#error#Message()*
 
   {type} must contain only letters, numbers, underscores, and hyphens.
   Throws ERROR(BadValue) if {type} contains invalid characters.
+  Throws ERROR(WrongType) if {type} is not a string.
 
 maktaba#error#Split({exception})                       *maktaba#error#Split()*
   Breaks {exception} message into the error type and the error message.
@@ -676,11 +706,16 @@ maktaba#error#Try({func}, [exceptions], [default])       *maktaba#error#Try()*
 
   [exceptions] is .* if omitted.
   [default] is 0 if omitted.
+  Throws ERROR(BadValue) if {func} is not a funcdict.
+  Throws ERROR(WrongType) if {func} is not callable, or if [exceptions] is
+  neither a
+      regex nor a list.
 
 maktaba#error#TryCommand({command}, [exceptions]) *maktaba#error#TryCommand()*
   Like |maktaba#error#Try()|, but executes {command} instead of calling a
   function.
   [exceptions] is .* if omitted.
+  Throws ERROR(WrongType) if [exceptions] is neither a regex nor a list.
 
 maktaba#filetype#IsEnabled()                    *maktaba#filetype#IsEnabled()*
   Returns 1 if filetype detection is enabled in vim, 0 otherwise.
@@ -1398,16 +1433,20 @@ maktaba#user#Name()                                      *maktaba#user#Name()*
   Gets the user's name.
 
 maktaba#user#CacheDir()                              *maktaba#user#CacheDir()*
-  Gets a directory that can be used for cache files. Respects $XDG_CACHE_HOME
-  if present.
+  Gets a directory that can be used for cache files, creating it if necessary.
+  Respects $XDG_CACHE_HOME if present.
+  Throws ERROR(NotAuthorized) if the directory does not exist and cannot be
+  created.
 
 maktaba#user#DataDir()                                *maktaba#user#DataDir()*
-  Gets a directory that can be used for data files. Respects $XDG_DATA_HOME if
-  present.
+  Gets a directory that can be used for data files, creating it if necessary.
+  Respects $XDG_DATA_HOME if present.
+  Throws ERROR(NotAuthorized) if the directory does not exist and cannot be
+  created.
 
 maktaba#user#ConfigDir()                            *maktaba#user#ConfigDir()*
-  Gets a directory that can be used for config files. Respects
-  $XDG_CONFIG_HOME if present.
+  Gets a directory that can be used for config files, creating it if
+  necessary. Respects $XDG_CONFIG_HOME if present.
   Throws ERROR(NotAuthorized) if the directory does not exist and cannot be
   created.
 
@@ -1425,6 +1464,7 @@ maktaba#value#IsEqual({a}, {b})                      *maktaba#value#IsEqual()*
 
 maktaba#value#IsIn({value}, {list})                     *maktaba#value#IsIn()*
   Whether {value} is in {list}.
+  Throws ERROR(BadValue) if {list} is not a list.
 
 maktaba#value#EmptyValue({value})                 *maktaba#value#EmptyValue()*
   Returns the empty value for {value}. This is 0, 0.0, '', [], {}, or 'empty',
@@ -1491,6 +1531,8 @@ maktaba#value#Focus({target}, {foci}, [value])         *maktaba#value#Focus()*
   a safe way, throwing exceptions if the implicit assumptions aren't met.
   Throws ERROR(BadValue) if {target} cannot be deconstructed the way {foci}
   expects.
+  Throws ERROR(WrongType) if {foci} contains the wrong types to index
+  {target}.
 
 maktaba#value#Save({variable})                          *maktaba#value#Save()*
   Captures the state of a {variable} into a returned dict. The return value
