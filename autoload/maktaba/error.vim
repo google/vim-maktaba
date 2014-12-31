@@ -254,7 +254,7 @@ endfunction
 " @default default=0
 " @throws BadValue if {func} is not a funcdict.
 " @throws WrongType if {func} is not callable, or if [exceptions] is neither a
-" regex nor a list.
+"     regex nor a list.
 function! maktaba#error#Try(F, ...) abort
   let l:exceptions = maktaba#ensure#TypeMatchesOneOf(get(a:, 1, '.*'), [[], ''])
   if maktaba#value#IsList(l:exceptions)

@@ -54,7 +54,7 @@ endfunction
 " <
 " @throws BadValue if {names} is invalid.
 " @throws WrongType if {names} is not a collection, or contains names that are
-" not strings.
+"     not strings.
 function! maktaba#enum#Create(names) abort
   if empty(a:names)
     throw maktaba#error#BadValue('Enum must have at least one name.')

@@ -632,7 +632,7 @@ maktaba#enum#Create({names})                           *maktaba#enum#Create()*
   Throws ERROR(BadValue) if {names} is invalid.
   Throws ERROR(WrongType) if {names} is not a collection, or contains names
   that are
-  not strings.
+      not strings.
 
 maktaba#error#Warn({message}, [args...])                *maktaba#error#Warn()*
   Prints {message} in a red warning bar for the user. {message} will be
@@ -709,7 +709,7 @@ maktaba#error#Try({func}, [exceptions], [default])       *maktaba#error#Try()*
   Throws ERROR(BadValue) if {func} is not a funcdict.
   Throws ERROR(WrongType) if {func} is not callable, or if [exceptions] is
   neither a
-  regex nor a list.
+      regex nor a list.
 
 maktaba#error#TryCommand({command}, [exceptions]) *maktaba#error#TryCommand()*
   Like |maktaba#error#Try()|, but executes {command} instead of calling a
