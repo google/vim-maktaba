@@ -396,10 +396,11 @@ function! maktaba#plugin#Get(name) abort
   endif
 
   " Check if any dir on runtimepath is a plugin that hasn't been detected yet.
-  let l:leafdirs = maktaba#rtp#LeafDirs()
-  if has_key(l:leafdirs, a:name)
-    return maktaba#plugin#GetOrInstall(l:leafdirs[a:name])
-  endif
+  for [l:leafdir, l:leafpath] in items(maktaba#rtp#LeafDirs())
+    if maktaba#plugin#CanonicalName(l:leafdir) is# l:name
+      return maktaba#plugin#GetOrInstall(l:leafpath)
+    endif
+  endfor
 
   throw maktaba#error#NotFound('Plugin %s', a:name)
 endfunction

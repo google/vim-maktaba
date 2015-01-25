@@ -88,10 +88,24 @@ even if they haven't been registered with maktaba yet.
 
   :let g:tmpsource = tempname()
   :call mkdir(g:tmpsource)
-  :let g:tmpplugin = maktaba#path#Join([g:tmpsource, 'tmpplugin'])
-  :call mkdir(g:tmpplugin)
-  :let &runtimepath .= ',' . g:tmpplugin
-  :call maktaba#ensure#IsTrue(maktaba#plugin#IsRegistered('tmpplugin'))
+  :function MakeLibDir(name)<CR>
+  |  let l:path = maktaba#path#Join([g:tmpsource, a:name])<CR>
+  |  call mkdir(l:path)<CR>
+  |  call mkdir(maktaba#path#Join([l:path, 'autoload']))<CR>
+  |  return l:path<CR>
+  |endfunction
+  :let &runtimepath .= ',' . MakeLibDir('tmplib1')
+  :call maktaba#library#Require('tmplib1')
+  :call maktaba#ensure#IsTrue(maktaba#plugin#IsRegistered('tmplib1'))
+
+These will be detected even if the directory name is not an exact match, as long
+as it canonicalizes to the same name.
+
+  :let &runtimepath .= ',' . MakeLibDir('vim-tmplib2')
+  :call maktaba#library#Require('tmplib2')
+
+  :let &runtimepath .= ',' . MakeLibDir('tmplib3.vim')
+  :call maktaba#library#Require('tmplib3')
 
 Note that installers are only called the first time a plugin is installed. To
 see this, let's install a louder installer.
