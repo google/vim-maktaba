@@ -1,5 +1,7 @@
 "" Utilities for making system calls and dealing with the shell.
 
+let s:callbacks = {}
+
 if !exists('s:usable_shell')
   let s:usable_shell = '\v^/bin/sh$'
 endif
@@ -67,6 +69,24 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
 endfunction
 
 
+" Execute a function in given tab, used for callbacks of asynchronous actions.
+function! s:CallbackInTab(callback, source_tab) abort
+  call maktaba#ensure#IsCallable(a:callback)
+  call maktaba#ensure#IsNumber(a:source_tab)
+  let l:current_tab = tabpagenr()
+  let l:state = maktaba#value#Save('lazyredraw')
+  let &lazyredraw = 1
+  try
+    silent! execute "tabnext " . a:source_tab
+    call maktaba#function#Apply(a:callback)
+    silent! execute "tabnext " . l:current_tab
+    redraw!
+  finally
+    call maktaba#value#Restore(l:state)
+  endtry
+endfunction
+
+
 ""
 " @private
 " @dict Syscall
@@ -88,6 +108,55 @@ function! maktaba#syscall#DoCall() abort dict
   endtry
   return l:return_data
 endfunction
+
+
+""
+" @private
+" @dict Syscall
+" Calls |system()| asynchronously, and invokes a @function(this.callback) once
+" the command completes, passing in stdout, stderr and exit code to it.
+" The specific implementation for @function(#CallAsync).
+function! maktaba#syscall#DoCallAsync() abort dict
+  if empty(v:servername)
+    throw maktaba#error#Message('ShellError', 'Cannot run async commands, no' .
+	\ ' --servername flag passed to vim. See :help servername.')
+  elseif !has('clientserver')
+    throw maktaba#error#Message('ShellError', 'Cannot run async commands, ' .
+	\ 'vim was compiled without +clientserver. See :help clientserver')
+  endif
+
+  if has("gui_running") && has("gui_macvim") && executable('mvim')
+    let l:binary = "mvim"
+  elseif executable('vim')
+    let l:binary = "vim"
+  elseif has("gui_running") && executable('gvim')
+    let l:binary = "gvim"
+  else
+    throw maktaba#error#NotFound('Vim binary not found, aborting async call.')
+  endif
+
+  let l:error_file = tempname()
+  let l:output_file = tempname()
+  let l:callback_cmd = join([
+	\ l:binary,
+	\ '--servername ' . v:servername,
+	\ '--remote-expr',
+	\ '"maktaba#syscall#AsyncDone(',
+	\ "'" . l:output_file . "', ",
+	\ "'" . l:error_file . "', ",
+	\ '$?',
+	\ ')"'], " ")
+  let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
+	\ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
+  let s:callbacks[l:output_file] = {
+	\ 'function': maktaba#ensure#IsCallable(self.callback),
+	\ 'tab': tabpagenr()}
+  echomsg s:EscapeSpecialChars(l:full_cmd)
+  silent execute '! ' . s:EscapeSpecialChars(l:full_cmd)
+  redraw!
+  return {}
+endfunction
+
 
 ""
 " @private
@@ -129,6 +198,7 @@ function! maktaba#syscall#Create(cmd) abort
       \ 'And': function('maktaba#syscall#And'),
       \ 'Or': function('maktaba#syscall#Or'),
       \ 'Call': function('maktaba#syscall#Call'),
+      \ 'CallAsync': function('maktaba#syscall#CallAsync'),
       \ 'CallForeground': function('maktaba#syscall#CallForeground'),
       \ 'GetCommand': function('maktaba#syscall#GetCommand')}
 endfunction
@@ -216,6 +286,23 @@ endfunction
 
 ""
 " @dict Syscall
+" Executes the system asynchronously and invokes the callback on completion.
+" If [throw_errors] is 1, any exit code from the command will cause a ShellError
+" to be thrown. Otherwise, the caller is responsible for checking
+" |v:shell_error| and handling error conditions.
+" @default throw_errors=1
+" @throws WrongType
+" @throws ShellError if the shell command returns an exit code.
+function! maktaba#syscall#CallAsync(...) abort dict
+  let self.callback = maktaba#ensure#IsCallable(get(a:, 1))
+  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 2, 1))
+  let l:call_func = maktaba#function#Create('maktaba#syscall#DoCallAsync', [],
+	\ self)
+  return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
+endfunction
+
+""
+" @dict Syscall
 " Executes the system call in the foreground, showing the output to the user.
 " If {pause} is 1, output will stay on the screen until the user presses Enter.
 " If [throw_errors] is 1, any exit code from the command will cause a ShellError
@@ -270,4 +357,21 @@ endfunction
 function! maktaba#syscall#SetUsableShellRegex(regex) abort
   call maktaba#ensure#IsString(a:regex)
   let s:usable_shell = a:regex
+endfunction
+
+
+""
+" @public
+" Executes the asynchronous callback setup by @function(Syscall.CallAsync).
+" The callback must be of prototype: callback(stdout, stderr, exit_code).
+function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
+  let l:callback_info = s:callbacks[a:stdout_file]
+  let l:stdout = join(readfile(a:stdout_file), "\n")
+  let l:stderr = join(readfile(a:stderr_file), "\n")
+  unlet s:callbacks[a:stdout_file]
+  call delete(a:stdout_file)
+  call delete(a:stderr_file)
+  let l:closure = maktaba#function#WithArgs(l:callback_info['function'],
+	\ l:stdout, l:stderr, a:exit_code)
+  call s:CallbackInTab(l:closure, l:callback_info['tab'])
 endfunction
