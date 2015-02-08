@@ -151,7 +151,6 @@ function! maktaba#syscall#DoCallAsync() abort dict
   let s:callbacks[l:output_file] = {
 	\ 'function': maktaba#ensure#IsCallable(self.callback),
 	\ 'tab': tabpagenr()}
-  echomsg s:EscapeSpecialChars(l:full_cmd)
   silent execute '! ' . s:EscapeSpecialChars(l:full_cmd)
   redraw!
   return {}
