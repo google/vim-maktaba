@@ -1,6 +1,7 @@
 "" Utilities for making system calls and dealing with the shell.
 
 let s:callbacks = {}
+let s:async_disabled = 0
 
 if !exists('s:usable_shell')
   let s:usable_shell = '\v^/bin/sh$'
@@ -77,10 +78,10 @@ function! s:CallbackInTab(callback, source_tab) abort
   let l:state = maktaba#value#Save('lazyredraw')
   let &lazyredraw = 1
   try
-    silent! execute "tabnext " . a:source_tab
+    execute "tabnext " . a:source_tab
     call maktaba#function#Apply(a:callback)
-    silent! execute "tabnext " . l:current_tab
-    redraw!
+    execute "tabnext " . l:current_tab
+    redraw
   finally
     call maktaba#value#Restore(l:state)
   endtry
@@ -111,20 +112,43 @@ endfunction
 
 
 ""
+" @public
+" Returns whether the current vim session supports asynchronous calls.
+function! maktaba#syscall#IsAsyncAvailable()
+  return !s:async_disabled && !empty(v:servername) && has('clientserver')
+endfunction
+
+
+""
 " @private
 " @dict Syscall
 " Calls |system()| asynchronously, and invokes a @function(this.callback) once
 " the command completes, passing in stdout, stderr and exit code to it.
 " The specific implementation for @function(#CallAsync).
 function! maktaba#syscall#DoCallAsync() abort dict
-  if empty(v:servername)
-    throw maktaba#error#Message('ShellError', 'Cannot run async commands, no' .
-        \ ' --servername flag passed to vim. See :help servername.')
-  elseif !has('clientserver')
-    throw maktaba#error#Message('ShellError', 'Cannot run async commands, ' .
-        \ 'vim was compiled without +clientserver. See :help clientserver')
+  if !maktaba#syscall#IsAsyncAvailable()
+    if self.allow_sync_fallback
+      let l:return_data = self.Call()
+      if has_key(l:return_data, 'stderr')
+        let l:stderr = l:return_data.stderr
+      else
+        let l:stderr = ''
+      endif
+      let l:closure = maktaba#function#WithArgs(
+            \ maktaba#ensure#IsCallable(self.callback),
+            \ l:return_data.stdout, l:stderr, 0)
+      call maktaba#function#Apply(l:closure)
+      return {}
+    else
+      if empty(v:servername)
+        throw maktaba#error#Message('ShellError', 'Cannot run async commands, '
+            \ 'no --servername flag passed to vim. See :help servername.')
+      elseif !has('clientserver')
+        throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
+            \ ' vim was compiled without +clientserver. See :help clientserver')
+      endif
+    endif
   endif
-
   let l:error_file = tempname()
   let l:output_file = tempname()
   let l:callback_cmd = join([
@@ -141,22 +165,7 @@ function! maktaba#syscall#DoCallAsync() abort dict
   let s:callbacks[l:output_file] = {
         \ 'function': maktaba#ensure#IsCallable(self.callback),
         \ 'tab': tabpagenr()}
-
-  let l:shell_state = maktaba#value#SaveAll(['&shell', '$SHELL'])
-  if &shell !~# s:usable_shell
-    set shell=/bin/sh
-  endif
-  if $SHELL !~# s:usable_shell
-    let $SHELL = '/bin/sh'
-  endif
-
-  try
-    silent execute '! ' . s:EscapeSpecialChars(l:full_cmd)
-  finally
-    call maktaba#value#Restore(l:shell_state)
-  endtry
-
-  redraw!
+  call system(l:full_cmd)
   return {}
 endfunction
 
@@ -298,7 +307,8 @@ endfunction
 " @throws ShellError if the shell command returns an exit code.
 function! maktaba#syscall#CallAsync(...) abort dict
   let self.callback = maktaba#ensure#IsCallable(get(a:, 1))
-  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 2, 1))
+  let self.allow_sync_fallback = maktaba#ensure#IsBool(get(a:, 2, 0))
+  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 3, 1))
   let l:call_func = maktaba#function#Create('maktaba#syscall#DoCallAsync', [],
         \ self)
   return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
@@ -360,6 +370,14 @@ endfunction
 function! maktaba#syscall#SetUsableShellRegex(regex) abort
   call maktaba#ensure#IsString(a:regex)
   let s:usable_shell = a:regex
+endfunction
+
+
+""
+" @private
+" Forces the disabling of asynchronous calls, to enable testing.
+function! maktaba#syscall#SetAsyncDisabled(disabled)
+  let s:async_disabled = a:disabled
 endfunction
 
 
