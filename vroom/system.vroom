@@ -365,24 +365,21 @@ maktaba#system#Or to chain commands.
 To execute system calls asynchronously, use CallAsync.
 
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
-  :function Callback(env, stdout, stderr, exit_code) abort<CR>
+  :function Callback(env, return_data) abort<CR>
   |  let g:env = a:env<CR>
-  |  let g:callback_stdout = a:stdout<CR>
-  |  let g:callback_exit_code = a:exit_code<CR>
+  |  let g:callback_stdout = a:return_data.stdout<CR>
+  |  let g:callback_exit_code = a:return_data.status<CR>
   |endfunction
   :call g:syscall.CallAsync('Callback')
   ! .*echo hi; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
-  :let g:deadline = localtime() + 5 " wait for at most 4 seconds
+  :let g:deadline = localtime() + 2 " wait for at most 2 seconds
   :while !exists('g:callback_exit_code') && localtime() < g:deadline
-  :  let g:async_failed = 1
-  :  break
   :endwhile
-  :if exists('g:async_failed')
-  :  echomsg "Async callback not run in 5 seconds, failing."
-  :else
-  :  echomsg g:callback_stdout
+  :call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
+  | 'Async callback was expected to complete within 2 seconds')
+  :echomsg g:callback_stdout
   ~ hi
-  :endif
+
 
 Async calls fall back to synchronous calls if disabled or not available.
 

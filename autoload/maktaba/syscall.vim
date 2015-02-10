@@ -140,15 +140,8 @@ function! maktaba#syscall#DoCallAsync() abort dict
   if !maktaba#syscall#IsAsyncAvailable()
     if self.allow_sync_fallback
       let l:return_data = self.Call()
-      if has_key(l:return_data, 'stderr')
-        let l:stderr = l:return_data.stderr
-      else
-        let l:stderr = ''
-      endif
-      let l:closure = maktaba#function#WithArgs(
-            \ maktaba#ensure#IsCallable(self.callback),
-            \ s:CurrentEnv(), l:return_data.stdout, l:stderr, 0)
-      call maktaba#function#Apply(l:closure)
+      let l:return_data.status = 0
+      call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
       return {}
     else
       if empty(v:servername)
@@ -310,6 +303,12 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system asynchronously and invokes the callback on completion.
+" [callback] function will be called on asynchronous command completion, with
+" the following arguments: [callback](env_dict, result_dict), where env_dict
+" contains tab, buffer, path, column and line info, and the result_dict contains
+" stdout, stderr and status (code).
+" If [allow_sync_fallback] is 1 and async calls are not available, a synchronous
+" call will be executed and callback called with the result.
 " If [throw_errors] is 1, any exit code from the command will cause a ShellError
 " to be thrown. Otherwise, the caller is responsible for checking
 " |v:shell_error| and handling error conditions.
@@ -398,12 +397,16 @@ endfunction
 " The callback must be of prototype: callback(stdout, stderr, exit_code).
 function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   let l:callback_info = s:callbacks[a:stdout_file]
-  let l:stdout = join(readfile(a:stdout_file), "\n")
-  let l:stderr = join(readfile(a:stderr_file), "\n")
+  let l:return_data = {}
+  let l:return_data.status = a:exit_code
+  let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
+  if filereadable(a:stderr_file)
+    let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
+  endif
   unlet s:callbacks[a:stdout_file]
   call delete(a:stdout_file)
   call delete(a:stderr_file)
   let l:closure = maktaba#function#WithArgs(l:callback_info.function,
-        \ l:callback_info.env, l:stdout, l:stderr, a:exit_code)
+        \ l:callback_info.env, l:return_data)
   call maktaba#function#Apply(l:closure)
 endfunction
