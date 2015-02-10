@@ -88,6 +88,17 @@ function! s:CallbackInTab(callback, source_tab) abort
 endfunction
 
 
+" Compiles a dictionary describing the current vim state.
+function! s:CurrentEnv()
+  return {
+        \ 'tab': tabpagenr(),
+        \ 'buffer': bufnr('%'),
+        \ 'path': expand('%:p'),
+        \ 'column': col('.'),
+        \ 'line': line('.')}
+endfunction
+
+
 ""
 " @private
 " @dict Syscall
@@ -136,7 +147,7 @@ function! maktaba#syscall#DoCallAsync() abort dict
       endif
       let l:closure = maktaba#function#WithArgs(
             \ maktaba#ensure#IsCallable(self.callback),
-            \ l:return_data.stdout, l:stderr, 0)
+            \ s:CurrentEnv(), l:return_data.stdout, l:stderr, 0)
       call maktaba#function#Apply(l:closure)
       return {}
     else
@@ -164,7 +175,7 @@ function! maktaba#syscall#DoCallAsync() abort dict
         \ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
   let s:callbacks[l:output_file] = {
         \ 'function': maktaba#ensure#IsCallable(self.callback),
-        \ 'tab': tabpagenr()}
+        \ 'env': s:CurrentEnv()}
   call system(l:full_cmd)
   return {}
 endfunction
@@ -392,7 +403,7 @@ function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   unlet s:callbacks[a:stdout_file]
   call delete(a:stdout_file)
   call delete(a:stderr_file)
-  let l:closure = maktaba#function#WithArgs(l:callback_info['function'],
-        \ l:stdout, l:stderr, a:exit_code)
-  call s:CallbackInTab(l:closure, l:callback_info['tab'])
+  let l:closure = maktaba#function#WithArgs(l:callback_info.function,
+        \ l:callback_info.env, l:stdout, l:stderr, a:exit_code)
+  call maktaba#function#Apply(l:closure)
 endfunction

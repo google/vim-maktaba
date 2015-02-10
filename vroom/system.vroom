@@ -365,7 +365,8 @@ maktaba#system#Or to chain commands.
 To execute system calls asynchronously, use CallAsync.
 
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
-  :function Callback(stdout, stderr, exit_code) abort<CR>
+  :function Callback(env, stdout, stderr, exit_code) abort<CR>
+  |  let g:env = a:env<CR>
   |  let g:callback_stdout = a:stdout<CR>
   |  let g:callback_exit_code = a:exit_code<CR>
   |endfunction
