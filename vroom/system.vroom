@@ -370,7 +370,7 @@ To execute system calls asynchronously, use CallAsync.
   |  let g:callback_stdout = a:return_data.stdout<CR>
   |  let g:callback_exit_code = a:return_data.status<CR>
   |endfunction
-  :call g:syscall.CallAsync('Callback')
+  :call g:syscall.CallAsync('Callback', 0)
   ! .*echo hi; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
   :let g:deadline = localtime() + 2 " wait for at most 2 seconds
   :while !exists('g:callback_exit_code') && localtime() < g:deadline

@@ -70,24 +70,6 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
 endfunction
 
 
-" Execute a function in given tab, used for callbacks of asynchronous actions.
-function! s:CallbackInTab(callback, source_tab) abort
-  call maktaba#ensure#IsCallable(a:callback)
-  call maktaba#ensure#IsNumber(a:source_tab)
-  let l:current_tab = tabpagenr()
-  let l:state = maktaba#value#Save('lazyredraw')
-  let &lazyredraw = 1
-  try
-    execute "tabnext " . a:source_tab
-    call maktaba#function#Apply(a:callback)
-    execute "tabnext " . l:current_tab
-    redraw
-  finally
-    call maktaba#value#Restore(l:state)
-  endtry
-endfunction
-
-
 " Compiles a dictionary describing the current vim state.
 function! s:CurrentEnv()
   return {
@@ -303,11 +285,11 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system asynchronously and invokes the callback on completion.
-" [callback] function will be called on asynchronous command completion, with
-" the following arguments: [callback](env_dict, result_dict), where env_dict
+" {callback} function will be called on asynchronous command completion, with
+" the following arguments: {callback}(env_dict, result_dict), where env_dict
 " contains tab, buffer, path, column and line info, and the result_dict contains
 " stdout, stderr and status (code).
-" If [allow_sync_fallback] is 1 and async calls are not available, a synchronous
+" If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
 " call will be executed and callback called with the result.
 " If [throw_errors] is 1, any exit code from the command will cause a ShellError
 " to be thrown. Otherwise, the caller is responsible for checking
@@ -315,10 +297,11 @@ endfunction
 " @default throw_errors=1
 " @throws WrongType
 " @throws ShellError if the shell command returns an exit code.
-function! maktaba#syscall#CallAsync(...) abort dict
-  let self.callback = maktaba#ensure#IsCallable(get(a:, 1))
-  let self.allow_sync_fallback = maktaba#ensure#IsBool(get(a:, 2, 0))
-  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 3, 1))
+function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback, ...)
+      \ abort dict
+  let self.callback = maktaba#ensure#IsCallable(a:Callback)
+  let self.allow_sync_fallback = a:allow_sync_fallback
+  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
   let l:call_func = maktaba#function#Create('maktaba#syscall#DoCallAsync', [],
         \ self)
   return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
@@ -402,11 +385,10 @@ function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
   if filereadable(a:stderr_file)
     let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
+    call delete(a:stderr_file)
   endif
   unlet s:callbacks[a:stdout_file]
   call delete(a:stdout_file)
-  call delete(a:stderr_file)
-  let l:closure = maktaba#function#WithArgs(l:callback_info.function,
-        \ l:callback_info.env, l:return_data)
-  call maktaba#function#Apply(l:closure)
+  call maktaba#function#Call(l:callback_info.function,
+        \ [l:callback_info.env, l:return_data])
 endfunction
