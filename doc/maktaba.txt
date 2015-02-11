@@ -159,8 +159,8 @@ Flag.AddTranslator({translator})                        *Flag.AddTranslator()*
   This function returns a function which, when called, unregisters
   {translator}. Hold on to it if you expect you'll need to remove
   {translator}.
-  Throws ERROR(WrongType) if {callback} is not callable.
-  Throws ERROR(BadValue) if {callback} is not a funcdict.
+  Throws ERROR(WrongType) if {translator} is not callable.
+  Throws ERROR(BadValue) if {translator} is not a funcdict.
 
 Flag.Translate({value})                                     *Flag.Translate()*
   Returns the value that the flag will have after being set to {value} (after

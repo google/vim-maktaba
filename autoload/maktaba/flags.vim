@@ -173,8 +173,8 @@ endfunction
 " This function returns a function which, when called, unregisters
 " {translator}. Hold on to it if you expect you'll need to remove
 " {translator}.
-" @throws WrongType if {callback} is not callable.
-" @throws BadValue if {callback} is not a funcdict.
+" @throws WrongType if {translator} is not callable.
+" @throws BadValue if {translator} is not a funcdict.
 function! maktaba#flags#AddTranslator(F) dict abort
   call maktaba#ensure#IsCallable(a:F)
   let l:remover = self._translators.Add(a:F)
