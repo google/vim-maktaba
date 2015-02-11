@@ -1,5 +1,15 @@
 "" Utilities for making system calls and dealing with the shell.
 
+let s:plugin = maktaba#Maktaba()
+
+if !exists('s:callbacks')
+  let s:callbacks = {}
+endif
+
+if !exists('s:async_disabled')
+  let s:async_disabled = 0
+endif
+
 if !exists('s:usable_shell')
   let s:usable_shell = '\v^/bin/sh$'
 endif
@@ -67,6 +77,17 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
 endfunction
 
 
+" Compiles a dictionary describing the current vim state.
+function! s:CurrentEnv()
+  return {
+      \ 'tab': tabpagenr(),
+      \ 'buffer': bufnr('%'),
+      \ 'path': expand('%:p'),
+      \ 'column': col('.'),
+      \ 'line': line('.')}
+endfunction
+
+
 ""
 " @private
 " @dict Syscall
@@ -88,6 +109,59 @@ function! maktaba#syscall#DoCall() abort dict
   endtry
   return l:return_data
 endfunction
+
+
+""
+" @public
+" Returns whether the current vim session supports asynchronous calls.
+function! maktaba#syscall#IsAsyncAvailable()
+  return !s:async_disabled && !empty(v:servername) && has('clientserver')
+endfunction
+
+
+""
+" @private
+" @dict Syscall
+" Calls |system()| asynchronously, and invokes a @function(this.callback) once
+" the command completes, passing in stdout, stderr and exit code to it.
+" The specific implementation for @function(#CallAsync).
+function! maktaba#syscall#DoCallAsync() abort dict
+  if !maktaba#syscall#IsAsyncAvailable()
+    if self.allow_sync_fallback
+      call s:plugin.logger.Warn('Async support not available. ' .
+          \ 'Falling back to synchronous execution for system call: ' .
+          \ self.GetCommand())
+      let l:return_data = self.Call()
+      let l:return_data.status = v:shell_error
+      call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
+      return {}
+    else
+      if empty(v:servername)
+        throw maktaba#error#Message('ShellError', 'Cannot run async commands, '
+            \ 'no --servername flag passed to vim. See :help servername.')
+      elseif !has('clientserver')
+        throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
+            \ ' vim was compiled without +clientserver. See :help clientserver')
+      endif
+    endif
+  endif
+  let l:error_file = tempname()
+  let l:output_file = tempname()
+  let l:callback_cmd = join([
+      \ v:progname,
+      \ '--servername ' . v:servername,
+      \ '--remote-expr',
+      \ printf('"maktaba#syscall#AsyncDone(''%s'', ''%s'', $?)"',
+            \ l:output_file, l:error_file)], " ")
+  let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
+      \ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
+  let s:callbacks[l:output_file] = {
+      \ 'function': maktaba#ensure#IsCallable(self.callback),
+      \ 'env': s:CurrentEnv()}
+  call system(l:full_cmd)
+  return {}
+endfunction
+
 
 ""
 " @private
@@ -129,6 +203,7 @@ function! maktaba#syscall#Create(cmd) abort
       \ 'And': function('maktaba#syscall#And'),
       \ 'Or': function('maktaba#syscall#Or'),
       \ 'Call': function('maktaba#syscall#Call'),
+      \ 'CallAsync': function('maktaba#syscall#CallAsync'),
       \ 'CallForeground': function('maktaba#syscall#CallForeground'),
       \ 'GetCommand': function('maktaba#syscall#GetCommand')}
 endfunction
@@ -216,6 +291,40 @@ endfunction
 
 ""
 " @dict Syscall
+" Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
+" capabilities, so the preconditions for it are vim being compiled with
+" +clientserver and the |v:servername| being set. Vim will try to set it to
+" something when it starts if it is running in X context, e.g. 'GVIM1'.
+" Otherwise, the user needs to set it by passing |--servername| $NAME to
+" vim. If the two conditions are not met, asynchronous calls are not possible,
+" and the call will either throw an error or fallback to synchronous calls,
+" depending on the {allow_sync_fallback} parameter.
+"
+" Executes the system asynchronously and invokes the callback on completion.
+" {callback} function will be called on asynchronous command completion, with
+" the following arguments: {callback}(env_dict, result_dict), where env_dict
+" contains tab, buffer, path, column and line info, and the result_dict contains
+" stdout, stderr and status (code).
+" If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
+" call will be executed and callback called with the result.
+" If [throw_errors] is 1, any exit code from the command will cause a ShellError
+" to be thrown. Otherwise, the caller is responsible for checking
+" result_dict.status and handling error conditions.
+" @default throw_errors=1
+" @throws WrongType
+" @throws ShellError if the shell command returns an exit code.
+function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback, ...)
+      \ abort dict
+  let self.callback = maktaba#ensure#IsCallable(a:Callback)
+  let self.allow_sync_fallback = a:allow_sync_fallback
+  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
+  let l:call_func = maktaba#function#Create('maktaba#syscall#DoCallAsync', [],
+        \ self)
+  return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
+endfunction
+
+""
+" @dict Syscall
 " Executes the system call in the foreground, showing the output to the user.
 " If {pause} is 1, output will stay on the screen until the user presses Enter.
 " If [throw_errors] is 1, any exit code from the command will cause a ShellError
@@ -270,4 +379,32 @@ endfunction
 function! maktaba#syscall#SetUsableShellRegex(regex) abort
   call maktaba#ensure#IsString(a:regex)
   let s:usable_shell = a:regex
+endfunction
+
+
+""
+" @private
+" Forces the disabling of asynchronous calls, to enable testing.
+function! maktaba#syscall#SetAsyncDisabled(disabled)
+  let s:async_disabled = a:disabled
+endfunction
+
+
+""
+" @private
+" Executes the asynchronous callback setup by @function(Syscall.CallAsync).
+" The callback must be of prototype: callback(env_dict, result_dict).
+function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
+  let l:callback_info = s:callbacks[a:stdout_file]
+  let l:return_data = {}
+  let l:return_data.status = a:exit_code
+  let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
+  if filereadable(a:stderr_file)
+    let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
+    call delete(a:stderr_file)
+  endif
+  unlet s:callbacks[a:stdout_file]
+  call delete(a:stdout_file)
+  call maktaba#function#Call(l:callback_info.function,
+      \ [l:callback_info.env, l:return_data])
 endfunction

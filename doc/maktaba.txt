@@ -374,6 +374,30 @@ Syscall.Call([throw_errors])                                  *Syscall.Call()*
   Throws ERROR(WrongType)
   Throws ERROR(ShellError) if the shell command returns an exit code.
 
+Syscall.CallAsync({allow_sync_fallback}, {callback}, [throw_errors])
+                                                         *Syscall.CallAsync()*
+  Asynchronous calls are executed via |--remote-expr| using vim's
+  |clientserver| capabilities, so the preconditions for it are vim being
+  compiled with +clientserver and the |v:servername| being set. Vim will try
+  to set it to something when it starts if it is running in X context, e.g.
+  'GVIM1'. Otherwise, the user needs to set it by passing |--servername| $NAME
+  to vim. If the two conditions are not met, asynchronous calls are not
+  possible, and the call will either throw an error or fallback to synchronous
+  calls, depending on the {allow_sync_fallback} parameter.
+
+  Executes the system asynchronously and invokes the callback on completion.
+  {callback} function will be called on asynchronous command completion, with
+  the following arguments: {callback}(env_dict, result_dict), where env_dict
+  contains tab, buffer, path, column and line info, and the result_dict
+  contains stdout, stderr and status (code). If {allow_sync_fallback} is 1 and
+  async calls are not available, a synchronous call will be executed and
+  callback called with the result. If [throw_errors] is 1, any exit code from
+  the command will cause a ShellError to be thrown. Otherwise, the caller is
+  responsible for checking result_dict.status and handling error conditions.
+  [throw_errors] is 1 if omitted.
+  Throws ERROR(WrongType)
+  Throws ERROR(ShellError) if the shell command returns an exit code.
+
 Syscall.CallForeground({pause}, [throw_errors])     *Syscall.CallForeground()*
   Executes the system call in the foreground, showing the output to the user.
   If {pause} is 1, output will stay on the screen until the user presses
@@ -1404,6 +1428,9 @@ maktaba#string#StartsWith({string}, {prefix})    *maktaba#string#StartsWith()*
 
 maktaba#string#EndsWith({string}, {suffix})        *maktaba#string#EndsWith()*
   Whether or not {string} ends with {suffix}.
+
+maktaba#syscall#IsAsyncAvailable()        *maktaba#syscall#IsAsyncAvailable()*
+  Returns whether the current vim session supports asynchronous calls.
 
 maktaba#syscall#Create({cmd})                       *maktaba#syscall#Create()*
   Creates a |maktaba.Syscall| object that can be used to execute {cmd} with
