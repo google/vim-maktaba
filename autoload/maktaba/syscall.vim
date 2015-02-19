@@ -137,8 +137,8 @@ function! maktaba#syscall#DoCallAsync() abort dict
       return {}
     else
       if empty(v:servername)
-        throw maktaba#error#Message('ShellError', 'Cannot run async commands, '
-            \ 'no --servername flag passed to vim. See :help servername.')
+        throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
+            \ ' no --servername flag passed to vim. See :help servername.')
       elseif !has('clientserver')
         throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
             \ ' vim was compiled without +clientserver. See :help clientserver')
