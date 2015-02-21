@@ -359,7 +359,7 @@ function! maktaba#syscall#GetCommand() abort dict
     " Accept strings for convenience, return as-is.
     return self.cmd
   endif
-  let l:words = map(self.cmd, 'maktaba#string#Strip(v:val)')
+  let l:words = map(copy(self.cmd), 'maktaba#string#Strip(v:val)')
   let l:words = map(l:words, 's:SoftShellEscape(v:val)')
   return join(l:words)
 endfunction

@@ -236,6 +236,11 @@ This function converts non-zero status codes into ShellError exceptions:
   $ 1 (status)
   ~ ERROR(ShellError): Error running: nothing
 
+  :call maktaba#error#Try(g:syscall_fn.WithArgs(['nothing', '!@#$']))
+  ! nothing '!@#$' 2> /tmp/* (glob)
+  $ 1 (status)
+  ~ ERROR(ShellError): Error running: nothing '!@#$'
+
 You can suppress error messages by passing in a 0 as maktaba#system#Call's third
 argument (throw_errors):
 
