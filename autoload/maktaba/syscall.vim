@@ -131,8 +131,11 @@ function! maktaba#syscall#DoCallAsync() abort dict
       call s:plugin.logger.Warn('Async support not available. ' .
           \ 'Falling back to synchronous execution for system call: ' .
           \ self.GetCommand())
-      let l:return_data = self.Call()
+      " This is called by DoSyscallCommon, which will throw if v:shell_error is
+      " not 0, so we reset it by executing true.
+      let l:return_data = self.Call(0)  " Don't throw ShellError on failure.
       let l:return_data.status = v:shell_error
+      call maktaba#syscall#Create(['true']).Call()
       call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
       return {}
     else
