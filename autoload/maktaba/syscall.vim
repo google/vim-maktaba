@@ -125,26 +125,8 @@ endfunction
 " Calls |system()| asynchronously, and invokes a @function(this.callback) once
 " the command completes, passing in stdout, stderr and exit code to it.
 " The specific implementation for @function(#CallAsync).
+" @throws MissingFeature if async execution is not available.
 function! maktaba#syscall#DoCallAsync() abort dict
-  if !maktaba#syscall#IsAsyncAvailable()
-    if self.allow_sync_fallback
-      call s:plugin.logger.Warn('Async support not available. ' .
-          \ 'Falling back to synchronous execution for system call: ' .
-          \ self.GetCommand())
-      let l:return_data = self.Call()
-      let l:return_data.status = v:shell_error
-      call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
-      return {}
-    else
-      if empty(v:servername)
-        throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
-            \ ' no --servername flag passed to vim. See :help servername.')
-      elseif !has('clientserver')
-        throw maktaba#error#Message('ShellError', 'Cannot run async commands,' .
-            \ ' vim was compiled without +clientserver. See :help clientserver')
-      endif
-    endif
-  endif
   let l:error_file = tempname()
   let l:output_file = tempname()
   let l:callback_cmd = join([
@@ -291,36 +273,68 @@ endfunction
 
 ""
 " @dict Syscall
-" Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
-" capabilities, so the preconditions for it are vim being compiled with
-" +clientserver and the |v:servername| being set. Vim will try to set it to
-" something when it starts if it is running in X context, e.g. 'GVIM1'.
-" Otherwise, the user needs to set it by passing |--servername| $NAME to
-" vim. If the two conditions are not met, asynchronous calls are not possible,
-" and the call will either throw an error or fallback to synchronous calls,
-" depending on the {allow_sync_fallback} parameter.
-"
-" Executes the system asynchronously and invokes the callback on completion.
+" Executes the system call asynchronously and invokes {callback} on completion.
 " {callback} function will be called on asynchronous command completion, with
 " the following arguments: {callback}(env_dict, result_dict), where env_dict
 " contains tab, buffer, path, column and line info, and the result_dict contains
 " stdout, stderr and status (code).
 " If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
 " call will be executed and callback called with the result.
-" If [throw_errors] is 1, any exit code from the command will cause a ShellError
-" to be thrown. Otherwise, the caller is responsible for checking
-" result_dict.status and handling error conditions.
-" @default throw_errors=1
+" For example: >
+"   function Handler(env_dict, result)
+"     if a:result.status != 0
+"       call maktaba#error#Shout('sleep command failed: %s', a:result.stderr)
+"       return
+"     endif
+"     echomsg 'Success!'
+"   endfunction
+"   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
+" <
+" WARNING: The caller is responsible for checking result_dict.status and
+" handling error conditions. Otherwise all failures are silent.
+"
+" Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
+" capabilities, so the preconditions for it are vim being compiled with
+" +clientserver and the |v:servername| being set. Vim will try to set it to
+" something when it starts if it is running in X context, e.g. 'GVIM1'.
+" Otherwise, the user needs to set it by passing |--servername| $NAME to
+" vim. If the two conditions are not met, asynchronous calls are not possible,
+" and the call will either throw |ERROR(MissingFeature)| or fall back to
+" synchronous calls, depending on the {allow_sync_fallback} parameter.
 " @throws WrongType
-" @throws ShellError if the shell command returns an exit code.
-function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback, ...)
-      \ abort dict
+" @throws MissingFeature if neither async execution nor fallback is available.
+function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
   let self.callback = maktaba#ensure#IsCallable(a:Callback)
-  let self.allow_sync_fallback = a:allow_sync_fallback
-  let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
-  let l:call_func = maktaba#function#Create('maktaba#syscall#DoCallAsync', [],
-        \ self)
-  return s:DoSyscallCommon(self, l:call_func, l:throw_errors)
+  call maktaba#ensure#IsBool(a:allow_sync_fallback)
+  if !maktaba#syscall#IsAsyncAvailable()
+    if a:allow_sync_fallback
+      call s:plugin.logger.Warn('Async support not available. ' .
+          \ 'Falling back to synchronous execution for system call: ' .
+          \ self.GetCommand())
+      let l:return_data = self.Call(0)
+      let l:return_data.status = v:shell_error
+      call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
+      return
+    else
+      if empty(v:servername)
+        throw maktaba#error#MissingFeature('Cannot run async commands:' .
+            \ ' no --servername flag passed to vim. See :help servername.')
+      elseif !has('clientserver')
+        throw maktaba#error#MissingFeature('Cannot run async commands: vim' .
+            \ ' was compiled without +clientserver. See :help clientserver.')
+      endif
+    endif
+  endif
+  let l:call_func = maktaba#function#Create(
+      \ 'maktaba#syscall#DoCallAsync', [], self)
+  " Errors indicate a problem with the CallAsync implementation, so they're
+  " thrown as ERROR(Failure) and not expected to be caught by callers.
+  try
+    call s:DoSyscallCommon(self, l:call_func, 1)
+  catch /ERROR(ShellError):/
+    throw maktaba#error#Failure('Problem dispatching async syscall: %s',
+        \ maktaba#error#Split(v:exception)[1])
+  endtry
 endfunction
 
 ""
