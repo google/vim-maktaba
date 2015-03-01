@@ -41,7 +41,8 @@ endfunction
 " Execute {syscall} using the specific call implementation {CallFunc}, handling
 " settings overrides and error propagation.
 " Used to implement @function(#Call) and @function(#CallForeground).
-" @throws ShellError if {syscall} returns an exit code and {throw_errors} is 1.
+" @throws ShellError if {syscall} returns non-zero exit code and {throw_errors}
+"     is 1.
 function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
   call maktaba#ensure#IsBool(a:throw_errors)
   let l:return_data = {}
@@ -114,8 +115,8 @@ endfunction
 ""
 " @public
 " Returns whether the current vim session supports asynchronous calls.
-function! maktaba#syscall#IsAsyncAvailable()
-  return !s:async_disabled && !empty(v:servername) && has('clientserver')
+function! maktaba#syscall#IsAsyncAvailable() abort
+  return !s:async_disabled && has('clientserver') && !empty(v:servername)
 endfunction
 
 
@@ -125,7 +126,6 @@ endfunction
 " Calls |system()| asynchronously, and invokes a @function(this.callback) once
 " the command completes, passing in stdout, stderr and exit code to it.
 " The specific implementation for @function(#CallAsync).
-" @throws MissingFeature if async execution is not available.
 function! maktaba#syscall#DoCallAsync() abort dict
   let l:error_file = tempname()
   let l:output_file = tempname()
@@ -255,15 +255,15 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call without showing output to the user.
-" If [throw_errors] is 1, any exit code from the command will cause a ShellError
-" to be thrown. Otherwise, the caller is responsible for checking
+" If [throw_errors] is 1, any non-zero exit code from the command will cause a
+" ShellError to be thrown. Otherwise, the caller is responsible for checking
 " |v:shell_error| and handling error conditions.
 " @default throw_errors=1
 " Returns a dictionary with the following fields:
 " * stdout: the shell command's entire stdout string, if available.
 " * stderr: the shell command's entire stderr string, if available.
 " @throws WrongType
-" @throws ShellError if the shell command returns an exit code.
+" @throws ShellError if the shell command returns a non-zero exit code.
 function! maktaba#syscall#Call(...) abort dict
   let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
   let l:call_func = maktaba#function#Create('maktaba#syscall#DoCall', [], self)
@@ -274,10 +274,10 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
-" {callback} function will be called on asynchronous command completion, with
-" the following arguments: {callback}(env_dict, result_dict), where env_dict
-" contains tab, buffer, path, column and line info, and the result_dict contains
-" stdout, stderr and status (code).
+" {callback} function will be called with the following arguments:
+" {callback}(env_dict, result_dict), where env_dict contains tab, buffer, path,
+" column and line info, and the result_dict contains stdout, stderr and status
+" (code).
 " If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
 " call will be executed and callback called with the result.
 " For example: >
@@ -291,11 +291,11 @@ endfunction
 "   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 " <
 " WARNING: The caller is responsible for checking result_dict.status and
-" handling error conditions. Otherwise all failures are silent.
+" handling unexpected exit codes. Otherwise all failures are silent.
 "
 " Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
 " capabilities, so the preconditions for it are vim being compiled with
-" +clientserver and the |v:servername| being set. Vim will try to set it to
+" +clientserver and |v:servername| being set. Vim will try to set it to
 " something when it starts if it is running in X context, e.g. 'GVIM1'.
 " Otherwise, the user needs to set it by passing |--servername| $NAME to
 " vim. If the two conditions are not met, asynchronous calls are not possible,
@@ -316,15 +316,24 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
       call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
       return
     else
-      if empty(v:servername)
-        throw maktaba#error#MissingFeature('Cannot run async commands:' .
-            \ ' no --servername flag passed to vim. See :help servername.')
+      " Neither async nor sync is available. Throw error with salient reason.
+      if s:async_disabled
+        let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled.'
       elseif !has('clientserver')
-        throw maktaba#error#MissingFeature('Cannot run async commands: vim' .
-            \ ' was compiled without +clientserver. See :help clientserver.')
+        let l:reason =
+            \ 'vim was compiled without +clientserver. See :help clientserver.'
+      elseif empty(v:servername)
+        let l:reason =
+            \ 'no --servername flag passed to vim. See :help servername.'
+      else
+        throw maktaba#error#Failure(
+            \ 'Async execution was not available for unknown reason.')
       endif
+      throw maktaba#error#MissingFeature(
+          \ 'Cannot run async commands: ' . l:reason)
     endif
   endif
+
   let l:call_func = maktaba#function#Create(
       \ 'maktaba#syscall#DoCallAsync', [], self)
   " Errors indicate a problem with the CallAsync implementation, so they're
@@ -341,15 +350,15 @@ endfunction
 " @dict Syscall
 " Executes the system call in the foreground, showing the output to the user.
 " If {pause} is 1, output will stay on the screen until the user presses Enter.
-" If [throw_errors] is 1, any exit code from the command will cause a ShellError
-" to be thrown. Otherwise, the caller is responsible for checking
+" If [throw_errors] is 1, any non-zero exit code from the command will cause a
+" ShellError to be thrown. Otherwise, the caller is responsible for checking
 " |v:shell_error| and handling error conditions.
 " @default throw_errors=1
 " Returns a dictionary with the following fields:
 " * stdout: the shell command's entire stdout string, if available.
 " * stderr: the shell command's entire stderr string, if available.
 " @throws WrongType
-" @throws ShellError if the shell command returns an exit code.
+" @throws ShellError if the shell command returns a non-zero exit code.
 " @throws NotImplemented if stdin has been specified for this Syscall.
 function! maktaba#syscall#CallForeground(pause, ...) abort dict
   let l:throw_errors = maktaba#ensure#IsBool(get(a:, 1, 1))
