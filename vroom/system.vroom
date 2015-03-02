@@ -385,6 +385,13 @@ To execute system calls asynchronously, use CallAsync.
   :echomsg g:callback_stdout
   ~ hi
 
+Asynchronous calls can also take a stdin parameter.
+
+  :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
+  :call g:syscall.CallAsync('Callback', 0)
+  ! .*cat; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
+  :echomsg g:callback_stdout
+  ~ Hello
 
 Async calls fall back to synchronous calls if disabled or not available.
 
