@@ -388,7 +388,7 @@ To execute system calls asynchronously, use CallAsync.
 Asynchronous calls can also take a stdin parameter.
 
   :unlet g:callback_stdout
-  :unlet g:callback_stderr
+  :unlet g:env
   :unlet g:callback_exit_code
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
   :call g:syscall.CallAsync('Callback', 0)
