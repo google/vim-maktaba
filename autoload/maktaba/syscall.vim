@@ -140,7 +140,12 @@ function! maktaba#syscall#DoCallAsync() abort dict
   let s:callbacks[l:output_file] = {
       \ 'function': maktaba#ensure#IsCallable(self.callback),
       \ 'env': s:CurrentEnv()}
-  call system(l:full_cmd)
+
+  if has_key(self, 'stdin')
+    call system(l:full_cmd, self.stdin)
+  else
+    call system(l:full_cmd)
+  endif
   return {}
 endfunction
 
