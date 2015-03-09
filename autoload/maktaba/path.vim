@@ -217,7 +217,7 @@ function! maktaba#path#Exists(path) abort
   let l:path_glob = substitute(l:path_glob, '\V[', '[[]', 'g')
   let l:path_glob = substitute(l:path_glob, '\V*', '[*]', 'g')
   let l:path_glob = substitute(l:path_glob, '\V?', '[\?]', 'g')
-  return !empty(glob(l:path_glob))
+  return !empty(glob(l:path_glob, 1))
 endfunction
 
 
