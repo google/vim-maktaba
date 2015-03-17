@@ -77,6 +77,82 @@ Enum.Value({name})                                              *Enum.Value()*
 Enum.Values()                                                  *Enum.Values()*
   Gets all values on the enum, in order.
 
+                                                   *maktaba.ExtensionRegistry*
+A registry for the extensions used by a single plugin.  Extensions are
+dictionaries (usually with some function fields) with a plugin-specific
+interpretation.
+
+Plugins should use |Plugin.GetExtensionRegistry()| to gain access to their own
+extension registry, and |maktaba#extension#GetRegistry()| to gain access to an
+extension registry for another plugin.
+
+For example, a hypothetical code-formatting plugin would use the following to
+retrieve a list of extensions, where each extension represents a formatter for
+a particular filetype:
+>
+  let [s:plugin, s:enter] = maktaba#plugin#Enter(expand('<sfile>:p'))
+  ...
+  let l:registry = s:plugin.GetExtensionRegistry()
+  for l:extension in l:registry.GetExtensions()
+    if &filetype is# l:extension.filetype
+      call maktaba#function#Call(l:extension.FormatBuffer)
+      return
+    endif
+  endfor
+<
+Likewise, a plugin providing another formatter would use the following to
+register a new extension:
+>
+  let l:extension = {
+      \ 'filetype': 'python',
+      \ 'FormatBuffer': function('pyformatter#FormatUsingAutopep8'),
+      \ }
+  let l:codefmt_registry = maktaba#extension#GetRegistry('code-formatting')
+  call l:codefmt_registry.AddExtension(l:extension)
+<
+See the Vroom tests in the Maktaba source tree (pluginextensions.vroom) for
+more examples.
+
+ExtensionRegistry.AddExtension({extension}) *ExtensionRegistry.AddExtension()*
+  Adds the given {extension} to this extension registry.
+
+  The extension must be a dict.  If a validator is registered for this
+  extension registry, this function will call the validator.  Failures will
+  result in the validation error being shouted to the user (and the extension
+  will not be added).
+
+  Throws ERROR(WrongType) if {extension} is not a dict.
+
+ExtensionRegistry.GetExtensions()          *ExtensionRegistry.GetExtensions()*
+  Returns the extensions that have been added to this extension registry.
+
+  Extensions added by the plugin to its own registry are always returned after
+  those added by other plugins.  Otherwise, extensions are returned in the
+  opposite order to which they were added.
+
+  This function is only available to the plugin that the extension registry
+  belongs to.
+  Throws ERROR(NotImplemented) if called by another plugin.
+
+ExtensionRegistry.SetValidator({validator}) *ExtensionRegistry.SetValidator()*
+  Sets {validator} as the validator for this extension registry.
+
+  {validator} can be the name of a function, funcref, or Maktaba funcdict. It
+  should accept an arbitrary dict (the extension) and throw an error if the
+  extension if invalid.
+
+  This function will call the validator for any extensions that have already
+  been registered.  Failures will cause the extension to be removed, and the
+  error shouted to the user.
+
+  This function is only available to the plugin that the extension registry
+  belongs to.
+
+  Throws ERROR(WrongType) if {validator} is not a string, funcref, nor dict.
+  Throws ERROR(BadValue) if {validator} is a dict but does not appear to be a
+      funcdict.
+  Throws ERROR(NotImplemented) if called by another plugin.
+
                                                                 *maktaba.Flag*
 The maktaba flag object. Exposes functions that operate on an individual
 maktaba flag.
@@ -285,6 +361,13 @@ Plugin.IsLibrary()                                        *Plugin.IsLibrary()*
   ftplugin/, ftdetect/, syntax/, indent/, nor instant/ directories. If it
   contains a plugin/ directory, that directory must contain only a flags.vim
   file.
+
+Plugin.GetExtensionRegistry()                  *Plugin.GetExtensionRegistry()*
+  Returns the |maktaba.ExtensionRegistry| belonging to this plugin.
+
+  This should be used only by the plugin itself; external callers should use
+  |maktaba#extension#GetRegistry()| instead, rather than depend upon the
+  plugin directly.
 
                                                              *maktaba.Setting*
 Parses {text} into a setting object. The setting object can be applied to a
@@ -749,6 +832,10 @@ maktaba#error#TryCommand({command}, [exceptions]) *maktaba#error#TryCommand()*
   function.
   [exceptions] is .* if omitted.
   Throws ERROR(WrongType) if [exceptions] is neither a regex nor a list.
+
+maktaba#extension#GetRegistry({plugin})      *maktaba#extension#GetRegistry()*
+  Returns an extension registry for the given plugin name.
+  Throws ERROR(WrongType) if {plugin} is not a string.
 
 maktaba#filetype#IsEnabled()                    *maktaba#filetype#IsEnabled()*
   Returns 1 if filetype detection is enabled in vim, 0 otherwise.

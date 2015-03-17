@@ -470,6 +470,7 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'GenerateHelpTags': function('maktaba#plugin#GenerateHelpTags'),
       \ 'MapPrefix': function('maktaba#plugin#MapPrefix'),
       \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
+      \ 'GetExtensionRegistry': function('maktaba#plugin#GetExtensionRegistry'),
       \ '_entered': l:entrycontroller,
       \ }
   " If plugin has an addon-info.json file with a "name" declared, overwrite the
@@ -882,6 +883,18 @@ function! maktaba#plugin#IsLibrary() dict abort
     endif
   endfor
   return self.HasDir('autoload')
+endfunction
+
+
+""
+" @dict Plugin
+" Returns the @dict(ExtensionRegistry) belonging to this plugin.
+"
+" This should be used only by the plugin itself; external callers should use
+" @function(maktaba#extension#GetRegistry) instead, rather than depend upon
+" the plugin directly.
+function! maktaba#plugin#GetExtensionRegistry() dict abort
+  return maktaba#extension#GetInternalRegistry(self.name)
 endfunction
 
 
