@@ -1,7 +1,7 @@
 {
   "name": "maktaba",
   "description": "Consistent Vimscript",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "author": "Google",
   "repository": {"type": "git", "url": "git://github.com/google/maktaba"}
 }
