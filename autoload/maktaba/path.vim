@@ -25,7 +25,8 @@ let s:drive_frontslash = '\v^\a://'
 " @function(#Split) and re-joining all components but the last, but more
 " efficient since it's needed by performance critical code.
 function! s:SplitLast(path) abort
-  " First strip off root.
+  " First strip off root. This prevents the root from ever ending up in the tail
+  " side of the split, and also makes the algorithm easier to reason about.
   let l:root = maktaba#path#RootComponent(a:path)
   let l:path = a:path[len(l:root) : ]
 
@@ -45,8 +46,11 @@ function! s:SplitLast(path) abort
     let l:count += 1
   endwhile
 
-  if l:last_sep isnot -1
-    return [l:root . l:path[ : l:last_sep - 1], l:path[l:last_sep + 1 : ]]
+  " Return [HEAD, TAIL] with root (if any_ included in the HEAD.
+  if l:last_sep != -1
+    " Slice up to (but not including) separator as HEAD.
+    let l:head = l:last_sep > 0 ? l:path[ : l:last_sep - 1] : ''
+    return [l:root . l:head, l:path[l:last_sep + 1 : ]]
   else
     return [l:root, '']
   endif
@@ -84,13 +88,13 @@ endfunction
 " The root of a relative path is empty.
 function! maktaba#path#RootComponent(path) abort
   if !s:is_backslash_platform
-    return a:path[:0] is# '/' ? '/' : ''
+    return a:path[:0] ==# '/' ? '/' : ''
   endif
-  if a:path =~# '\v^\\$'
+  if a:path ==# '\'
     " Windows users can always use backslashes regardless of &shellslash.
     " Vim interprets \ as the default drive.
     return '\'
-  elseif &shellslash && a:path[:0] is# '\'
+  elseif &shellslash && a:path[:0] ==# '\'
     " / also expands to the default drive if &shellslash is set.
     return '/'
   elseif a:path =~# s:drive_backslash
@@ -169,7 +173,7 @@ endfunction
 " <
 " The first echoes 'file', the second echoes ''.
 function! maktaba#path#Basename(path) abort
-  return s:SplitLast(a:path)[-1]
+  return s:SplitLast(a:path)[1]
 endfunction
 
 
