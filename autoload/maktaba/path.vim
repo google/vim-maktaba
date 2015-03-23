@@ -2,9 +2,6 @@ let s:is_backslash_platform = exists('+shellslash')
 let s:use_backslash = s:is_backslash_platform && !&shellslash
 let s:slash = s:use_backslash ? '\' : '/'
 
-let s:root_frontslash = '\v^/'
-let s:root_backslash = '\v^\\'
-
 if !s:is_backslash_platform
   " Unescaped frontslash.
   " \\@<!%(\\\\)* matches any number of double-backslashes not preceded by
@@ -16,12 +13,48 @@ else
   " See http://en.wikipedia.org/wiki/Path_(computing)#Representations_of_paths_by_operating_system_and_shell.
   let s:unescaped_slash = '\v\\@<!%(\\\\)*\zs[/\\]'
 endif
-let g:unescaped_slash = s:unescaped_slash
 let s:trailing_slash = s:unescaped_slash . '$'
 let s:trailing_slashes = s:unescaped_slash . '+$'
 
 let s:drive_backslash = '\v^\a:\\\\'
 let s:drive_frontslash = '\v^\a://'
+
+
+""
+" Splits {path} on the last system separator character. Equivalent to using
+" @function(#Split) and re-joining all components but the last, but more
+" efficient since it's needed by performance critical code.
+function! s:SplitLast(path) abort
+  " First strip off root. This prevents the root from ever ending up in the tail
+  " side of the split, and also makes the algorithm easier to reason about.
+  let l:root = maktaba#path#RootComponent(a:path)
+  let l:path = a:path[len(l:root) : ]
+
+  " Find the last separator (highest count to match() that doesn't return -1).
+  " Note this uses linear search, but tuning it to reduce iterations didn't seem
+  " to help, possibly because of caching inside vim.
+  let l:count = 1
+  let l:last_sep = -1
+  while 1
+    let l:sep_index = match(l:path, s:unescaped_slash, 0, l:count)
+    if l:sep_index is -1
+      " No match at this count. Terminate and use last match.
+      break
+    else
+      let l:last_sep = l:sep_index
+    endif
+    let l:count += 1
+  endwhile
+
+  " Return [HEAD, TAIL] with root (if any_ included in the HEAD.
+  if l:last_sep != -1
+    " Slice up to (but not including) separator as HEAD.
+    let l:head = l:last_sep > 0 ? l:path[ : l:last_sep - 1] : ''
+    return [l:root . l:head, l:path[l:last_sep + 1 : ]]
+  else
+    return [l:root, '']
+  endif
+endfunction
 
 
 " Joins {left} and {right}.
@@ -55,14 +88,13 @@ endfunction
 " The root of a relative path is empty.
 function! maktaba#path#RootComponent(path) abort
   if !s:is_backslash_platform
-    " This regex matches / alone.
-    return matchstr(a:path, s:root_frontslash)
+    return a:path[:0] ==# '/' ? '/' : ''
   endif
-  if a:path =~# '\v^\\$'
-    " Windows users can always use backslashes regardless of &shellslash
+  if a:path ==# '\'
+    " Windows users can always use backslashes regardless of &shellslash.
     " Vim interprets \ as the default drive.
     return '\'
-  elseif &shellslash && a:path =~# s:root_backslash
+  elseif &shellslash && a:path[:0] ==# '\'
     " / also expands to the default drive if &shellslash is set.
     return '/'
   elseif a:path =~# s:drive_backslash
@@ -92,14 +124,14 @@ endfunction
 " Joins the list {components} together using the system separator character.
 " Works like python's os.path.join in that
 " >
-"   Join('relative', '/absolute')
+"   Join(['relative', '/absolute'])
 " <
 " is '/absolute'
 function! maktaba#path#Join(components) abort
   call maktaba#ensure#IsList(a:components)
   " We work through the components backwards because Join returns the rightmost
   " absolute path (if any absolute paths are created).
-  let l:components = reverse(a:components)
+  let l:components = reverse(copy(a:components))
   " You might think this code can be simplified by initializing l:path to ''.
   " This is not the case: joining a component with an empty string ensures
   " a trailing slash. If we were to start with l:path = '' then
@@ -141,10 +173,7 @@ endfunction
 " <
 " The first echoes 'file', the second echoes ''.
 function! maktaba#path#Basename(path) abort
-  if a:path =~# s:trailing_slash
-    return ''
-  endif
-  return maktaba#path#Split(a:path)[-1]
+  return s:SplitLast(a:path)[1]
 endfunction
 
 
@@ -156,11 +185,7 @@ endfunction
 " <
 " The first echoes '/path/to', the second echoes '/path/to/dir'
 function! maktaba#path#Dirname(path) abort
-  let l:parts = maktaba#path#Split(a:path)
-  if a:path !~# s:trailing_slash
-    let l:parts = l:parts[:-2]
-  endif
-  return maktaba#path#Join(l:parts)
+  return s:SplitLast(a:path)[0]
 endfunction
 
 
