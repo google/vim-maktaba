@@ -1153,7 +1153,7 @@ maktaba#path#Join({components})                          *maktaba#path#Join()*
   Joins the list {components} together using the system separator character.
   Works like python's os.path.join in that
 >
-    Join('relative', '/absolute')
+    Join(['relative', '/absolute'])
 <
   is '/absolute'
 

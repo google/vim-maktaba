@@ -92,14 +92,14 @@ endfunction
 " Joins the list {components} together using the system separator character.
 " Works like python's os.path.join in that
 " >
-"   Join('relative', '/absolute')
+"   Join(['relative', '/absolute'])
 " <
 " is '/absolute'
 function! maktaba#path#Join(components) abort
   call maktaba#ensure#IsList(a:components)
   " We work through the components backwards because Join returns the rightmost
   " absolute path (if any absolute paths are created).
-  let l:components = reverse(a:components)
+  let l:components = reverse(copy(a:components))
   " You might think this code can be simplified by initializing l:path to ''.
   " This is not the case: joining a component with an empty string ensures
   " a trailing slash. If we were to start with l:path = '' then
