@@ -35,6 +35,8 @@
 " See the Vroom tests in the Maktaba source tree (pluginextensions.vroom) for
 " more examples.
 
+let s:maktaba = maktaba#Maktaba()
+
 
 " Extension registry objects, keyed by plugin name.
 if !exists('s:registries')
@@ -54,6 +56,8 @@ function! maktaba#extension#GetInternalRegistry(plugin) abort
     return s:registries[a:plugin]
   endif
 
+  call s:maktaba.logger.Info(
+      \ 'New extension registry for plugin "%s"', a:plugin)
   let l:registry = {
       \ 'AddExtension': function('maktaba#extension#AddExtension'),
       \ 'GetExtensions': function('maktaba#extension#GetExtensions'),
