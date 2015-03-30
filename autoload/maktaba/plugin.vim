@@ -659,7 +659,7 @@ endfunction
 ""
 " @dict Plugin
 " If [file] is given, the plugin file plugin/<file>.vim will be sourced.
-" An error will  be thrown if [file] does not exist unless [optional] is set.
+" An error will be thrown if [file] does not exist unless [optional] is set.
 " If [file] is omitted, then all plugin files that have not yet been sourced
 " will be sourced.
 " [file] may also be a list of filenames to source.
@@ -824,7 +824,7 @@ endfunction
 " [throw] argument to make this function throw errors instead of printing them,
 " if you plan to catch them explicitly.
 "
-" Mappings should  be defined in the plugin/mappings.vim file. The user
+" Mappings should be defined in the plugin/mappings.vim file. The user
 " configures their map prefix preferences via the flag that controls that file.
 " @default throw=0
 " @throws NotFound if plugin/mappings.vim does not exist.
