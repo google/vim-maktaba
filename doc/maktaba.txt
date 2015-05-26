@@ -1063,6 +1063,13 @@ maktaba#library#Import({library})                   *maktaba#library#Import()*
 
   The maktaba plugin object will be returned.
 
+  In normal usage, the plugin manager will be used to satisfy library
+  dependencies at the plugin level (via dependency support if available,
+  otherwise manually satisfied by the user). This function is only used to
+  safely access the plugin handle from code, and |maktaba#library#Require()|
+  is used to ensure individual files that depend on the library have access to
+  it (or cause an error to be printed).
+
   Throws ERROR(NotALibrary) if {library} is not a library plugin.
   Throws ERROR(NotFound) if {library} cannot be installed by any installer.
 
@@ -1074,6 +1081,18 @@ maktaba#library#Require({library})                 *maktaba#library#Require()*
   dumps). This function returns 1 on success and 0 on failure. Use this
   instead of |maktaba#library#Import()| when you don't care to grab a handle
   to the imported plugin object (which is usually).
+
+  In normal usage, the plugin manager will be used to satisfy library
+  dependencies at the plugin level (via dependency support if available,
+  otherwise manually satisfied by the user). This function is only used to
+  ensure individual files that depend on the library have access to it (or
+  cause an error to be printed).
+
+  If a dependency cannot be satisfied, an error message will be shouted, but
+  no error is thrown and the sourcing file will still be allowed to continue
+  executing normally. The plugin code will ordinarily throw additional errors
+  when it tries to call into library code. Errors shouted here are secondary
+  and only intended to provide context and sometimes earlier detection.
 
   Throws ERROR(NotALibrary) if {library} describes a non-library plugin.
 
