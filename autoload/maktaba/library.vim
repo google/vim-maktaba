@@ -43,6 +43,13 @@ endfunction
 "
 " The maktaba plugin object will be returned.
 "
+" In normal usage, the plugin manager will be used to satisfy library
+" dependencies at the plugin level (via dependency support if available,
+" otherwise manually satisfied by the user). This function is only used to
+" safely access the plugin handle from code, and @function(#Require) is used to
+" ensure individual files that depend on the library have access to it (or cause
+" an error to be printed).
+"
 " @throws NotALibrary if {library} is not a library plugin.
 " @throws NotFound if {library} cannot be installed by any installer.
 function! maktaba#library#Import(library) abort
@@ -86,10 +93,22 @@ endfunction
 " @function(#Import) when you don't care to grab a handle to the imported plugin
 " object (which is usually).
 "
+" In normal usage, the plugin manager will be used to satisfy library
+" dependencies at the plugin level (via dependency support if available,
+" otherwise manually satisfied by the user). This function is only used to
+" ensure individual files that depend on the library have access to it (or cause
+" an error to be printed).
+"
+" If a dependency cannot be satisfied, an error message will be shouted, but no
+" error is thrown and the sourcing file will still be allowed to continue
+" executing normally. The plugin code will ordinarily throw additional errors
+" when it tries to call into library code. Errors shouted here are secondary and
+" only intended to provide context and sometimes earlier detection.
+"
 " @throws NotALibrary if {library} describes a non-library plugin.
 function! maktaba#library#Require(library) abort
   try
-    let l:plugin = maktaba#library#Import(a:library)
+    call maktaba#library#Import(a:library)
   catch /ERROR(NotFound):/
     call maktaba#error#Shout(v:exception)
     return 0
