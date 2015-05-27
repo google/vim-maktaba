@@ -11,6 +11,15 @@ if !exists('s:plugins_by_location')
   let s:plugins_by_location = {}
 endif
 
+" Blob of data used by s:GetUnregisteredLeafdirs() for caching:
+"  * The 'leafdirs' field is the cached dict of unregistered leafdirs to return.
+"  * The 'rtp' and 'plugin_locations' fields are the last seen &rtp and
+"    keys(s:plugins_by_location) values, used to invalidate the cache on
+"    changes.
+if !exists('s:unregistered_leafdirs_cache')
+  let s:unregistered_leafdirs_cache = {}
+endif
+
 " Recognized special directories are as follows:
 "
 " autoload/*: Files containing functions made available upon request.
@@ -99,6 +108,33 @@ endfunction
 " Doesn't apply sophisticated heuristics like stripping 'vim-' prefix.
 function! s:SanitizedName(name) abort
   return substitute(a:name, '[^_a-zA-Z0-9]', '_', 'g')
+endfunction
+
+
+""
+" Gets a dictionary of {leaf path} for each path found on &rtp that does not
+" correspond to a registered plugin.
+" Returns the same data structure as maktaba#rtp#LeafDirs but with
+" already-registered dirs omitted.
+function! s:GetUnregisteredLeafdirs() abort
+  " NOTE: This function is performance-sensitive.
+  let l:cache = s:unregistered_leafdirs_cache
+  let l:plugin_locations = keys(s:plugins_by_location)
+  if !has_key(l:cache, 'rtp') || !has_key(l:cache, 'plugin_locations') ||
+      \ l:cache.rtp isnot# &rtp ||
+      \ l:cache.plugin_locations !=# l:plugin_locations
+    let l:leafdirs = {}
+    for [l:leafdir, l:leafpath] in items(maktaba#rtp#LeafDirs())
+      if !has_key(s:plugins_by_location, l:leafpath)
+        " Path is not a plugin location. Include in return value.
+        let l:leafdirs[l:leafdir] = l:leafpath
+      endif
+    endfor
+    let l:cache.leafdirs = l:leafdirs
+    let l:cache.rtp = &rtp
+    let l:cache.plugin_locations = l:plugin_locations
+  endif
+  return l:cache.leafdirs
 endfunction
 
 
@@ -260,7 +296,7 @@ endfunction
 " Scans 'runtimepath' for any unregistered plugins and registers them with
 " maktaba. May trigger instant/ hooks for newly-registered plugins.
 function! maktaba#plugin#Detect() abort
-  for [l:name, l:location] in items(maktaba#rtp#LeafDirs())
+  for [l:name, l:location] in items(s:GetUnregisteredLeafdirs())
     call maktaba#plugin#GetOrInstall(l:location)
   endfor
 endfunction
@@ -284,7 +320,7 @@ endfunction
 " registered with maktaba.
 function! maktaba#plugin#IsRegistered(plugin) abort
   try
-    let l:plugin = maktaba#plugin#Get(a:plugin)
+    call maktaba#plugin#Get(a:plugin)
   catch /ERROR(NotFound):/
     return 0
   endtry
@@ -303,14 +339,8 @@ endfunction
 " then maktaba can't handle a plugin named "plugins/myplugin". Make sure your
 " plugins have sufficiently different names!
 function! maktaba#plugin#CanonicalName(plugin) abort
-  let l:plugin = a:plugin
-  if maktaba#string#StartsWith(l:plugin, 'vim-')
-    let l:plugin = l:plugin[4:]
-  endif
-  if maktaba#string#EndsWith(l:plugin, '.vim')
-    let l:plugin = l:plugin[:-5]
-  endif
-  return l:plugin
+  " NOTE: This function is performance-sensitive.
+  return matchstr(a:plugin, '\v\C^(vim-)?\zs.{-}\ze(\.vim)?$')
 endfunction
 
 
@@ -396,7 +426,7 @@ function! maktaba#plugin#Get(name) abort
   endif
 
   " Check if any dir on runtimepath is a plugin that hasn't been detected yet.
-  for [l:leafdir, l:leafpath] in items(maktaba#rtp#LeafDirs())
+  for [l:leafdir, l:leafpath] in items(s:GetUnregisteredLeafdirs())
     if maktaba#plugin#CanonicalName(l:leafdir) is# l:name
       return maktaba#plugin#GetOrInstall(l:leafpath)
     endif
