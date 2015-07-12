@@ -1043,8 +1043,7 @@ maktaba#json#Format({value})                           *maktaba#json#Format()*
   Funcref or non-finite Float (or a Dictionary or List containing either).
   Throws ERROR(BadValue) if the input cannot be represented as JSON.
 
-maktaba#json#Parse({json}, [custom_values], [custom_value])
-                                                        *maktaba#json#Parse()*
+maktaba#json#Parse({json}, [custom_values])             *maktaba#json#Parse()*
   Parses the JSON text {json} to a Vim value. If [custom_values] is passed, it
   is a dictionary mapping JSON primitives (in string form) to custom values to
   use instead of maktaba#json# sentinels. For example:
@@ -1054,7 +1053,7 @@ maktaba#json#Parse({json}, [custom_values], [custom_value])
   Throws ERROR(WrongType) if {json} is not a string or [custom_values] is not
   a dict.
   Throws ERROR(BadValue) if {json} is not a valid JSON text.
-  Throws ERROR(BadValue) if [custom_value] keys are invalid JSON primitive
+  Throws ERROR(BadValue) if [custom_values] keys are invalid JSON primitive
   names.
 
 maktaba#library#Import({library})                   *maktaba#library#Import()*

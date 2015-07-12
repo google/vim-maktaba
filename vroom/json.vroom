@@ -18,8 +18,8 @@ As always, we start by installing Maktaba.
 We can start by formatting a variety of Vim values as JSON. Any Vim value other
 than a Funcref can be formatted as a JSON text.
 
-  :function CheckEqual(a, b) abort
-  :  return maktaba#ensure#IsEqual(a:b, a:a)
+  :function CheckEqual(actual, expected) abort
+  :  return maktaba#ensure#IsEqual(a:expected, a:actual)
   :endfunction
 
   :call CheckEqual(maktaba#json#Format('Hello, world'), '"Hello, world"')
@@ -27,7 +27,7 @@ than a Funcref can be formatted as a JSON text.
   :call CheckEqual(maktaba#json#Format(42.0), '42.0')
   :call CheckEqual(maktaba#json#Format([1, 2, 'foo']), '[1, 2, "foo"]')
   :let g:json = maktaba#json#Format({'foo': {'bar': 'baz'}})
-  :call CheckEqual('{"foo": {"bar": "baz"}}', g:json)
+  :call CheckEqual(g:json, '{"foo": {"bar": "baz"}}')
 
 Note that all of these return a string.
 

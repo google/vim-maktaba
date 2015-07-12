@@ -190,7 +190,7 @@ endfunction
 " <
 " @throws WrongType if {json} is not a string or [custom_values] is not a dict.
 " @throws BadValue if {json} is not a valid JSON text.
-" @throws BadValue if [custom_value] keys are invalid JSON primitive names.
+" @throws BadValue if [custom_values] keys are invalid JSON primitive names.
 function! maktaba#json#Parse(json, ...) abort
   let l:json = maktaba#string#Strip(maktaba#ensure#IsString(a:json))
   let l:custom_values = maktaba#ensure#IsDict(get(a:, 1, {}))
