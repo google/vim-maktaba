@@ -4,6 +4,7 @@ env:
     - CI_TARGET=vim
     - CI_TARGET=neovim
 before_script:
+  - sudo apt-get update
   - sudo apt-get install python3-dev
   - if [ $CI_TARGET = vim ]; then
       sudo apt-get install vim-gnome &&
