@@ -28,6 +28,11 @@ if !exists('s:maktaba')
   let s:maktaba.globals.loghandlers = maktaba#reflist#Create()
 endif
 
+if !exists('s:json_python_disabled')
+  let s:json_python_disabled = 0
+endif
+
+
 
 ""
 " Returns a handle to the maktaba plugin object.
@@ -104,4 +109,23 @@ function! maktaba#LateLoad(...) abort
   if l:cycle
     call maktaba#filetype#Cycle()
   endif
+endfunction
+
+
+""
+" @private
+" Forces the disabling of the Python implementation of the maktaba#json
+" functions, to enable testing. This must be called before referencing any of
+" the maktaba#json functions, since it will only take effect on first load.
+function! maktaba#SetJsonPythonDisabled(disabled) abort
+  let s:json_python_disabled = a:disabled
+endfunction
+
+
+""
+" @private
+" Returns whether the Python implementation of the maktaba#json functions is
+" disabled.
+function! maktaba#GetJsonPythonDisabled() abort
+  return s:json_python_disabled
 endfunction

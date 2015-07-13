@@ -6,8 +6,8 @@ These functions are provided in Vimscript and Python versions.  The Python
 versions are faster but depend upon a version of Vim compiled with +python
 (currently version 7.3.1042 or later).
 
-This set of tests uses the Python versions if available.  See
-json-vimscript.vroom for the tests of the Vimscript versions.
+This set of tests forces use of the Vimscript versions.  See json.vroom for the
+tests of the Python versions.
 
 As always, we start by installing Maktaba.
 
@@ -15,6 +15,11 @@ As always, we start by installing Maktaba.
   :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
   :let g:bootstrapfile = g:maktabadir . '/bootstrap.vim'
   :execute 'source' g:bootstrapfile
+
+We then disable the Python implementations.  We must do this before we make any
+calls to a maktaba#json function.
+
+  :call maktaba#SetJsonPythonDisabled(1)
 
 
 
@@ -100,16 +105,13 @@ This validates that your primitive names don't have typos.
 
 
 Maktaba will throw an error if the input to maktaba#json#Parse() is not a
-string, or if it is not a valid JSON text.  Note that the precise text of the
-error may differ between the Vimscript and Python implementations, so we match
-against both below, in case we are running on a version of Vim that doesn't
-support the Python implementation.
+string, or if it is not a valid JSON text.
 
   :let g:parse = maktaba#function#Create('maktaba#json#Parse')
   :call maktaba#error#Try(g:parse.WithArgs(0))
   ~ ERROR(WrongType): Expected a string. Got a number.
   :call maktaba#error#Try(g:parse.WithArgs('system("ls")'))
-  ~ ERROR\(BadValue\): Input is not valid JSON text(.|:.*) (regex)
+  ~ ERROR(BadValue): Input is not valid JSON text.
 
 
 
@@ -120,11 +122,9 @@ represented in JSON.
   :let g:inf = 1.0 / 0.0
   :let g:format = maktaba#function#Create('maktaba#json#Format')
   :call maktaba#error#Try(g:format.WithArgs(g:nan))
-  ~ ERROR(BadValue): Value cannot be represented as JSON:* (glob)
+  ~ ERROR\(BadValue\): Value cannot be represented as JSON: -?nan (regex)
   :call maktaba#error#Try(g:format.WithArgs(g:inf))
-  ~ ERROR(BadValue): Value cannot be represented as JSON:* (glob)
+  ~ ERROR(BadValue): Value cannot be represented as JSON: inf
 
   :call maktaba#error#Try(g:format.WithArgs(maktaba#function#Create('system')))
-  ~ ERROR\(BadValue\): (regex)
-  |( Value cannot be represented as JSON:.*|
-  | Funcdict for func 'system' cannot be represented as JSON.)
+  ~ ERROR(BadValue): Funcdict for func 'system' cannot be represented as JSON.

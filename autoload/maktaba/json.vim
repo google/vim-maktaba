@@ -12,6 +12,164 @@ if !exists('maktaba#json#NULL')
       \ 'null': s:NULL, 'true': s:TRUE, 'false': s:FALSE}
 endif
 
+" Python implementation:
+
+" Initialize Vim's Python environment with the helpers we'll need.
+function! s:InitPython() abort
+  python << EOF
+import json
+import vim
+
+
+def _maktaba_vim2py_deepcopy(value, null, true, false):
+    if isinstance(value, vim.List):
+        value = [_maktaba_vim2py_deepcopy(e, null, true, false)
+                 for e in value]
+    elif isinstance(value, vim.Dictionary):
+        # vim.Dictionary doesn't support items() or iter() until 7.3.1061.
+        value = {_maktaba_vim2py_deepcopy(k, null, true, false):
+                 _maktaba_vim2py_deepcopy(value[k], null, true, false)
+                 for k in value.keys()}
+
+    if value == null:
+        return None
+    if value == true:
+        return True
+    if value == false:
+        return False
+
+    return value
+
+
+def _maktaba_py2vim_scalar(value, null, true, false):
+    if value is None:
+        return null
+    if value is True:
+        return true
+    if value is False:
+        return false
+    return value
+
+
+def _maktaba_py2vim_list_inplace(value, null, true, false):
+    for i in range(len(value)):
+        v = value[i]
+        if isinstance(v, list):
+            _maktaba_py2vim_list_inplace(v, null, true, false)
+        elif isinstance(v, dict):
+            _maktaba_py2vim_dict_inplace(v, null, true, false)
+        else:
+            value[i] = _maktaba_py2vim_scalar(v, null, true, false)
+
+
+def _maktaba_py2vim_dict_inplace(value, null, true, false):
+    for k in value:
+        # JSON only permits string keys, so there's no need to transform the
+        # key, just the value.
+        v = value[k]
+        if isinstance(v, list):
+            _maktaba_py2vim_list_inplace(v, null, true, false)
+        elif isinstance(v, dict):
+            _maktaba_py2vim_dict_inplace(v, null, true, false)
+        else:
+            value[k] = _maktaba_py2vim_scalar(v, null, true, false)
+
+
+def maktaba_json_format():
+    buffer = vim.bindeval('l:buffer')
+    custom_values = buffer[0]
+    value = buffer[1]
+    # Now translate the Vim value to something that uses Python types (e.g.
+    # None, True, False), based on the custom values we're using.  Note that
+    # this must return a copy of the input, as we cannot store None (or True
+    # or False) in a Vim value.  (Doing that also avoids needing to tell
+    # json.dumps() how to serialize a vim.List or vim.Dictionary.)
+
+    # Note that to do this we need to check our custom values for equality,
+    # which we can't do if they're a vim.List or vim.Dictionary.
+    # Fortunately, there's an easy way to fix that.
+    custom_values = _maktaba_vim2py_deepcopy(custom_values, None, None, None)
+
+    # Now we can use those custom values to translate the real value.
+    value = _maktaba_vim2py_deepcopy(
+        value,
+        custom_values['null'], custom_values['true'], custom_values['false'])
+    try:
+      buffer[2] = json.dumps(value, allow_nan=False)
+    except ValueError as e:  # e.g. attempting to format NaN
+      buffer[3] = e.message
+    except TypeError as e:  # e.g. attempting to format a Function
+      buffer[3] = e.message
+
+
+def maktaba_json_parse():
+    buffer = vim.bindeval('l:buffer')
+
+    custom_values = buffer[0]
+    json_str = buffer[1]
+    try:
+      value = [json.loads(json_str)]
+    except ValueError as e:
+      buffer[3] = e.message
+      return
+
+    # Now mutate the resulting Python object to something that can be stored
+    # in a Vim value (i.e. has no None values, which Vim won't accept).
+    _maktaba_py2vim_list_inplace(
+        value,
+        custom_values['null'], custom_values['true'], custom_values['false'])
+    buffer[2] = value[0]
+EOF
+endfunction
+
+" Try to initialize Vim's Python environment. If that fails, we'll use the
+" Vimscript implementations instead.
+
+" maktaba#SetJsonPythonDisabled() can be used to skip trying to use the Python
+" implementation.
+let s:disable_python = maktaba#GetJsonPythonDisabled()
+" We require Vim >= 7.3.1042 to use the Python implementation:
+"   7.3.569 added bindeval().
+"   7.3.996 added the vim.List and vim.Dictionary types.
+"   7.3.1042 fixes assigning a dict() containing Unicode keys to a Vim value.
+if v:version < 703 || (v:version == 703 && !has('patch1042'))
+      \ || s:disable_python
+  let s:use_python = 0  " Not a recent Vim, or explicitly disabled
+else
+  try
+    call s:InitPython()
+    let s:use_python = 1
+  catch /E319:/  " No +python
+    let s:use_python = 0
+  endtry
+endif
+
+" Python implementation of maktaba#json#Format()
+function! s:PythonFormat(value) abort
+  let l:buffer = [s:DEFAULT_CUSTOM_VALUES, a:value, 0, 0]
+  python maktaba_json_format()
+  if l:buffer[3] isnot# 0
+    throw maktaba#error#BadValue(
+        \ 'Value cannot be represented as JSON: %s.', l:buffer[3])
+  endif
+
+  return l:buffer[2]
+endfunction
+
+" Python implementation of s:ParsePartial()
+function! s:PythonParsePartial(json, custom_values) abort
+  let l:buffer = [a:custom_values, a:json, 0, 0]
+  python maktaba_json_parse()
+  if l:buffer[3] isnot# 0
+    throw maktaba#error#BadValue(
+        \ 'Input is not valid JSON text: %s.', l:buffer[3])
+  endif
+
+  return l:buffer[2]
+endfunction
+
+" Vimscript implementation:
+
 function! s:Ellipsize(str, limit) abort
   return len(a:str) > a:limit ? a:str[ : a:limit - 4] . '...' : a:str
 endfunction
@@ -30,6 +188,10 @@ endfunction
 " Dictionary or List containing either).
 " @throws BadValue if the input cannot be represented as JSON.
 function! maktaba#json#Format(value) abort
+  if s:use_python
+    return s:PythonFormat(a:value)
+  endif
+
   if a:value is s:NULL
     return 'null'
   elseif a:value is s:TRUE
@@ -213,6 +375,11 @@ function! maktaba#json#Parse(json, ...) abort
         \ 'Invalid JSON primitive name(s) in custom_values: %s',
         \ join(l:unrecognized_custom_keys, ', '))
   endif
+
+  if s:use_python
+    return s:PythonParsePartial(a:json, l:custom_values)
+  endif
+
   let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
   if empty(l:remaining)
     return l:value
