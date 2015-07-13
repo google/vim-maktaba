@@ -51,7 +51,9 @@ We can also parse any given JSON text to a Vim value.
   :call CheckEqual(maktaba#json#Parse('"Hello, world"'), 'Hello, world')
   :call CheckEqual(maktaba#json#Parse('42'), 42)
   :call CheckEqual(maktaba#json#Parse('42.0'), 42.0)
-  :call CheckEqual(maktaba#json#Parse('[1, 2, "foo"]'), [1, 2, 'foo'])
+  :call CheckEqual(maktaba#json#Parse('[]'), [])
+  :call CheckEqual(maktaba#json#Parse('[1, {}, "foo"]'), [1, {}, 'foo'])
+  :call CheckEqual(maktaba#json#Parse('{}'), {})
   :let g:dict = maktaba#json#Parse('{"foo": {"bar": "baz"}}')
   :call CheckEqual(g:dict, {'foo': {'bar': 'baz'}})
 

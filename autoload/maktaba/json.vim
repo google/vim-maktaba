@@ -118,6 +118,7 @@ function! s:ParseListPartial(json, custom_values) abort
     " Parse and consume one value as the next list item.
     let [l:item, l:remaining] = s:ParsePartial(l:remaining, a:custom_values)
     call add(l:items, l:item)
+    unlet l:item
     " If next character is "]", consume and finish list.
     if l:remaining[0:0] is# ']'
       let l:remaining = s:Consume(l:remaining, 1)
@@ -136,7 +137,7 @@ endfunction
 function! s:ParseDictPartial(json, custom_values) abort
   let l:remaining = s:Consume(a:json, 1)
   if l:remaining[0:0] is# '}'
-    return [[], s:Consume(l:remaining, 1)]
+    return [{}, s:Consume(l:remaining, 1)]
   endif
   let l:dict = {}
   while !empty(l:remaining)
