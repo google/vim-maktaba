@@ -7,6 +7,9 @@ if !exists('maktaba#json#NULL')
   let maktaba#json#FALSE = {'__json__': 'false'}
   let s:FALSE = maktaba#json#FALSE
   lockvar! maktaba#json#NULL maktaba#json#TRUE maktaba#json#FALSE
+
+  let s:DEFAULT_CUSTOM_VALUES = {
+      \ 'null': s:NULL, 'true': s:TRUE, 'false': s:FALSE}
 endif
 
 function! s:Ellipsize(str, limit) abort
@@ -68,15 +71,15 @@ endfunction
 function! s:ParsePartial(json, custom_values) abort
   " null, true, or false
   if a:json =~# '\m^null\>'
-    let l:value = get(a:custom_values, 'null', s:NULL)
+    let l:value = a:custom_values.null
     return [l:value, s:Consume(a:json, 4)]
   endif
   if a:json =~# '\m^true\>'
-    let l:value = get(a:custom_values, 'true', s:TRUE)
+    let l:value = a:custom_values.true
     return [l:value, s:Consume(a:json, 4)]
   endif
   if a:json =~# '\m^false\>'
-    let l:value = get(a:custom_values, 'false', s:FALSE)
+    let l:value = a:custom_values.false
     return [l:value, s:Consume(a:json, 5)]
   endif
   " Number
@@ -195,6 +198,12 @@ endfunction
 function! maktaba#json#Parse(json, ...) abort
   let l:json = maktaba#string#Strip(maktaba#ensure#IsString(a:json))
   let l:custom_values = maktaba#ensure#IsDict(get(a:, 1, {}))
+  if empty(l:custom_values)  " common case
+    let l:custom_values = s:DEFAULT_CUSTOM_VALUES
+  else
+    let l:custom_values = copy(l:custom_values)
+    call extend(l:custom_values, s:DEFAULT_CUSTOM_VALUES, 'keep')
+  endif
   " Ensure custom values only has 'null', 'true', or 'false' as keys.
   let l:allowed_custom_keys = ['null', 'true', 'false']
   let l:unrecognized_custom_keys =
