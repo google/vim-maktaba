@@ -1,6 +1,3 @@
-let s:plugin = maktaba#Maktaba()
-
-
 " Sentinel constants used to serialize/deserialize JSON primitives.
 if !exists('maktaba#json#NULL')
   let maktaba#json#NULL = {'__json__': 'null'}
@@ -13,16 +10,39 @@ if !exists('maktaba#json#NULL')
 
   let s:DEFAULT_CUSTOM_VALUES = {
       \ 'null': s:NULL, 'true': s:TRUE, 'false': s:FALSE}
+
+  " <sfile>:p:h:h:h is .../maktaba/
+  let s:plugindir =  expand('<sfile>:p:h:h:h')
 endif
 
+
 " Python implementation:
+
+" Initialize Vim's Python environment with the helpers we'll need.
+function! s:InitPython() abort
+  " This is an inlined version of maktaba#python#ImportModule().
+  " We don't want to use anything here that would cause us to load the Maktaba
+  " plugin, since we might be in the process of doing that load.
+  let l:is_backslash_platform = exists('+shellslash')
+  let l:use_backslash = l:is_backslash_platform && !&shellslash
+  let l:slash = l:use_backslash ? '\' : '/'
+  let l:path = s:plugindir . l:slash . 'python'
+  python <<EOF
+import sys
+import vim
+
+sys.path.insert(0, vim.eval('l:path'))
+import maktabajson
+del sys.path[:1]
+EOF
+endfunction
 
 " Try to initialize Vim's Python environment. If that fails, we'll use the
 " Vimscript implementations instead.
 
-" maktaba#SetJsonPythonDisabled() can be used to skip trying to use the Python
-" implementation.
-let s:disable_python = maktaba#GetJsonPythonDisabled()
+" maktaba#json#python#SetDisabled() can be used to skip trying to use the
+" Python implementation.
+let s:disable_python = maktaba#json#python#GetDisabled()
 " We require Vim >= 7.3.1042 to use the Python implementation:
 "   7.3.569 added bindeval().
 "   7.3.996 added the vim.List and vim.Dictionary types.
@@ -32,7 +52,7 @@ if v:version < 703 || (v:version == 703 && !has('patch1042'))
   let s:use_python = 0  " Not a recent Vim, or explicitly disabled
 else
   try
-    call maktaba#python#ImportModule(s:plugin, 'maktabajson')
+    call s:InitPython()
     let s:use_python = 1
   catch /E319:/  " No +python
     let s:use_python = 0
