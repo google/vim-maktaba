@@ -10,7 +10,79 @@ if !exists('maktaba#json#NULL')
 
   let s:DEFAULT_CUSTOM_VALUES = {
       \ 'null': s:NULL, 'true': s:TRUE, 'false': s:FALSE}
+
+  " <sfile>:p:h:h:h is .../maktaba/
+  let s:plugindir =  expand('<sfile>:p:h:h:h')
 endif
+
+
+" Python implementation:
+
+" Initialize Vim's Python environment with the helpers we'll need.
+function! s:InitPython() abort
+  " This is an inlined version of maktaba#python#ImportModule().
+  " We don't want to use anything here that would cause us to load the Maktaba
+  " plugin, since we might be in the process of doing that load.
+  let l:is_backslash_platform = exists('+shellslash')
+  let l:use_backslash = l:is_backslash_platform && !&shellslash
+  let l:slash = l:use_backslash ? '\' : '/'
+  let l:path = s:plugindir . l:slash . 'python'
+  python <<EOF
+import sys
+import vim
+
+sys.path.insert(0, vim.eval('l:path'))
+import maktabajson
+del sys.path[:1]
+EOF
+endfunction
+
+" Try to initialize Vim's Python environment. If that fails, we'll use the
+" Vimscript implementations instead.
+" maktaba#json#python#Disable() can be used to skip trying to use the
+" Python implementation.
+
+" We require Vim >= 7.3.1042 to use the Python implementation:
+"   7.3.569 added bindeval().
+"   7.3.996 added the vim.List and vim.Dictionary types.
+"   7.3.1042 fixes assigning a dict() containing Unicode keys to a Vim value.
+if v:version < 703 || (v:version == 703 && !has('patch1042'))
+      \ || maktaba#json#python#IsDisabled()
+  let s:use_python = 0  " Not a recent Vim, or explicitly disabled
+else
+  try
+    call s:InitPython()
+    let s:use_python = 1
+  catch /E319:/  " No +python
+    let s:use_python = 0
+  endtry
+endif
+
+" Python implementation of maktaba#json#Format()
+function! s:PythonFormat(value) abort
+  let l:buffer = [s:DEFAULT_CUSTOM_VALUES, a:value, 0, 0]
+  python maktabajson.format()
+  if l:buffer[3] isnot# 0
+    throw maktaba#error#BadValue(
+        \ 'Value cannot be represented as JSON: %s.', l:buffer[3])
+  endif
+
+  return l:buffer[2]
+endfunction
+
+" Python implementation of s:ParsePartial()
+function! s:PythonParsePartial(json, custom_values) abort
+  let l:buffer = [a:custom_values, a:json, 0, 0]
+  python maktabajson.parse()
+  if l:buffer[3] isnot# 0
+    throw maktaba#error#BadValue(
+        \ 'Input is not valid JSON text: %s.', l:buffer[3])
+  endif
+
+  return l:buffer[2]
+endfunction
+
+" Vimscript implementation:
 
 function! s:Ellipsize(str, limit) abort
   return len(a:str) > a:limit ? a:str[ : a:limit - 4] . '...' : a:str
@@ -30,6 +102,10 @@ endfunction
 " Dictionary or List containing either).
 " @throws BadValue if the input cannot be represented as JSON.
 function! maktaba#json#Format(value) abort
+  if s:use_python
+    return s:PythonFormat(a:value)
+  endif
+
   if a:value is s:NULL
     return 'null'
   elseif a:value is s:TRUE
@@ -213,6 +289,11 @@ function! maktaba#json#Parse(json, ...) abort
         \ 'Invalid JSON primitive name(s) in custom_values: %s',
         \ join(l:unrecognized_custom_keys, ', '))
   endif
+
+  if s:use_python
+    return s:PythonParsePartial(a:json, l:custom_values)
+  endif
+
   let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
   if empty(l:remaining)
     return l:value
