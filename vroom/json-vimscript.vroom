@@ -19,7 +19,7 @@ As always, we start by installing Maktaba.
 We then disable the Python implementations.  We must do this before we make any
 calls to a maktaba#json function.
 
-  :call maktaba#json#python#SetDisabled(1)
+  :call maktaba#json#python#Disable()
 
 
 

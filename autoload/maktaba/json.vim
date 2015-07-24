@@ -39,16 +39,15 @@ endfunction
 
 " Try to initialize Vim's Python environment. If that fails, we'll use the
 " Vimscript implementations instead.
-
-" maktaba#json#python#SetDisabled() can be used to skip trying to use the
+" maktaba#json#python#Disable() can be used to skip trying to use the
 " Python implementation.
-let s:disable_python = maktaba#json#python#GetDisabled()
+
 " We require Vim >= 7.3.1042 to use the Python implementation:
 "   7.3.569 added bindeval().
 "   7.3.996 added the vim.List and vim.Dictionary types.
 "   7.3.1042 fixes assigning a dict() containing Unicode keys to a Vim value.
 if v:version < 703 || (v:version == 703 && !has('patch1042'))
-      \ || s:disable_python
+      \ || maktaba#json#python#IsDisabled()
   let s:use_python = 0  " Not a recent Vim, or explicitly disabled
 else
   try
