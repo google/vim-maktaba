@@ -48,6 +48,7 @@ endfunction
 "   7.3.1042 fixes assigning a dict() containing Unicode keys to a Vim value.
 if v:version < 703 || (v:version == 703 && !has('patch1042'))
       \ || maktaba#json#python#IsDisabled()
+      \ || has('nvim') " neovim does not implement bindeval, which maktaba uses.
   let s:use_python = 0  " Not a recent Vim, or explicitly disabled
 else
   try
