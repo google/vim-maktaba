@@ -1,11 +1,22 @@
+" Neovim support covered in https://github.com/neovim/neovim/issues/3417.
+let s:HAS_NATIVE_JSON =
+    \ !has('nvim') &&
+    \ v:version > 704 || v:version == 704 && has('patch1304')
+
 " Sentinel constants used to serialize/deserialize JSON primitives.
 if !exists('maktaba#json#NULL')
-  let maktaba#json#NULL = {'__json__': 'null'}
-  let s:NULL = maktaba#json#NULL
-  let maktaba#json#TRUE = {'__json__': 'true'}
-  let s:TRUE = maktaba#json#TRUE
-  let maktaba#json#FALSE = {'__json__': 'false'}
-  let s:FALSE = maktaba#json#FALSE
+  if s:HAS_NATIVE_JSON
+    let s:NULL = v:null
+    let s:TRUE = v:true
+    let s:FALSE = v:false
+  else
+    let s:NULL = {'__json__': 'null'}
+    let s:TRUE = {'__json__': 'true'}
+    let s:FALSE = {'__json__': 'false'}
+  endif
+  let maktaba#json#NULL = s:NULL
+  let maktaba#json#TRUE = s:TRUE
+  let maktaba#json#FALSE = s:FALSE
   lockvar! maktaba#json#NULL maktaba#json#TRUE maktaba#json#FALSE
 
   let s:DEFAULT_CUSTOM_VALUES = {
@@ -91,7 +102,7 @@ endfunction
 
 function! s:FormatKeyAndValue(key, value) abort
   if maktaba#value#IsString(a:key)
-    return printf('"%s": %s', a:key, maktaba#json#Format(a:value))
+    return printf('"%s":%s', a:key, maktaba#json#Format(a:value))
   endif
   throw maktaba#error#BadValue(
       \ 'Non-string keys not allowed for JSON dicts: %s.', string(a:key))
@@ -103,6 +114,19 @@ endfunction
 " Dictionary or List containing either).
 " @throws BadValue if the input cannot be represented as JSON.
 function! maktaba#json#Format(value) abort
+  if s:HAS_NATIVE_JSON
+    try
+      let l:encoded = json_encode(a:value)
+      " Ensure encoded value can be decoded again as a workaround for
+      " https://github.com/vim/vim/issues/654.
+      call json_decode(l:encoded)
+    catch /E474:/
+      throw maktaba#error#BadValue(
+          \ 'Value cannot be represented as JSON: %s', string(a:value))
+    endtry
+    return l:encoded
+  endif
+
   if s:use_python
     return s:PythonFormat(a:value)
   endif
@@ -127,7 +151,7 @@ function! maktaba#json#Format(value) abort
     return '"' . l:escaped . '"'
   elseif maktaba#value#IsList(a:value)
     let l:json_items = map(copy(a:value), 'maktaba#json#Format(v:val)')
-    return '[' . join(l:json_items, ', ') . ']'
+    return '[' . join(l:json_items, ',') . ']'
   elseif maktaba#value#IsDict(a:value)
     if maktaba#value#IsCallable(a:value)
       throw maktaba#error#BadValue(
@@ -136,7 +160,7 @@ function! maktaba#json#Format(value) abort
     endif
     let l:json_items =
         \ map(items(a:value), 's:FormatKeyAndValue(v:val[0], v:val[1])')
-    return '{' . join(l:json_items, ', ') . '}'
+    return '{' . join(l:json_items, ',') . '}'
   endif
   throw maktaba#error#BadValue(a:value)
 endfunction
@@ -264,6 +288,24 @@ function! s:SetDifference(a, b) abort
 endfunction
 
 ""
+" Replace special JSON primitives in {value} according to {custom_values}.
+" {custom_values} is a dictionary mapping JSON primitives (in string form) to
+" custom values to use instead of native JSON primitives.
+function! s:ReplacePrimitives(value, custom_values) abort
+  if maktaba#value#IsList(a:value) || maktaba#value#IsDict(a:value)
+    return map(copy(a:value), 's:ReplacePrimitives(v:val, a:custom_values)')
+  elseif a:value ==# s:TRUE
+    return a:custom_values.true
+  elseif a:value ==# s:FALSE
+    return a:custom_values.false
+  elseif a:value ==# s:NULL
+    return a:custom_values.null
+  else
+    return a:value
+  endif
+endfunction
+
+""
 " Parses the JSON text {json} to a Vim value. If [custom_values] is passed, it
 " is a dictionary mapping JSON primitives (in string form) to custom values to
 " use instead of maktaba#json# sentinels. For example: >
@@ -275,20 +317,36 @@ endfunction
 function! maktaba#json#Parse(json, ...) abort
   let l:json = maktaba#string#Strip(maktaba#ensure#IsString(a:json))
   let l:custom_values = maktaba#ensure#IsDict(get(a:, 1, {}))
+  if !empty(l:custom_values)
+    " Ensure custom values only has 'null', 'true', or 'false' as keys.
+    let l:allowed_custom_keys = ['null', 'true', 'false']
+    let l:unrecognized_custom_keys =
+        \ s:SetDifference(keys(l:custom_values), l:allowed_custom_keys)
+    if !empty(l:unrecognized_custom_keys)
+      throw maktaba#error#BadValue(
+          \ 'Invalid JSON primitive name(s) in custom_values: %s',
+          \ join(l:unrecognized_custom_keys, ', '))
+    endif
+  endif
+  " Populate all primitive values so recursive step can assume they're present.
+  let l:use_custom_values = !empty(l:custom_values)
   if empty(l:custom_values)  " common case
     let l:custom_values = s:DEFAULT_CUSTOM_VALUES
   else
     let l:custom_values = copy(l:custom_values)
     call extend(l:custom_values, s:DEFAULT_CUSTOM_VALUES, 'keep')
   endif
-  " Ensure custom values only has 'null', 'true', or 'false' as keys.
-  let l:allowed_custom_keys = ['null', 'true', 'false']
-  let l:unrecognized_custom_keys =
-      \ s:SetDifference(keys(l:custom_values), l:allowed_custom_keys)
-  if !empty(l:unrecognized_custom_keys)
-    throw maktaba#error#BadValue(
-        \ 'Invalid JSON primitive name(s) in custom_values: %s',
-        \ join(l:unrecognized_custom_keys, ', '))
+
+  if s:HAS_NATIVE_JSON
+    try
+      let l:value = json_decode(a:json)
+    catch /E474:/
+      throw maktaba#error#BadValue('Input is not valid JSON text.')
+    endtry
+    if l:use_custom_values
+      return s:ReplacePrimitives(l:value, l:custom_values)
+    endif
+    return l:value
   endif
 
   if s:use_python

@@ -33,9 +33,9 @@ than a Funcref can be formatted as a JSON text.
   :call CheckEqual(maktaba#json#Format('Hello, world'), '"Hello, world"')
   :call CheckEqual(maktaba#json#Format(42), '42')
   :call CheckEqual(maktaba#json#Format(42.0), '42.0')
-  :call CheckEqual(maktaba#json#Format([1, 2, 'foo']), '[1, 2, "foo"]')
+  :call CheckEqual(maktaba#json#Format([1, 2, 'foo']), '[1,2,"foo"]')
   :let g:json = maktaba#json#Format({'foo': {'bar': 'baz'}})
-  :call CheckEqual(g:json, '{"foo": {"bar": "baz"}}')
+  :call CheckEqual(g:json, '{"foo":{"bar":"baz"}}')
 
 Note that all of these return a string.
 
@@ -50,7 +50,7 @@ or 'false', these can be represented using sentinel values.
   :call CheckEqual(maktaba#json#Format(maktaba#json#TRUE), 'true')
   :call CheckEqual(maktaba#json#Format(maktaba#json#FALSE), 'false')
   :let g:json = maktaba#json#Format({'x': [maktaba#json#NULL, 1]})
-  :call CheckEqual(g:json, '{"x": [null, 1]}')
+  :call CheckEqual(g:json, '{"x":[null,1]}')
 
 
 
@@ -60,9 +60,9 @@ We can also parse any given JSON text to a Vim value.
   :call CheckEqual(maktaba#json#Parse('42'), 42)
   :call CheckEqual(maktaba#json#Parse('42.0'), 42.0)
   :call CheckEqual(maktaba#json#Parse('[]'), [])
-  :call CheckEqual(maktaba#json#Parse('[1, {}, "foo"]'), [1, {}, 'foo'])
+  :call CheckEqual(maktaba#json#Parse('[1,{},"foo"]'), [1, {}, 'foo'])
   :call CheckEqual(maktaba#json#Parse('{}'), {})
-  :let g:dict = maktaba#json#Parse('{"foo": {"bar": "baz"}}')
+  :let g:dict = maktaba#json#Parse('{"foo":{"bar":"baz"}}')
   :call CheckEqual(g:dict, {'foo': {'bar': 'baz'}})
 
 For strings, it properly interprets special characters like quote and newline.
@@ -75,9 +75,9 @@ values 'true', or 'false', these are normally represented as sentinel values.
   :call CheckEqual(maktaba#json#Parse('null'), maktaba#json#NULL)
   :call CheckEqual(maktaba#json#Parse('true'), maktaba#json#TRUE)
   :call CheckEqual(maktaba#json#Parse('false'), maktaba#json#FALSE)
-  :let g:value = maktaba#json#Parse('[null, false]')
+  :let g:value = maktaba#json#Parse('[null,false]')
   :call CheckEqual(g:value, [maktaba#json#NULL, maktaba#json#FALSE])
-  :let g:dict = maktaba#json#Parse('{"a": null, "b": true}')
+  :let g:dict = maktaba#json#Parse('{"a":null,"b":true}')
   :call CheckEqual(g:dict, {'a': maktaba#json#NULL, 'b': maktaba#json#TRUE})
 
 Since these sentinels may be inconvenient in some cases and it's hard to
@@ -93,7 +93,7 @@ dict keys.)
 
 Primitives that are not overridden will still be returned as sentinels.
 
-  :let g:dict = maktaba#json#Parse('{"a": true, "b": null}', {'true': 1})
+  :let g:dict = maktaba#json#Parse('{"a":true,"b":null}', {'true': 1})
   :call CheckEqual(g:dict, {'a': 1, 'b': maktaba#json#NULL})
 
 This validates that your primitive names don't have typos.
@@ -127,4 +127,6 @@ represented in JSON.
   ~ ERROR(BadValue): Value cannot be represented as JSON: inf
 
   :call maktaba#error#Try(g:format.WithArgs(maktaba#function#Create('system')))
-  ~ ERROR(BadValue): Funcdict for func 'system' cannot be represented as JSON.
+  ~ ERROR\(BadValue\): (regex)
+  |( Value cannot be represented as JSON:.*|
+  | Funcdict for func 'system' cannot be represented as JSON.)
