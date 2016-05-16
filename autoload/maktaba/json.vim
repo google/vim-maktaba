@@ -189,8 +189,7 @@ function! s:ParsePartial(json, custom_values) abort
   endif
   " Special numbers (Infinity and NaN)
   if a:json =~# '\m^NaN\>'
-    " NOTE: Vim may represent this as negative (-nan).
-    return [0.0 / 0.0, s:Consume(a:json, 3)]
+    return [abs(0.0 / 0.0), s:Consume(a:json, 3)]
   endif
   if a:json =~# '\m^Infinity\>'
     return [1.0 / 0.0, s:Consume(a:json, 8)]
