@@ -114,7 +114,7 @@ def format():
         custom_values['null'], custom_values['true'], custom_values['false'])
 
     try:
-        buffer[2] = json.dumps(value, allow_nan=False, separators=(',', ':'))
+        buffer[2] = json.dumps(value, allow_nan=True, separators=(',', ':'))
     except ValueError as e:  # e.g. attempting to format NaN
         buffer[3] = e.message
     except TypeError as e:  # e.g. attempting to format a Function
