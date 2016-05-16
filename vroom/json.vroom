@@ -57,7 +57,8 @@ We can also parse any given JSON text to a Vim value.
   :call CheckEqual(maktaba#json#Parse('"Hello, world"'), 'Hello, world')
   :call CheckEqual(maktaba#json#Parse('42'), 42)
   :call CheckEqual(maktaba#json#Parse('42.0'), 42.0)
-  :call maktaba#ensure#IsTrue(isnan(maktaba#json#Parse('NaN')))
+  :let g:nan = 0.0 / 0.0
+  :call maktaba#ensure#IsIn(maktaba#json#Parse('NaN'), [g:nan, -g:nan])
   :let g:inf = 1.0 / 0.0
   :call CheckEqual(maktaba#json#Parse('Infinity'), g:inf)
   :call CheckEqual(maktaba#json#Parse('-Infinity'), -g:inf)
