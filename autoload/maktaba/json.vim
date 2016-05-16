@@ -1,7 +1,8 @@
 " Neovim support covered in https://github.com/neovim/neovim/issues/3417.
+" NOTE: Avoids using pre-1430 support for consistent Infinity/NaN.
 let s:HAS_NATIVE_JSON =
     \ !has('nvim') &&
-    \ v:version > 704 || v:version == 704 && has('patch1304')
+    \ v:version > 704 || v:version == 704 && has('patch1430')
 
 " Sentinel constants used to serialize/deserialize JSON primitives.
 if !exists('maktaba#json#NULL')
@@ -139,9 +140,12 @@ function! maktaba#json#Format(value) abort
     return 'false'
   elseif maktaba#value#IsNumeric(a:value)
     let l:json = string(a:value)
-    if index(['nan', 'inf', '-nan', '-inf'], l:json) != -1
-      throw maktaba#error#BadValue(
-          \ 'Value cannot be represented as JSON: %s', l:json)
+    if index(['nan', '-nan'], l:json) != -1
+      return 'NaN'
+    elseif l:json is# 'inf'
+      return 'Infinity'
+    elseif l:json is# '-inf'
+      return '-Infinity'
     endif
     return l:json
   elseif maktaba#value#IsString(a:value)
@@ -182,6 +186,16 @@ function! s:ParsePartial(json, custom_values) abort
   if a:json =~# '\m^false\>'
     let l:value = a:custom_values.false
     return [l:value, s:Consume(a:json, 5)]
+  endif
+  " Special numbers (Infinity and NaN)
+  if a:json =~# '\m^NaN\>'
+    return [abs(0.0 / 0.0), s:Consume(a:json, 3)]
+  endif
+  if a:json =~# '\m^Infinity\>'
+    return [1.0 / 0.0, s:Consume(a:json, 8)]
+  endif
+  if a:json =~# '\m^-Infinity\>'
+    return [-1.0 / 0.0, s:Consume(a:json, 9)]
   endif
   " Number
   " TODO(dbarnett): Handle scientific notation.

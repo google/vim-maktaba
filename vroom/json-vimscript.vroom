@@ -33,6 +33,10 @@ than a Funcref can be formatted as a JSON text.
   :call CheckEqual(maktaba#json#Format('Hello, world'), '"Hello, world"')
   :call CheckEqual(maktaba#json#Format(42), '42')
   :call CheckEqual(maktaba#json#Format(42.0), '42.0')
+  :call CheckEqual(maktaba#json#Format(0.0 / 0.0), 'NaN')
+  :call CheckEqual(maktaba#json#Format(1.0 / 0.0), 'Infinity')
+  :call maktaba#ensure#IsIn(maktaba#json#Format(-1.0 / 0.0),
+  | ['-Infinity', 'Infinity'])
   :call CheckEqual(maktaba#json#Format([1, 2, 'foo']), '[1,2,"foo"]')
   :let g:json = maktaba#json#Format({'foo': {'bar': 'baz'}})
   :call CheckEqual(g:json, '{"foo":{"bar":"baz"}}')
@@ -59,6 +63,9 @@ We can also parse any given JSON text to a Vim value.
   :call CheckEqual(maktaba#json#Parse('"Hello, world"'), 'Hello, world')
   :call CheckEqual(maktaba#json#Parse('42'), 42)
   :call CheckEqual(maktaba#json#Parse('42.0'), 42.0)
+  :call CheckEqual(string(maktaba#json#Parse('NaN')), 'nan')
+  :let g:inf = 1.0 / 0.0
+  :call CheckEqual(maktaba#json#Parse('Infinity'), g:inf)
   :call CheckEqual(maktaba#json#Parse('[]'), [])
   :call CheckEqual(maktaba#json#Parse('[1,{},"foo"]'), [1, {}, 'foo'])
   :call CheckEqual(maktaba#json#Parse('{}'), {})
@@ -118,14 +125,7 @@ string, or if it is not a valid JSON text.
 Maktaba will also throw an error if asked to format Vim values that cannot be
 represented in JSON.
 
-  :let g:nan = 0.0 / 0.0
-  :let g:inf = 1.0 / 0.0
   :let g:format = maktaba#function#Create('maktaba#json#Format')
-  :call maktaba#error#Try(g:format.WithArgs(g:nan))
-  ~ ERROR\(BadValue\): Value cannot be represented as JSON: -?nan (regex)
-  :call maktaba#error#Try(g:format.WithArgs(g:inf))
-  ~ ERROR(BadValue): Value cannot be represented as JSON: inf
-
   :call maktaba#error#Try(g:format.WithArgs(maktaba#function#Create('system')))
   ~ ERROR\(BadValue\): (regex)
   |( Value cannot be represented as JSON:.*|
