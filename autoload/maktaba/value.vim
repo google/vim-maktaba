@@ -51,28 +51,6 @@ endfunction
 
 
 ""
-" Tests whether Funcrefs {X} and {Y} have the same function name.
-" This works around a behavior change in 7.4-1875 causing partials to not match
-" unless their argument lists match.
-" Example: >
-"   call s:FuncNamesEqual(
-"       \ function('X'),
-"       \ function('X', [1], {'N': 2}))
-" <
-" These functions compare as equal even though their arg bindings differ.
-function! s:FuncNamesEqual(X, Y) abort
-  if !has('patch-7.4.1875')
-    " Use simple equality. Partials were compared by name prior to patch 1875.
-    return a:X == a:Y
-  endif
-  " Compare functions by name only.
-  return maktaba#value#IsFuncref(a:X) &&
-      \ type(a:X) == type(a:Y) &&
-      \ get(a:X, 'name') ==# get(a:Y, 'name')
-endfunction
-
-
-""
 " Tests whether values {a} and {b} are equal.
 " This works around a number of limitations in vimscript's == operator. Unlike
 " with the == operator,
@@ -85,7 +63,14 @@ endfunction
 " consistent with the behavior of equality established by |index()| and
 " |count()|, but may be surprising to some users.
 function! maktaba#value#IsEqual(X, Y) abort
-  return type(a:X) == type(a:Y) && ((a:X ==# a:Y) || s:FuncNamesEqual(a:X, a:Y))
+  if type(a:X) != type(a:Y)
+    return 0
+  endif
+  " NOTE: get(Funcref, 'name') fails without patch 1875.
+  return a:X ==# a:Y || (
+      \ has('patch-7.4.1875') &&
+      \ maktaba#value#IsFuncref(a:X) &&
+      \ get(a:X, 'name') ==# get(a:Y, 'name'))
 endfunction
 
 
