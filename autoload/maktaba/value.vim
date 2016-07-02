@@ -65,25 +65,10 @@ function! s:FuncNamesEqual(X, Y) abort
     " Use simple equality. Partials were compared by name prior to patch 1875.
     return a:X == a:Y
   endif
-  " Compare functions by name only (ignoring everything after comma or paren).
-  " NOTE: This is robust without any clever handling of quotes and escapes
-  " because vim function names can't contain either special character.
+  " Compare functions by name only.
   return maktaba#value#IsFuncref(a:X) &&
       \ type(a:X) == type(a:Y) &&
-      \ s:FuncrefIdent(a:X) ==# s:FuncrefIdent(a:Y)
-endfunction
-
-
-""
-" Returns a truncated string representation of {X} which is unique to the
-" function name.
-" Example: >
-"   echo s:FuncrefIdent(function('X'))
-"   echo s:FuncrefIdent(function('X', [1], {'N': 2}))
-" <
-" These calls both return `"function('X'"`.
-function! s:FuncrefIdent(X) abort
-  return split(string(a:X), '\m[,)]', 1)[0]
+      \ get(a:X, 'name') ==# get(a:Y, 'name')
 endfunction
 
 
