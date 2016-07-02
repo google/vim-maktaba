@@ -184,12 +184,7 @@ trouble. At first, they look nice:
   ~ Mrs. Object
 
 But you soon realize that vim isn't very smart about dictionary methods. As soon
-as you extract a method from a dictionary, vim forgets the context entirely.
-
-  :let g:call = maktaba#function#Create('call')
-  :call maktaba#error#Try(g:call.WithArgs(g:object.Name, []))
-  ~ *E725: Calling dict function without Dictionary: MyName (glob)
-
+as you extract a method from a dictionary, vim may forget the context entirely.
 If you ever need to extract a method from a dictionary and keep the context, use
 maktaba#function#Method.
 
