@@ -63,14 +63,7 @@ endfunction
 " consistent with the behavior of equality established by |index()| and
 " |count()|, but may be surprising to some users.
 function! maktaba#value#IsEqual(X, Y) abort
-  if type(a:X) != type(a:Y)
-    return 0
-  endif
-  " NOTE: get(Funcref, 'name') fails without patch 1875.
-  return a:X ==# a:Y || (
-      \ has('patch-7.4.1875') &&
-      \ maktaba#value#IsFuncref(a:X) &&
-      \ get(a:X, 'name') ==# get(a:Y, 'name'))
+  return type(a:X) == type(a:Y) && a:X ==# a:Y
 endfunction
 
 

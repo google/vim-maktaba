@@ -38,7 +38,8 @@ endfunction
 function! maktaba#enum#IsValid(Value) abort
   return maktaba#value#IsDict(a:Value) &&
       \ has_key(a:Value, 'Name') &&
-      \ maktaba#value#IsEqual(a:Value.Name, function('maktaba#enum#Name'))
+      \ maktaba#function#HasSameName(
+          \ a:Value.Name, function('maktaba#enum#Name'))
 endfunction
 
 

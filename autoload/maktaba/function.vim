@@ -46,7 +46,25 @@ let s:DoWithContext = function('maktaba#function#DoWithContext')
 function! maktaba#function#IsWellFormedDict(F) abort
   return maktaba#value#IsDict(a:F)
       \ && has_key(a:F, 'Call')
-      \ && maktaba#value#IsEqual(a:F.Call, s:DoCall)
+      \ && maktaba#function#HasSameName(a:F.Call, s:DoCall)
+endfunction
+
+
+""
+" Checks whether Funcrefs {F} and {G} refer to the same function name.
+" Ignores bound arguments on partials, so the following check succeeds >
+"   let F = function('X')
+"   let G = function('X', [1])
+"   call maktaba#ensure#IsTrue(maktaba#function#HasSameName(F, G))
+" <
+" @throws WrongType if either arg not a Funcref.
+function! maktaba#function#HasSameName(F, G) abort
+  call maktaba#ensure#IsFuncref(a:F)
+  call maktaba#ensure#IsFuncref(a:G)
+  if has('patch-7.4.1875')
+    return get(a:F, 'name') ==# get(a:G, 'name')
+  endif
+  return a:F ==# a:G
 endfunction
 
 

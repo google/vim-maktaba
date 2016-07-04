@@ -863,6 +863,16 @@ maktaba#flags#Create({name}, [default])               *maktaba#flags#Create()*
   initialized to [default].
   [default] is 0 if omitted.
 
+maktaba#function#HasSameName({F}, {G})        *maktaba#function#HasSameName()*
+  Checks whether Funcrefs {F} and {G} refer to the same function name. Ignores
+  bound arguments on partials, so the following check succeeds
+>
+    let F = function('X')
+    let G = function('X', [1])
+    call maktaba#ensure#IsTrue(maktaba#function#HasSameName(F, G))
+<
+  Throws ERROR(WrongType) if either arg not a Funcref.
+
 maktaba#function#Create({func}, [arglist], [dict]) *maktaba#function#Create()*
   Creates a funcdict object that can be applied with
   |maktaba#function#Apply()|. When applied, {func} will be applied with
