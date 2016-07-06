@@ -62,6 +62,9 @@ endfunction
 " NOTE: {a} AND {b} MUST BE OF THE SAME TYPE. 1.0 DOES NOT EQUAL 1! This is
 " consistent with the behavior of equality established by |index()| and
 " |count()|, but may be surprising to some users.
+"
+" NOTE: Funcref comparison is by func name only prior to patch 7.4.1875 (any
+" partial of the same function name was considered equal).
 function! maktaba#value#IsEqual(X, Y) abort
   return type(a:X) == type(a:Y) && a:X ==# a:Y
 endfunction

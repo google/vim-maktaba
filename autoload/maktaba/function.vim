@@ -57,7 +57,7 @@ endfunction
 "   let G = function('X', [1])
 "   call maktaba#ensure#IsTrue(maktaba#function#HasSameName(F, G))
 " <
-" @throws WrongType if either arg not a Funcref.
+" @throws WrongType if either arg is not a Funcref.
 function! maktaba#function#HasSameName(F, G) abort
   call maktaba#ensure#IsFuncref(a:F)
   call maktaba#ensure#IsFuncref(a:G)
