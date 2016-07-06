@@ -863,6 +863,16 @@ maktaba#flags#Create({name}, [default])               *maktaba#flags#Create()*
   initialized to [default].
   [default] is 0 if omitted.
 
+maktaba#function#HasSameName({F}, {G})        *maktaba#function#HasSameName()*
+  Checks whether Funcrefs {F} and {G} refer to the same function name. Ignores
+  bound arguments on partials, so the following check succeeds
+>
+    let F = function('X')
+    let G = function('X', [1])
+    call maktaba#ensure#IsTrue(maktaba#function#HasSameName(F, G))
+<
+  Throws ERROR(WrongType) if either arg is not a Funcref.
+
 maktaba#function#Create({func}, [arglist], [dict]) *maktaba#function#Create()*
   Creates a funcdict object that can be applied with
   |maktaba#function#Apply()|. When applied, {func} will be applied with
@@ -1631,8 +1641,11 @@ maktaba#value#IsEqual({a}, {b})                      *maktaba#value#IsEqual()*
   The == operator is insane. Use this instead.
 
   NOTE: {a} AND {b} MUST BE OF THE SAME TYPE. 1.0 DOES NOT EQUAL 1! This is
-  consistent with the behavior of equality established by instant() and
-  count(), but may be surprising to some users.
+  consistent with the behavior of equality established by |index()| and
+  |count()|, but may be surprising to some users.
+
+  NOTE: Funcref comparison is by func name only prior to patch 7.4.1875 (any
+  partial of the same function name was considered equal).
 
 maktaba#value#IsIn({value}, {list})                     *maktaba#value#IsIn()*
   Whether {value} is in {list}.
