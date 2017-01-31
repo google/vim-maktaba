@@ -1418,6 +1418,19 @@ maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
 
     <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'>
 
+maktaba#python#Eval({expr})                            *maktaba#python#Eval()*
+  Evaluate python {expr} and return the result.
+
+  Polyfill for vim's |pyeval()| that works on vim versions older than 7.3.569.
+  You can call pyeval() directly if you don't intend to support vim versions
+  older than that.
+
+  Supports simple types (number, string, list, dict), but not other
+  python-only types like None, True, or False that have no direct vimscript
+  analog. Those will fail on older vim versions, so either take care to avoid
+  them in the return value or just skip the polyfill and use pyeval()
+  directly.
+
 maktaba#rtp#Split([paths])                               *maktaba#rtp#Split()*
   Split [paths], a string of comma-separated path entries, into a list of
   paths. Handles unescaping the commas. Paths will be canonicalized using
