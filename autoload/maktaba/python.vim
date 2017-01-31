@@ -27,3 +27,23 @@ EOF
   endtry
   python del sys.path[:1]
 endfunction
+
+
+""
+" Evaluate python {expr} and return the result.
+"
+" Polyfill for vim's |pyeval()| that works on vim versions older than 7.3.569.
+" You can call pyeval() directly if you don't intend to support vim versions
+" older than that.
+"
+" Supports simple types (number, string, list, dict), but not other python-only
+" types like None, True, or False that have no direct vimscript analog. Those
+" will fail on older vim versions, so either take care to avoid them in the
+" return value or just skip the polyfill and use pyeval() directly.
+function! maktaba#python#Eval(expr) abort
+  if exists('*pyeval')
+    return pyeval(a:expr)
+  endif
+  python import json, vim
+  python vim.command('return ' + json.dumps(eval(vim.eval('a:expr'))))
+endfunction
