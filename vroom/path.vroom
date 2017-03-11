@@ -97,6 +97,8 @@ the last component of the path:
   ~ 'file'
   :echomsg string(maktaba#path#Basename('/path/to/dir/'))
   ~ ''
+  :echomsg string(maktaba#path#Basename('file'))
+  ~ 'file'
 
 Dirname gets all but the last components of the path (in path form, without a
 trailing slash):
@@ -105,6 +107,8 @@ trailing slash):
   ~ '/path/to'
   :echomsg string(maktaba#path#Dirname('/path/to/dir/'))
   ~ '/path/to/dir'
+  :echomsg string(maktaba#path#Dirname('file'))
+  ~ ''
 
 For both utilities, callers are encouraged to use canonical dir representation
 (with a trailing slash) for directory paths, to disambiguate them from file

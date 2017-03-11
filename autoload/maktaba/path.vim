@@ -46,13 +46,13 @@ function! s:SplitLast(path) abort
     let l:count += 1
   endwhile
 
-  " Return [HEAD, TAIL] with root (if any_ included in the HEAD.
+  " Return [HEAD, TAIL] with root (if any) included in the HEAD.
   if l:last_sep != -1
     " Slice up to (but not including) separator as HEAD.
     let l:head = l:last_sep > 0 ? l:path[ : l:last_sep - 1] : ''
     return [l:root . l:head, l:path[l:last_sep + 1 : ]]
   else
-    return [l:root, '']
+    return [l:root, l:path]
   endif
 endfunction
 
@@ -172,6 +172,12 @@ endfunction
 "   :echomsg maktaba#path#Basename('/path/to/dir/')
 " <
 " The first echoes 'file', the second echoes ''.
+"
+" A bare filename is its own basename:
+" >
+"   :echomsg maktaba#path#Basename('file')
+" <
+" This echoes 'file'.
 function! maktaba#path#Basename(path) abort
   return s:SplitLast(a:path)[1]
 endfunction
@@ -183,7 +189,13 @@ endfunction
 "   :echomsg maktaba#path#Dirname('/path/to/file')
 "   :echomsg maktaba#path#Dirname('/path/to/dir/')
 " <
-" The first echoes '/path/to', the second echoes '/path/to/dir'
+" The first echoes '/path/to', the second echoes '/path/to/dir'.
+"
+" A bare filename with no slashes returns an empty dirname:
+" >
+"   :echomsg maktaba#path#Dirname('file')
+" <
+" This echoes ''.
 function! maktaba#path#Dirname(path) abort
   return s:SplitLast(a:path)[0]
 endfunction

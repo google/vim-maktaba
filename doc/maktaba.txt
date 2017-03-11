@@ -1227,13 +1227,25 @@ maktaba#path#Basename({path})                        *maktaba#path#Basename()*
 <
   The first echoes 'file', the second echoes ''.
 
+  A bare filename is its own basename:
+>
+    :echomsg maktaba#path#Basename('file')
+<
+  This echoes 'file'.
+
 maktaba#path#Dirname({path})                          *maktaba#path#Dirname()*
   The dirname of {path}. Trailing slash matters. Consider:
 >
     :echomsg maktaba#path#Dirname('/path/to/file')
     :echomsg maktaba#path#Dirname('/path/to/dir/')
 <
-  The first echoes '/path/to', the second echoes '/path/to/dir'
+  The first echoes '/path/to', the second echoes '/path/to/dir'.
+
+  A bare filename with no slashes returns an empty dirname:
+>
+    :echomsg maktaba#path#Dirname('file')
+<
+  This echoes ''.
 
 maktaba#path#GetDirectory({path})                *maktaba#path#GetDirectory()*
   Gets the directory path of {path}. If {path} appears to point to a file, the
