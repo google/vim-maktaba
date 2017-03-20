@@ -137,7 +137,9 @@ function! maktaba#syscall#DoCallAsync() abort dict
             \ l:output_file, l:error_file)], " ")
   let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
       \ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
-  let s:callbacks[l:output_file] = maktaba#ensure#IsCallable(self.callback)
+  let s:callbacks[l:output_file] = {
+      \ 'function': maktaba#ensure#IsCallable(self.callback),
+      \ 'env': s:CurrentEnv()}
 
   if has_key(self, 'stdin')
     call system(l:full_cmd, self.stdin)
@@ -277,20 +279,9 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
-" If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
-" call will be executed and callback called with the result.
-"
-" [pass_env] specifies the signature of {callback}.
-" - If it is 0 (recommended), {callback} will be called with a single argument:
+" {callback} function will be called with the following arguments:
 " {callback}(result_dict), where result_dict contains stdout, stderr and status
 " (code).
-" - If it is 1 (legacy default) or omitted, {callback} will be called with two
-" arguments:
-" {callback}(env_dict, result_dict), where env_dict contains tab, buffer, path,
-" column and line info, and the result_dict contains stdout, stderr and status
-" (code). Future maktaba changes will remove this mode, and eventually remove
-" the param entirely.
-"
 " For example: >
 "   function Handler(result) abort
 "     if a:result.status != 0
@@ -299,7 +290,7 @@ endfunction
 "     endif
 "     echomsg 'Success!'
 "   endfunction
-"   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1, 0)
+"   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 " <
 " WARNING: The callback is responsible for checking result_dict.status and
 " handling unexpected exit codes. Otherwise all failures are silent.
@@ -318,8 +309,12 @@ endfunction
 "   let callback = maktaba#function#Create('ReplaceLineHandler', [env])
 "   call maktaba#syscall#Create(['date']).CallAsync(callback, 1, 0)
 " <
-" This pattern replaces the legacy [pass_env] mechanism, but is more explicit
-" and more flexible.
+"
+" As a legacy fallback, if the callback fails expecting more arguments, it will
+" be called with the arguments: {callback}(env_dict, result_dict), where
+" env_dict contains tab, buffer, path, column and line info, and the result_dict
+" contains stdout, stderr and status (code). This fallback will be deprecated
+" and stop working in future versions of maktaba.
 "
 " Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
 " capabilities, so the preconditions for it are vim being compiled with
@@ -331,15 +326,8 @@ endfunction
 " synchronous calls, depending on the {allow_sync_fallback} parameter.
 " @throws WrongType
 " @throws MissingFeature if neither async execution nor fallback is available.
-function! maktaba#syscall#CallAsync(
-    \ Callback, allow_sync_fallback, ...) abort dict
-  let l:Callback = maktaba#ensure#IsCallable(a:Callback)
-  let l:pass_env = maktaba#ensure#IsBool(get(a:, 1, 1))
-  if l:pass_env
-    let self.callback = maktaba#function#Create(l:Callback, [s:CurrentEnv()])
-  else
-    let self.callback = l:Callback
-  endif
+function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
+  let self.callback = maktaba#ensure#IsCallable(a:Callback)
   call maktaba#ensure#IsBool(a:allow_sync_fallback)
   if !maktaba#syscall#IsAsyncAvailable()
     if a:allow_sync_fallback
@@ -348,7 +336,16 @@ function! maktaba#syscall#CallAsync(
           \ self.GetCommand())
       let l:return_data = self.Call(0)
       let l:return_data.status = v:shell_error
-      call maktaba#function#Call(self.callback, [l:return_data])
+      try
+        " Try prototype callback({result_dict}).
+        call maktaba#function#Call(self.callback, [l:return_data])
+      catch /E119:/
+        " Not enough arguments.
+        " Fall back to legacy prototype callback({env_dict}, {result_dict}).
+        " TODO(#180): Deprecate and shout an error for this case.
+        call maktaba#function#Call(
+            \ self.callback, [s:CurrentEnv(), l:return_data])
+      endtry
       return
     else
       " Neither async nor sync is available. Throw error with salient reason.
@@ -451,9 +448,11 @@ endfunction
 ""
 " @private
 " Executes the asynchronous callback setup by @function(Syscall.CallAsync).
-" The callback must be of prototype: callback(env_dict, result_dict).
+" The callback must be of prototype: callback(result_dict) or legacy prototype
+" callback(env_dict, result_dict). The latter will be deprecated and stop
+" working in future versions of maktaba.
 function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
-  let l:Callback = s:callbacks[a:stdout_file]
+  let l:callback_info = s:callbacks[a:stdout_file]
   let l:return_data = {}
   let l:return_data.status = a:exit_code
   let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
@@ -463,5 +462,14 @@ function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   endif
   unlet s:callbacks[a:stdout_file]
   call delete(a:stdout_file)
-  call maktaba#function#Call(l:Callback, [l:return_data])
+  try
+    " Try prototype callback({result_dict}).
+    call maktaba#function#Call(l:callback_info.function, [l:return_data])
+  catch /E119:/
+    " Not enough arguments.
+    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
+    " TODO(#180): Deprecate and shout an error for this case.
+    call maktaba#function#Call(
+        \ l:callback_info.function, [l:callback_info.env, l:return_data])
+  endtry
 endfunction

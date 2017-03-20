@@ -457,23 +457,11 @@ Syscall.Call([throw_errors])                                  *Syscall.Call()*
   Throws ERROR(WrongType)
   Throws ERROR(ShellError) if the shell command returns a non-zero exit code.
 
-Syscall.CallAsync({callback}, {allow_sync_fallback}, [pass_env])
-                                                         *Syscall.CallAsync()*
+Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   Executes the system call asynchronously and invokes {callback} on
-  completion. If {allow_sync_fallback} is 1 and async calls are not available,
-  a synchronous call will be executed and callback called with the result.
-
-  [pass_env] specifies the signature of {callback}.
-  If it is 0 (recommended), {callback} will be called with a single argument:
+  completion. {callback} function will be called with the following arguments:
   {callback}(result_dict), where result_dict contains stdout, stderr and
-  status (code).
-  If it is 1 (legacy default) or omitted, {callback} will be called with two
-  arguments: {callback}(env_dict, result_dict), where env_dict contains tab,
-  buffer, path, column and line info, and the result_dict contains stdout,
-  stderr and status (code). Future maktaba changes will remove this mode, and
-  eventually remove the param entirely.
-
-  For example:
+  status (code). For example:
 >
     function Handler(result) abort
       if a:result.status != 0
@@ -482,7 +470,7 @@ Syscall.CallAsync({callback}, {allow_sync_fallback}, [pass_env])
       endif
       echomsg 'Success!'
     endfunction
-    call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1, 0)
+    call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 <
   WARNING: The callback is responsible for checking result_dict.status and
   handling unexpected exit codes. Otherwise all failures are silent.
@@ -502,8 +490,12 @@ Syscall.CallAsync({callback}, {allow_sync_fallback}, [pass_env])
     let callback = maktaba#function#Create('ReplaceLineHandler', [env])
     call maktaba#syscall#Create(['date']).CallAsync(callback, 1, 0)
 <
-  This pattern replaces the legacy [pass_env] mechanism, but is more explicit
-  and more flexible.
+
+  As a legacy fallback, if the callback fails expecting more arguments, it
+  will be called with the arguments: {callback}(env_dict, result_dict), where
+  env_dict contains tab, buffer, path, column and line info, and the
+  result_dict contains stdout, stderr and status (code). This fallback will be
+  deprecated and stop working in future versions of maktaba.
 
   Asynchronous calls are executed via |--remote-expr| using vim's
   |clientserver| capabilities, so the preconditions for it are vim being

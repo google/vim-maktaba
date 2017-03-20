@@ -370,8 +370,7 @@ maktaba#system#Or to chain commands.
 To execute system calls asynchronously, use CallAsync.
 
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
-  :function Callback(env, return_data) abort<CR>
-  |  let g:env = a:env<CR>
+  :function Callback(return_data) abort<CR>
   |  let g:callback_stdout = a:return_data.stdout<CR>
   |  let g:callback_exit_code = a:return_data.status<CR>
   |endfunction
@@ -388,7 +387,6 @@ To execute system calls asynchronously, use CallAsync.
 Asynchronous calls can also take a stdin parameter.
 
   :unlet g:callback_stdout
-  :unlet g:env
   :unlet g:callback_exit_code
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
   :call g:syscall.CallAsync('Callback', 0)
@@ -407,5 +405,18 @@ Async calls fall back to synchronous calls if disabled or not available.
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
   :call g:syscall.CallAsync('Callback', 1)
   ! echo hi 2> .*
+
+As a legacy fallback, if the callback fails expecting more arguments, it will be
+called with the arguments: {callback}(env_dict, result_dict).
+
+  :function! Callback(env, return_data) abort<CR>
+  |  let g:env = a:env<CR>
+  |  let g:callback_stdout = a:return_data.stdout<CR>
+  |  let g:callback_exit_code = a:return_data.status<CR>
+  |endfunction
+  :call g:syscall.CallAsync('Callback', 1)
+  ! echo hi 2> .*
+  :echomsg string(sort(keys(g:env)))
+  ~ ['buffer', 'column', 'line', 'path', 'tab']
 
   @system
