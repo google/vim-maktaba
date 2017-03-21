@@ -369,50 +369,48 @@ maktaba#system#Or to chain commands.
 
 To execute system calls asynchronously, use CallAsync.
 
-  :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
-  :function Callback(return_data) abort<CR>
-  |  let g:callback_stdout = a:return_data.stdout<CR>
-  |  let g:callback_exit_code = a:return_data.status<CR>
+  :function AsyncWait(invocation, delay) abort<CR>
+  |  let l:deadline = localtime() + a:delay " wait for at most N seconds<CR>
+  |  while !a:invocation.finished && localtime() < l:deadline<CR>
+  |  endwhile<CR>
+  |  call maktaba#ensure#IsTrue(a:invocation.finished,
+  | 'Async callback was expected to complete within %d seconds', a:delay)<CR>
+  |  return a:invocation<CR>
   |endfunction
-  :call g:syscall.CallAsync('Callback', 0)
+  :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
+  :function Callback(result) abort<CR>
+  |  let g:callback_stdout = a:result.stdout<CR>
+  |endfunction
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
   ! .*echo hi; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
-  :let g:deadline = localtime() + 2 " wait for at most 2 seconds
-  :while !exists('g:callback_exit_code') && localtime() < g:deadline
-  :endwhile
-  :call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
-  | 'Async callback was expected to complete within 2 seconds')
   :echomsg g:callback_stdout
+  ~ hi
+  :echomsg g:invocation.stdout
   ~ hi
 
 Asynchronous calls can also take a stdin parameter.
 
   :unlet g:callback_stdout
-  :unlet g:callback_exit_code
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
-  :call g:syscall.CallAsync('Callback', 0)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
   ! .*cat; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
-  :let g:deadline = localtime() + 2 " wait for at most 2 seconds
-  :while !exists('g:callback_exit_code') && localtime() < g:deadline
-  :endwhile
-  :call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
-  | 'Async callback was expected to complete within 2 seconds')
-  :echomsg g:callback_stdout
+  :echomsg g:invocation.stdout
   ~ Hello
 
 Async calls fall back to synchronous calls if disabled or not available.
 
   :call maktaba#syscall#SetAsyncDisabled(1)
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
-  :call g:syscall.CallAsync('Callback', 1)
+  :let g:invocation = g:syscall.CallAsync('Callback', 1)
   ! echo hi 2> .*
+  :echomsg g:invocation.stdout
+  ~ hi
 
 As a legacy fallback, if the callback fails expecting more arguments, it will be
 called with the arguments: {callback}(env_dict, result_dict).
 
-  :function! Callback(env, return_data) abort<CR>
+  :function! Callback(env, result) abort<CR>
   |  let g:env = a:env<CR>
-  |  let g:callback_stdout = a:return_data.stdout<CR>
-  |  let g:callback_exit_code = a:return_data.status<CR>
   |endfunction
   :call g:syscall.CallAsync('Callback', 1)
   ! echo hi 2> .*
