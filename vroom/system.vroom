@@ -369,33 +369,42 @@ maktaba#system#Or to chain commands.
 
 To execute system calls asynchronously, use CallAsync.
 
+  :function AsyncWait(delay) abort<CR>
+  |  let l:deadline = localtime() + a:delay " wait for at most N seconds<CR>
+  |  while !exists('g:callback_exit_code') && localtime() < l:deadline <CR>
+  |  endwhile<CR>
+  |  call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
+  | 'Async callback was expected to complete within %d seconds', a:delay)<CR>
+  |endfunction
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
   :function Callback(return_data) abort<CR>
   |  let g:callback_stdout = a:return_data.stdout<CR>
   |  let g:callback_exit_code = a:return_data.status<CR>
   |endfunction
-  :call g:syscall.CallAsync('Callback', 0)
+  :call g:syscall.CallAsync('Callback', 0) | call AsyncWait(2)
   ! .*echo hi; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
-  :let g:deadline = localtime() + 2 " wait for at most 2 seconds
-  :while !exists('g:callback_exit_code') && localtime() < g:deadline
-  :endwhile
-  :call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
-  | 'Async callback was expected to complete within 2 seconds')
   :echomsg g:callback_stdout
   ~ hi
+
+Async calls can't throw uncaught errors up to the original caller, so they're
+just shouted to the user directly.
+
+  :function ThrowErrorCallback(return_data) abort<CR>
+  |  let g:callback_exit_code = a:return_data.status<CR>
+  |  throw 'BOOM'<CR>
+  |endfunction
+  :unlet g:callback_exit_code
+  :call g:syscall.CallAsync('ThrowErrorCallback', 0) | call AsyncWait(2)
+  ! .*echo hi; .*
+  ~ Error from CallAsync callback: BOOM
 
 Asynchronous calls can also take a stdin parameter.
 
   :unlet g:callback_stdout
   :unlet g:callback_exit_code
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
-  :call g:syscall.CallAsync('Callback', 0)
+  :call g:syscall.CallAsync('Callback', 0) | call AsyncWait(2)
   ! .*cat; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
-  :let g:deadline = localtime() + 2 " wait for at most 2 seconds
-  :while !exists('g:callback_exit_code') && localtime() < g:deadline
-  :endwhile
-  :call maktaba#ensure#IsTrue(exists('g:callback_exit_code'),
-  | 'Async callback was expected to complete within 2 seconds')
   :echomsg g:callback_stdout
   ~ Hello
 
