@@ -280,13 +280,10 @@ endfunction
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
 " {callback} function will be called with the following arguments:
-" {callback}(env_dict, result_dict), where env_dict contains tab, buffer, path,
-" column and line info, and the result_dict contains stdout, stderr and status
+" {callback}(result_dict), where result_dict contains stdout, stderr and status
 " (code).
-" If {allow_sync_fallback} is 1 and async calls are not available, a synchronous
-" call will be executed and callback called with the result.
 " For example: >
-"   function Handler(env_dict, result)
+"   function Handler(result) abort
 "     if a:result.status != 0
 "       call maktaba#error#Shout('sleep command failed: %s', a:result.stderr)
 "       return
@@ -295,8 +292,29 @@ endfunction
 "   endfunction
 "   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 " <
-" WARNING: The caller is responsible for checking result_dict.status and
+" WARNING: The callback is responsible for checking result_dict.status and
 " handling unexpected exit codes. Otherwise all failures are silent.
+"
+" NOTE: If {callback} depends on cursor location or other vim state, the caller
+" should capture parameters and bind them to the callback: >
+"   function ReplaceLineHandler(env, result) abort
+"     if a:result.status != 0
+"       call maktaba#error#Shout('date call failed: %s', a:result.stderr)
+"       return
+"     endif
+"     execute 'buffer' a:env.buffer
+"     call maktaba#buffer#Overwrite(a:env.line, a:env.line, [a:result.stdout])
+"   endfunction
+"   let env = {'buffer': bufnr('%'), 'line': line('.')}
+"   let callback = maktaba#function#Create('ReplaceLineHandler', [env])
+"   call maktaba#syscall#Create(['date']).CallAsync(callback, 1, 0)
+" <
+"
+" As a legacy fallback, if the callback fails expecting more arguments, it will
+" be called with the arguments: {callback}(env_dict, result_dict), where
+" env_dict contains tab, buffer, path, column and line info, and the result_dict
+" contains stdout, stderr and status (code). This fallback will be deprecated
+" and stop working in future versions of maktaba.
 "
 " Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
 " capabilities, so the preconditions for it are vim being compiled with
@@ -318,7 +336,16 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
           \ self.GetCommand())
       let l:return_data = self.Call(0)
       let l:return_data.status = v:shell_error
-      call maktaba#function#Call(self.callback, [s:CurrentEnv(), l:return_data])
+      try
+        " Try prototype callback({result_dict}).
+        call maktaba#function#Call(self.callback, [l:return_data])
+      catch /E119:/
+        " Not enough arguments.
+        " Fall back to legacy prototype callback({env_dict}, {result_dict}).
+        " TODO(#180): Deprecate and shout an error for this case.
+        call maktaba#function#Call(
+            \ self.callback, [s:CurrentEnv(), l:return_data])
+      endtry
       return
     else
       " Neither async nor sync is available. Throw error with salient reason.
@@ -421,7 +448,9 @@ endfunction
 ""
 " @private
 " Executes the asynchronous callback setup by @function(Syscall.CallAsync).
-" The callback must be of prototype: callback(env_dict, result_dict).
+" The callback must be of prototype: callback(result_dict) or legacy prototype
+" callback(env_dict, result_dict). The latter will be deprecated and stop
+" working in future versions of maktaba.
 function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   let l:callback_info = s:callbacks[a:stdout_file]
   let l:return_data = {}
@@ -433,6 +462,14 @@ function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
   endif
   unlet s:callbacks[a:stdout_file]
   call delete(a:stdout_file)
-  call maktaba#function#Call(l:callback_info.function,
-      \ [l:callback_info.env, l:return_data])
+  try
+    " Try prototype callback({result_dict}).
+    call maktaba#function#Call(l:callback_info.function, [l:return_data])
+  catch /E119:/
+    " Not enough arguments.
+    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
+    " TODO(#180): Deprecate and shout an error for this case.
+    call maktaba#function#Call(
+        \ l:callback_info.function, [l:callback_info.env, l:return_data])
+  endtry
 endfunction
