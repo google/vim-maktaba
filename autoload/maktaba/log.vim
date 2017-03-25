@@ -19,6 +19,10 @@ lockvar! maktaba#log#LEVELS
 
 let s:LEVELS = maktaba#log#LEVELS
 
+if !exists('s:notification_level')
+  let s:notification_level = s:LEVELS.WARN
+endif
+
 
 ""
 " @usage {level} {context} {message} [args...]
@@ -35,6 +39,9 @@ function! s:DoMessage(level, context, message, ...) abort
   endif
 
   call s:SendToHandlers([a:level, localtime(), a:context, l:message])
+  if s:notification_level isnot -1 && a:level >= s:notification_level
+    call s:NotifyMessage(printf('[%s] %s', a:context, l:message), a:level)
+  endif
 endfunction
 
 
@@ -65,6 +72,31 @@ function! s:SendToHandlers(logitem) abort
   for l:Handler in l:maktaba.globals.loghandlers.Items()
     call maktaba#function#Call(l:Handler, a:logitem)
   endfor
+endfunction
+
+
+function! s:NotifyMessage(message, level) abort
+  if a:level >= s:LEVELS.ERROR
+    call maktaba#error#Shout(a:message)
+  elseif a:level >= s:LEVELS.WARN
+    call maktaba#error#Warn(a:message)
+  else
+    echomsg a:message
+  endif
+endfunction
+
+
+""
+" Sets the minimum {level} that will be immediately shown to the user using
+" @function(maktaba#error#Warn) or @function(maktaba#error#Shout). The
+" notification level defaults to WARN if it was never explicitly configured.
+" If {level} is -1, notifications will be disabled entirely.
+" @throws BadValue
+function! maktaba#log#SetNotificationLevel(level) abort
+  call maktaba#ensure#IsTrue(
+      \ a:level is -1 || maktaba#value#IsIn(a:level, s:LEVELS.Values()),
+      \ 'Expected {level} to be maktaba#log#LEVELS value or -1')
+  let s:notification_level = a:level
 endfunction
 
 

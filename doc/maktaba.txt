@@ -1192,6 +1192,13 @@ maktaba#list#RemoveAll({list}, {item})              *maktaba#list#RemoveAll()*
   Removes all instances of {item} from {list}. {list} is modified in place and
   returned for convenience.
 
+maktaba#log#SetNotificationLevel({level}) *maktaba#log#SetNotificationLevel()*
+  Sets the minimum {level} that will be immediately shown to the user using
+  |maktaba#error#Warn()| or |maktaba#error#Shout()|. The notification level
+  defaults to WARN if it was never explicitly configured. If {level} is -1,
+  notifications will be disabled entirely.
+  Throws ERROR(BadValue)
+
 maktaba#log#Logger({context})                           *maktaba#log#Logger()*
   Creates a |maktaba.Logger| interface for {context}.
 
