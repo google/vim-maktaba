@@ -8,14 +8,16 @@ endif
 
 ""
 " The enumeration dict encapsulating the list of logging levels.
-let maktaba#log#LEVELS = maktaba#enum#Create([
-    \ 'DEBUG',
-    \ 'INFO',
-    \ 'WARN',
-    \ 'ERROR',
-    \ 'SEVERE',
-    \ ])
-lockvar! maktaba#log#LEVELS
+if !exists('maktaba#log#LEVELS')
+  let maktaba#log#LEVELS = maktaba#enum#Create([
+      \ 'DEBUG',
+      \ 'INFO',
+      \ 'WARN',
+      \ 'ERROR',
+      \ 'SEVERE',
+      \ ])
+  lockvar! maktaba#log#LEVELS
+endif
 
 let s:LEVELS = maktaba#log#LEVELS
 
