@@ -90,6 +90,23 @@ endfunction
 
 
 ""
+" Helper to call {Callback} with and without legacy {env_data} arg.
+" Tries {Callback}({return_data}) first and falls back to
+" {Callback}({env_dict}, {return_data}).
+function! s:TriggerAsyncCallback(Callback, env_data, return_data) abort
+  try
+    " Try prototype callback({result_dict}).
+    call maktaba#function#Call(a:Callback, [a:return_data])
+  catch /E119:/
+    " Not enough arguments.
+    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
+    " TODO(#180): Deprecate and shout an error for this case.
+    call maktaba#function#Call(a:Callback, [a:env_data, a:return_data])
+  endtry
+endfunction
+
+
+""
 " @private
 " @dict Syscall
 " Calls |system()| and returns a stdout/stderr dict.
@@ -336,16 +353,7 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
           \ self.GetCommand())
       let l:return_data = self.Call(0)
       let l:return_data.status = v:shell_error
-      try
-        " Try prototype callback({result_dict}).
-        call maktaba#function#Call(self.callback, [l:return_data])
-      catch /E119:/
-        " Not enough arguments.
-        " Fall back to legacy prototype callback({env_dict}, {result_dict}).
-        " TODO(#180): Deprecate and shout an error for this case.
-        call maktaba#function#Call(
-            \ self.callback, [s:CurrentEnv(), l:return_data])
-      endtry
+      call s:TriggerAsyncCallback(self.callback, s:CurrentEnv(), l:return_data)
       return
     else
       " Neither async nor sync is available. Throw error with salient reason.
@@ -452,24 +460,23 @@ endfunction
 " callback(env_dict, result_dict). The latter will be deprecated and stop
 " working in future versions of maktaba.
 function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
-  let l:callback_info = s:callbacks[a:stdout_file]
-  let l:return_data = {}
-  let l:return_data.status = a:exit_code
-  let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
-  if filereadable(a:stderr_file)
-    let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
-    call delete(a:stderr_file)
-  endif
-  unlet s:callbacks[a:stdout_file]
-  call delete(a:stdout_file)
   try
-    " Try prototype callback({result_dict}).
-    call maktaba#function#Call(l:callback_info.function, [l:return_data])
-  catch /E119:/
-    " Not enough arguments.
-    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
-    " TODO(#180): Deprecate and shout an error for this case.
-    call maktaba#function#Call(
-        \ l:callback_info.function, [l:callback_info.env, l:return_data])
+    let l:callback_info = s:callbacks[a:stdout_file]
+    let l:return_data = {}
+    let l:return_data.status = a:exit_code
+    let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
+    if filereadable(a:stderr_file)
+      let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
+      call delete(a:stderr_file)
+    endif
+    unlet s:callbacks[a:stdout_file]
+    call delete(a:stdout_file)
+    call s:TriggerAsyncCallback(
+        \ l:callback_info.function, l:callback_info.env, l:return_data)
+  catch
+    " Uncaught errors from here would be sent back to the --remote-expr command
+    " line, but vim can't do anything useful with them from there. Catch and
+    " shout them here instead.
+    call maktaba#error#Shout('Error from CallAsync callback: %s', v:exception)
   endtry
 endfunction
