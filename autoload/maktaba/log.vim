@@ -87,10 +87,13 @@ endfunction
 
 
 ""
-" Sets the minimum {level} that will be immediately shown to the user using
-" @function(maktaba#error#Warn) or @function(maktaba#error#Shout). The
-" notification level defaults to WARN if it was never explicitly configured.
-" If {level} is -1, notifications will be disabled entirely.
+" Sets the minimum {level} of log messages that will trigger a user
+" notification, or -1 to disable notifications. By default, the user will be
+" notified after every message logged at WARN or higher.
+"
+" Notifications will be sent using @function(maktaba#error#Shout) for ERROR
+" and SEVERE messages, @function(maktaba#error#Warn) for WARN, and |:echomsg|
+" for INFO and DEBUG.
 " @throws BadValue
 function! maktaba#log#SetNotificationLevel(level) abort
   call maktaba#ensure#IsTrue(
