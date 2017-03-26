@@ -440,15 +440,22 @@ endfunction
 " Marks the SyscallInvocation associated with {invocation_id} finished with
 " given {exit_code} and executes its callback.
 function! maktaba#syscall#AsyncDone(invocation_id, exit_code)
-  let l:invocation = s:pending_invocations[a:invocation_id]
-  unlet s:pending_invocations[a:invocation_id]
-  let result_dict = {
-      \ 'status': a:exit_code,
-      \ 'stdout': join(readfile(l:invocation._outfile), "\n")}
-  call delete(l:invocation._outfile)
-  if filereadable(l:invocation._errfile)
-    let l:result_dict.stderr = join(readfile(l:invocation._errfile), "\n")
-    call delete(l:invocation._errfile)
-  endif
-  call l:invocation.Finish(l:result_dict)
+  try
+    let l:invocation = s:pending_invocations[a:invocation_id]
+    unlet s:pending_invocations[a:invocation_id]
+    let result_dict = {
+        \ 'status': a:exit_code,
+        \ 'stdout': join(readfile(l:invocation._outfile), "\n")}
+    call delete(l:invocation._outfile)
+    if filereadable(l:invocation._errfile)
+      let l:result_dict.stderr = join(readfile(l:invocation._errfile), "\n")
+      call delete(l:invocation._errfile)
+    endif
+    call l:invocation.Finish(l:result_dict)
+  catch
+    " Uncaught errors from here would be sent back to the --remote-expr command
+    " line, but vim can't do anything useful with them from there. Catch and
+    " shout them here instead.
+    call maktaba#error#Shout('Error from CallAsync callback: %s', v:exception)
+  endtry
 endfunction

@@ -388,9 +388,18 @@ To execute system calls asynchronously, use CallAsync.
   :echomsg g:invocation.stdout
   ~ hi
 
+Async calls can't throw uncaught errors up to the original caller, so they're
+just shouted to the user directly.
+
+  :function ThrowErrorCallback(return_data) abort<CR>
+  |  throw 'BOOM'<CR>
+  |endfunction
+  :call AsyncWait(g:syscall.CallAsync('ThrowErrorCallback', 0), 2)
+  ! .*echo hi; .*
+  ~ Error from CallAsync callback: BOOM
+
 Asynchronous calls can also take a stdin parameter.
 
-  :unlet g:callback_stdout
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
   :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
   ! .*cat; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
