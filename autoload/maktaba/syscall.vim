@@ -79,6 +79,20 @@ endfunction
 
 
 ""
+" Captures stdout/stderr for a clientserver {invocation}.
+function! s:CaptureClientServerOutput(invocation) abort
+  let l:result_dict = {}
+  let l:result_dict.stdout = join(readfile(a:invocation._outfile), "\n")
+  call delete(a:invocation._outfile)
+  if filereadable(a:invocation._errfile)
+    let l:result_dict.stderr = join(readfile(a:invocation._errfile), "\n")
+    call delete(a:invocation._errfile)
+  endif
+  return l:result_dict
+endfunction
+
+
+""
 " @private
 " @dict Syscall
 " Calls |system()| and returns a stdout/stderr dict.
@@ -267,7 +281,7 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
-" If vim implementation does not support async execution (details below),
+" If the current vim instance does not support async execution (details below),
 " setting {allow_sync_fallback} allows the system call to be executed
 " synchronously as a fallback instead of failing with an error.
 "
@@ -441,16 +455,18 @@ endfunction
 " given {exit_code} and executes its callback.
 function! maktaba#syscall#AsyncDone(invocation_id, exit_code)
   try
-    let l:invocation = s:pending_invocations[a:invocation_id]
+    try
+      let l:invocation = s:pending_invocations[a:invocation_id]
+    catch /E716:/
+      " Key not present.
+      call maktaba#error#Shout(
+          \ 'CallAsync error: No pending invocation found with ID %d.',
+          \ a:invocation_id)
+      return
+    endtry
     unlet s:pending_invocations[a:invocation_id]
-    let result_dict = {
-        \ 'status': a:exit_code,
-        \ 'stdout': join(readfile(l:invocation._outfile), "\n")}
-    call delete(l:invocation._outfile)
-    if filereadable(l:invocation._errfile)
-      let l:result_dict.stderr = join(readfile(l:invocation._errfile), "\n")
-      call delete(l:invocation._errfile)
-    endif
+    let l:result_dict = s:CaptureClientServerOutput(l:invocation)
+    let l:result_dict.status = a:exit_code
     call l:invocation.Finish(l:result_dict)
   catch
     " Uncaught errors from here would be sent back to the --remote-expr command

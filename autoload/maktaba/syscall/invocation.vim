@@ -27,20 +27,21 @@ endfunction
 " status, etc.
 "
 " Public variables:
-" * finished: 0 if invocation is pending, 1 if finished. The result variables
-"   (status, stdout, stderr) will not exist if invocation is not finished.
+" * finished: 0 if the invocation is pending, 1 if finished. The result
+"   variables (status, stdout, stderr) will not exist if the invocation is not
+"   finished.
 "   Guaranteed to be 1 when an invocation's callback is called.
 " * status: the shell exit code from the invocation (typically 0 for success).
 " * stdout: the invocation's entire stdout string.
 " * stderr: the invocation's entire stderr string, if available.
 "
-" Note one Syscall invoked multiple times would produce multiple independent
-" SyscallInvocations.
+" Note that one Syscall invoked multiple times would produce multiple
+" independent SyscallInvocations.
 
 
 ""
 " @private
-" Create a @dict(SyscallInvocation).
+" Creates a @dict(SyscallInvocation).
 " Private helper only for use by Syscall.CallAsync.
 function! maktaba#syscall#invocation#Create(Callback) abort
   return {

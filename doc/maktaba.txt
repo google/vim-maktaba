@@ -459,9 +459,9 @@ Syscall.Call([throw_errors])                                  *Syscall.Call()*
 
 Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   Executes the system call asynchronously and invokes {callback} on
-  completion. If vim implementation does not support async execution (details
-  below), setting {allow_sync_fallback} allows the system call to be executed
-  synchronously as a fallback instead of failing with an error.
+  completion. If the current vim instance does not support async execution
+  (details below), setting {allow_sync_fallback} allows the system call to be
+  executed synchronously as a fallback instead of failing with an error.
 
   Returns a |maktaba.SyscallInvocation| to interact with the invocation, check
   status, etc.
@@ -541,15 +541,15 @@ Provides a mechanism for interacting with a syscall invocation, checking
 status, etc.
 
 Public variables:
-  * finished: 0 if invocation is pending, 1 if finished. The result variables
-    (status, stdout, stderr) will not exist if invocation is not finished.
-    Guaranteed to be 1 when an invocation's callback is called.
+  * finished: 0 if the invocation is pending, 1 if finished. The result
+    variables (status, stdout, stderr) will not exist if the invocation is not
+    finished. Guaranteed to be 1 when an invocation's callback is called.
   * status: the shell exit code from the invocation (typically 0 for success).
   * stdout: the invocation's entire stdout string.
   * stderr: the invocation's entire stderr string, if available.
 
-Note one Syscall invoked multiple times would produce multiple independent
-SyscallInvocations.
+Note that one Syscall invoked multiple times would produce multiple
+independent SyscallInvocations.
 
 ==============================================================================
 FUNCTIONS                                                  *maktaba-functions*
