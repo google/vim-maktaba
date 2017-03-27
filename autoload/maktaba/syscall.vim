@@ -2,8 +2,8 @@
 
 let s:plugin = maktaba#Maktaba()
 
-if !exists('s:callbacks')
-  let s:callbacks = {}
+if !exists('s:pending_invocations')
+  let s:pending_invocations = {}
 endif
 
 if !exists('s:async_disabled')
@@ -78,31 +78,17 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
 endfunction
 
 
-" Compiles a dictionary describing the current vim state.
-function! s:CurrentEnv()
-  return {
-      \ 'tab': tabpagenr(),
-      \ 'buffer': bufnr('%'),
-      \ 'path': expand('%:p'),
-      \ 'column': col('.'),
-      \ 'line': line('.')}
-endfunction
-
-
 ""
-" Helper to call {Callback} with and without legacy {env_data} arg.
-" Tries {Callback}({return_data}) first and falls back to
-" {Callback}({env_dict}, {return_data}).
-function! s:TriggerAsyncCallback(Callback, env_data, return_data) abort
-  try
-    " Try prototype callback({result_dict}).
-    call maktaba#function#Call(a:Callback, [a:return_data])
-  catch /E119:/
-    " Not enough arguments.
-    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
-    " TODO(#180): Deprecate and shout an error for this case.
-    call maktaba#function#Call(a:Callback, [a:env_data, a:return_data])
-  endtry
+" Captures stdout/stderr for a clientserver {invocation}.
+function! s:CaptureClientServerOutput(invocation) abort
+  let l:result_dict = {}
+  let l:result_dict.stdout = join(readfile(a:invocation._outfile), "\n")
+  call delete(a:invocation._outfile)
+  if filereadable(a:invocation._errfile)
+    let l:result_dict.stderr = join(readfile(a:invocation._errfile), "\n")
+    call delete(a:invocation._errfile)
+  endif
+  return l:result_dict
 endfunction
 
 
@@ -143,20 +129,19 @@ endfunction
 " Calls |system()| asynchronously, and invokes a @function(this.callback) once
 " the command completes, passing in stdout, stderr and exit code to it.
 " The specific implementation for @function(#CallAsync).
-function! maktaba#syscall#DoCallAsync() abort dict
-  let l:error_file = tempname()
-  let l:output_file = tempname()
-  let l:callback_cmd = join([
+function! maktaba#syscall#DoCallAsync(invocation) abort dict
+  let a:invocation._outfile = tempname()
+  let a:invocation._errfile = tempname()
+  let l:callback_cmd = [
       \ v:progname,
       \ '--servername ' . v:servername,
       \ '--remote-expr',
-      \ printf('"maktaba#syscall#AsyncDone(''%s'', ''%s'', $?)"',
-            \ l:output_file, l:error_file)], " ")
+      \ printf('"maktaba#syscall#AsyncDone(%d, $?)"', a:invocation.id)]
   let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
-      \ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
-  let s:callbacks[l:output_file] = {
-      \ 'function': maktaba#ensure#IsCallable(self.callback),
-      \ 'env': s:CurrentEnv()}
+      \ self.GetCommand(),
+      \ join(l:callback_cmd, ' '),
+      \ a:invocation._outfile,
+      \ a:invocation._errfile)
 
   if has_key(self, 'stdin')
     call system(l:full_cmd, self.stdin)
@@ -296,9 +281,16 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
-" {callback} function will be called with the following arguments:
-" {callback}(result_dict), where result_dict contains stdout, stderr and status
-" (code).
+" If the current vim instance does not support async execution (details below),
+" setting {allow_sync_fallback} allows the system call to be executed
+" synchronously as a fallback instead of failing with an error.
+"
+" Returns a @dict(SyscallInvocation) to interact with the invocation, check
+" status, etc.
+"
+" {callback} function will be called with the SyscallInvocation as an argument,
+" as {callback}(SyscallInvocation), and the invocation provides access to
+" stdout, stderr and status (code).
 " For example: >
 "   function Handler(result) abort
 "     if a:result.status != 0
@@ -309,8 +301,8 @@ endfunction
 "   endfunction
 "   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 " <
-" WARNING: The callback is responsible for checking result_dict.status and
-" handling unexpected exit codes. Otherwise all failures are silent.
+" WARNING: The callback is responsible for checking SyscallInvocation.status and
+" handling unexpected exit codes. Otherwise all syscall failures are silent.
 "
 " NOTE: If {callback} depends on cursor location or other vim state, the caller
 " should capture parameters and bind them to the callback: >
@@ -328,10 +320,9 @@ endfunction
 " <
 "
 " As a legacy fallback, if the callback fails expecting more arguments, it will
-" be called with the arguments: {callback}(env_dict, result_dict), where
-" env_dict contains tab, buffer, path, column and line info, and the result_dict
-" contains stdout, stderr and status (code). This fallback will be deprecated
-" and stop working in future versions of maktaba.
+" be called with the arguments: {callback}(env_dict, SyscallInvocation), where
+" env_dict contains tab, buffer, path, column and line info. This fallback will
+" be deprecated and stop working in future versions of maktaba.
 "
 " Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
 " capabilities, so the preconditions for it are vim being compiled with
@@ -344,8 +335,9 @@ endfunction
 " @throws WrongType
 " @throws MissingFeature if neither async execution nor fallback is available.
 function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
-  let self.callback = maktaba#ensure#IsCallable(a:Callback)
   call maktaba#ensure#IsBool(a:allow_sync_fallback)
+  let l:invocation = maktaba#syscall#invocation#Create(
+      \ maktaba#ensure#IsCallable(a:Callback))
   if !maktaba#syscall#IsAsyncAvailable()
     if a:allow_sync_fallback
       call s:plugin.logger.Warn('Async support not available. ' .
@@ -353,8 +345,8 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
           \ self.GetCommand())
       let l:return_data = self.Call(0)
       let l:return_data.status = v:shell_error
-      call s:TriggerAsyncCallback(self.callback, s:CurrentEnv(), l:return_data)
-      return
+      call l:invocation.Finish(l:return_data)
+      return l:invocation
     else
       " Neither async nor sync is available. Throw error with salient reason.
       if s:async_disabled
@@ -374,8 +366,9 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
     endif
   endif
 
+  let s:pending_invocations[l:invocation.id] = l:invocation
   let l:call_func = maktaba#function#Create(
-      \ 'maktaba#syscall#DoCallAsync', [], self)
+      \ 'maktaba#syscall#DoCallAsync', [l:invocation], self)
   " Errors indicate a problem with the CallAsync implementation, so they're
   " thrown as ERROR(Failure) and not expected to be caught by callers.
   try
@@ -384,7 +377,10 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
     throw maktaba#error#Failure('Problem dispatching async syscall: %s',
         \ maktaba#error#Split(v:exception)[1])
   endtry
+
+  return l:invocation
 endfunction
+
 
 ""
 " @dict Syscall
@@ -455,24 +451,23 @@ endfunction
 
 ""
 " @private
-" Executes the asynchronous callback setup by @function(Syscall.CallAsync).
-" The callback must be of prototype: callback(result_dict) or legacy prototype
-" callback(env_dict, result_dict). The latter will be deprecated and stop
-" working in future versions of maktaba.
-function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
+" Marks the SyscallInvocation associated with {invocation_id} finished with
+" given {exit_code} and executes its callback.
+function! maktaba#syscall#AsyncDone(invocation_id, exit_code)
   try
-    let l:callback_info = s:callbacks[a:stdout_file]
-    let l:return_data = {}
-    let l:return_data.status = a:exit_code
-    let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
-    if filereadable(a:stderr_file)
-      let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
-      call delete(a:stderr_file)
-    endif
-    unlet s:callbacks[a:stdout_file]
-    call delete(a:stdout_file)
-    call s:TriggerAsyncCallback(
-        \ l:callback_info.function, l:callback_info.env, l:return_data)
+    try
+      let l:invocation = s:pending_invocations[a:invocation_id]
+    catch /E716:/
+      " Key not present.
+      call maktaba#error#Shout(
+          \ 'CallAsync error: No pending invocation found with ID %d.',
+          \ a:invocation_id)
+      return
+    endtry
+    unlet s:pending_invocations[a:invocation_id]
+    let l:result_dict = s:CaptureClientServerOutput(l:invocation)
+    let l:result_dict.status = a:exit_code
+    call l:invocation.Finish(l:result_dict)
   catch
     " Uncaught errors from here would be sent back to the --remote-expr command
     " line, but vim can't do anything useful with them from there. Catch and

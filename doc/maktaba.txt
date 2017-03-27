@@ -459,9 +459,16 @@ Syscall.Call([throw_errors])                                  *Syscall.Call()*
 
 Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   Executes the system call asynchronously and invokes {callback} on
-  completion. {callback} function will be called with the following arguments:
-  {callback}(result_dict), where result_dict contains stdout, stderr and
-  status (code). For example:
+  completion. If the current vim instance does not support async execution
+  (details below), setting {allow_sync_fallback} allows the system call to be
+  executed synchronously as a fallback instead of failing with an error.
+
+  Returns a |maktaba.SyscallInvocation| to interact with the invocation, check
+  status, etc.
+
+  {callback} function will be called with the SyscallInvocation as an
+  argument, as {callback}(SyscallInvocation), and the invocation provides
+  access to stdout, stderr and status (code). For example:
 >
     function Handler(result) abort
       if a:result.status != 0
@@ -472,8 +479,9 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
     endfunction
     call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 <
-  WARNING: The callback is responsible for checking result_dict.status and
-  handling unexpected exit codes. Otherwise all failures are silent.
+  WARNING: The callback is responsible for checking SyscallInvocation.status
+  and handling unexpected exit codes. Otherwise all syscall failures are
+  silent.
 
   NOTE: If {callback} depends on cursor location or other vim state, the
   caller should capture parameters and bind them to the callback:
@@ -492,10 +500,9 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
 <
 
   As a legacy fallback, if the callback fails expecting more arguments, it
-  will be called with the arguments: {callback}(env_dict, result_dict), where
-  env_dict contains tab, buffer, path, column and line info, and the
-  result_dict contains stdout, stderr and status (code). This fallback will be
-  deprecated and stop working in future versions of maktaba.
+  will be called with the arguments: {callback}(env_dict, SyscallInvocation),
+  where env_dict contains tab, buffer, path, column and line info. This
+  fallback will be deprecated and stop working in future versions of maktaba.
 
   Asynchronous calls are executed via |--remote-expr| using vim's
   |clientserver| capabilities, so the preconditions for it are vim being
@@ -527,6 +534,22 @@ Syscall.GetCommand()                                    *Syscall.GetCommand()*
   Gets the literal command string that would be executed by |Syscall.Call()|
   or |Syscall.CallForeground()|, with words joined and special characters
   escaped.
+
+                                                   *maktaba.SyscallInvocation*
+A maktaba representation of a single invocation of a |maktaba.Syscall|.
+Provides a mechanism for interacting with a syscall invocation, checking
+status, etc.
+
+Public variables:
+  * finished: 0 if the invocation is pending, 1 if finished. The result
+    variables (status, stdout, stderr) will not exist if the invocation is not
+    finished. Guaranteed to be 1 when an invocation's callback is called.
+  * status: the shell exit code from the invocation (typically 0 for success).
+  * stdout: the invocation's entire stdout string.
+  * stderr: the invocation's entire stderr string, if available.
+
+Note that one Syscall invoked multiple times would produce multiple
+independent SyscallInvocations.
 
 ==============================================================================
 FUNCTIONS                                                  *maktaba-functions*
