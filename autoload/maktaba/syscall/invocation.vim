@@ -1,13 +1,3 @@
-if !exists('s:num_invocations')
-  let s:num_invocations = 0
-endif
-
-""
-" Gets a number uniquely identifying a SyscallInvocation.
-function! s:CreateInvocationId()
-  let s:num_invocations += 1
-  return s:num_invocations
-endfunction
 
 " Compiles a dictionary describing the current vim state.
 function! s:CurrentEnv()
@@ -27,6 +17,7 @@ endfunction
 " status, etc.
 "
 " Public variables:
+" * syscall: The @dict(Syscall) that triggered this invocation.
 " * finished: 0 if the invocation is pending, 1 if finished. The result
 "   variables (status, stdout, stderr) will not exist if the invocation is not
 "   finished.
@@ -43,9 +34,9 @@ endfunction
 " @private
 " Creates a @dict(SyscallInvocation).
 " Private helper only for use by Syscall.CallAsync.
-function! maktaba#syscall#invocation#Create(Callback) abort
+function! maktaba#syscall#invocation#Create(syscall, Callback) abort
   return {
-      \ 'id': s:CreateInvocationId(),
+      \ 'syscall': a:syscall,
       \ 'finished': 0,
       \ '_env': s:CurrentEnv(),
       \ '_callback': a:Callback,
@@ -57,6 +48,7 @@ endfunction
 
 ""
 " @private
+" @dict SyscallInvocation
 " Executes the invocation's callback. The callback must be of prototype:
 " callback(result_dict) or legacy prototype callback(env_dict, result_dict).
 " The latter will be deprecated and stop working in future versions of maktaba.

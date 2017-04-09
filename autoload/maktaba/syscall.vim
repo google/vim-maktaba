@@ -2,16 +2,20 @@
 
 let s:plugin = maktaba#Maktaba()
 
-if !exists('s:pending_invocations')
-  let s:pending_invocations = {}
+if !exists('s:usable_shell')
+  let s:usable_shell = '\v^/bin/sh$'
 endif
 
 if !exists('s:async_disabled')
   let s:async_disabled = 0
 endif
 
-if !exists('s:usable_shell')
-  let s:usable_shell = '\v^/bin/sh$'
+if !exists('s:vimjob_disabled')
+  let s:vimjob_disabled = 0
+endif
+
+if !exists('s:force_sync_fallback_allowed')
+  let s:force_sync_fallback_allowed = 0
 endif
 
 
@@ -79,20 +83,6 @@ endfunction
 
 
 ""
-" Captures stdout/stderr for a clientserver {invocation}.
-function! s:CaptureClientServerOutput(invocation) abort
-  let l:result_dict = {}
-  let l:result_dict.stdout = join(readfile(a:invocation._outfile), "\n")
-  call delete(a:invocation._outfile)
-  if filereadable(a:invocation._errfile)
-    let l:result_dict.stderr = join(readfile(a:invocation._errfile), "\n")
-    call delete(a:invocation._errfile)
-  endif
-  return l:result_dict
-endfunction
-
-
-""
 " @private
 " @dict Syscall
 " Calls |system()| and returns a stdout/stderr dict.
@@ -119,36 +109,9 @@ endfunction
 " @public
 " Returns whether the current vim session supports asynchronous calls.
 function! maktaba#syscall#IsAsyncAvailable() abort
-  return !s:async_disabled && has('clientserver') && !empty(v:servername)
-endfunction
-
-
-""
-" @private
-" @dict Syscall
-" Calls |system()| asynchronously, and invokes a @function(this.callback) once
-" the command completes, passing in stdout, stderr and exit code to it.
-" The specific implementation for @function(#CallAsync).
-function! maktaba#syscall#DoCallAsync(invocation) abort dict
-  let a:invocation._outfile = tempname()
-  let a:invocation._errfile = tempname()
-  let l:callback_cmd = [
-      \ v:progname,
-      \ '--servername ' . v:servername,
-      \ '--remote-expr',
-      \ printf('"maktaba#syscall#AsyncDone(%d, $?)"', a:invocation.id)]
-  let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
-      \ self.GetCommand(),
-      \ join(l:callback_cmd, ' '),
-      \ a:invocation._outfile,
-      \ a:invocation._errfile)
-
-  if has_key(self, 'stdin')
-    call system(l:full_cmd, self.stdin)
-  else
-    call system(l:full_cmd)
-  endif
-  return {}
+  return !s:async_disabled && (
+      \ (!s:vimjob_disabled && has('job')) ||
+      \ (has('clientserver') && !empty(v:servername)))
 endfunction
 
 
@@ -324,22 +287,27 @@ endfunction
 " env_dict contains tab, buffer, path, column and line info. This fallback will
 " be deprecated and stop working in future versions of maktaba.
 "
-" Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
-" capabilities, so the preconditions for it are vim being compiled with
-" +clientserver and |v:servername| being set. Vim will try to set it to
-" something when it starts if it is running in X context, e.g. 'GVIM1'.
-" Otherwise, the user needs to set it by passing |--servername| $NAME to
-" vim. If the two conditions are not met, asynchronous calls are not possible,
-" and the call will either throw |ERROR(MissingFeature)| or fall back to
-" synchronous calls, depending on the {allow_sync_fallback} parameter.
+" Asynchronous calls are executed via vim's |job| support. If the vim instance
+" is missing job support, this will try to fall back to legacy |clientserver|
+" invocation, which has a few preconditions of its own (see below). If neither
+" option is available, asynchronous calls are not possible, and the call will
+" either throw |ERROR(MissingFeature)| or fall back to synchronous calls,
+" depending on the {allow_sync_fallback} parameter.
+"
+" The legacy fallback executes calls via |--remote-expr| using vim's
+" |clientserver| capabilities, so the preconditions for it are vim being
+" compiled with +clientserver and |v:servername| being set. Vim will try to set
+" it to something when it starts if it is running in X context, e.g. 'GVIM1'.
+" Otherwise, the user needs to set it by passing |--servername| $NAME to vim.
 " @throws WrongType
 " @throws MissingFeature if neither async execution nor fallback is available.
 function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
   call maktaba#ensure#IsBool(a:allow_sync_fallback)
   let l:invocation = maktaba#syscall#invocation#Create(
+      \ self,
       \ maktaba#ensure#IsCallable(a:Callback))
   if !maktaba#syscall#IsAsyncAvailable()
-    if a:allow_sync_fallback
+    if a:allow_sync_fallback || s:force_sync_fallback_allowed
       call s:plugin.logger.Warn('Async support not available. ' .
           \ 'Falling back to synchronous execution for system call: ' .
           \ self.GetCommand())
@@ -350,33 +318,35 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
     else
       " Neither async nor sync is available. Throw error with salient reason.
       if s:async_disabled
-        let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled.'
-      elseif !has('clientserver')
-        let l:reason =
-            \ 'vim was compiled without +clientserver. See :help clientserver.'
-      elseif empty(v:servername)
-        let l:reason =
-            \ 'no --servername flag passed to vim. See :help servername.'
+        let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled'
       else
-        throw maktaba#error#Failure(
-            \ 'Async execution was not available for unknown reason.')
+        let l:reason = 'no +job support and no fallback available'
       endif
       throw maktaba#error#MissingFeature(
-          \ 'Cannot run async commands: ' . l:reason)
+          \ 'Cannot run async commands (%s). See :help Syscall.CallAsync',
+          \ l:reason)
     endif
   endif
 
-  let s:pending_invocations[l:invocation.id] = l:invocation
-  let l:call_func = maktaba#function#Create(
-      \ 'maktaba#syscall#DoCallAsync', [l:invocation], self)
-  " Errors indicate a problem with the CallAsync implementation, so they're
-  " thrown as ERROR(Failure) and not expected to be caught by callers.
-  try
-    call s:DoSyscallCommon(self, l:call_func, 1)
-  catch /ERROR(ShellError):/
-    throw maktaba#error#Failure('Problem dispatching async syscall: %s',
-        \ maktaba#error#Split(v:exception)[1])
-  endtry
+  if !s:vimjob_disabled && has('job')
+    let l:vimjob_invocation =
+        \ maktaba#syscall#async#CreateInvocation(self, l:invocation)
+    call l:vimjob_invocation.Start()
+  else
+    " TODO(#190): Remove clientserver implementation.
+    let l:clientserver_invocation =
+        \ maktaba#syscall#clientserver#CreateInvocation(self, l:invocation)
+    let l:call_func =
+        \ maktaba#function#Method(l:clientserver_invocation, 'Start')
+    " Errors indicate a problem with the CallAsync implementation, so they're
+    " thrown as ERROR(Failure) and not expected to be caught by callers.
+    try
+      call s:DoSyscallCommon(self, l:call_func, 1)
+    catch /ERROR(ShellError):/
+      throw maktaba#error#Failure('Problem dispatching async syscall: %s',
+          \ maktaba#error#Split(v:exception)[1])
+    endtry
+  endif
 
   return l:invocation
 endfunction
@@ -442,36 +412,25 @@ endfunction
 
 
 ""
-" @private
-" Forces the disabling of asynchronous calls, to enable testing.
-function! maktaba#syscall#SetAsyncDisabled(disabled)
-  let s:async_disabled = a:disabled
+" Disables asynchronous calls if {disabled} is true. Enables otherwise.
+function! maktaba#syscall#SetAsyncDisabledForTesting(disabled) abort
+  let s:async_disabled = maktaba#ensure#IsBool(a:disabled)
+endfunction
+
+
+""
+" Sets whether to override @function(Syscall.CallAsync)'s allow_sync_fallback
+" argument and unconditionally {force} it to 1. Passing 0 restores normal
+" behavior.
+function! maktaba#syscall#ForceSyncFallbackAllowedForTesting(force) abort
+  let s:force_sync_fallback_allowed = maktaba#ensure#IsBool(a:force)
 endfunction
 
 
 ""
 " @private
-" Marks the SyscallInvocation associated with {invocation_id} finished with
-" given {exit_code} and executes its callback.
-function! maktaba#syscall#AsyncDone(invocation_id, exit_code)
-  try
-    try
-      let l:invocation = s:pending_invocations[a:invocation_id]
-    catch /E716:/
-      " Key not present.
-      call maktaba#error#Shout(
-          \ 'CallAsync error: No pending invocation found with ID %d.',
-          \ a:invocation_id)
-      return
-    endtry
-    unlet s:pending_invocations[a:invocation_id]
-    let l:result_dict = s:CaptureClientServerOutput(l:invocation)
-    let l:result_dict.status = a:exit_code
-    call l:invocation.Finish(l:result_dict)
-  catch
-    " Uncaught errors from here would be sent back to the --remote-expr command
-    " line, but vim can't do anything useful with them from there. Catch and
-    " shout them here instead.
-    call maktaba#error#Shout('Error from CallAsync callback: %s', v:exception)
-  endtry
+" Disables vim job async implementation if {disabled} is true. Enables
+" otherwise.
+function! maktaba#syscall#SetVimjobDisabledForTesting(disabled) abort
+  let s:vimjob_disabled = maktaba#ensure#IsBool(a:disabled)
 endfunction

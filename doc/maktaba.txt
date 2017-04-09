@@ -504,14 +504,19 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   where env_dict contains tab, buffer, path, column and line info. This
   fallback will be deprecated and stop working in future versions of maktaba.
 
-  Asynchronous calls are executed via |--remote-expr| using vim's
+  Asynchronous calls are executed via vim's |job| support. If the vim instance
+  is missing job support, this will try to fall back to legacy |clientserver|
+  invocation, which has a few preconditions of its own (see below). If neither
+  option is available, asynchronous calls are not possible, and the call will
+  either throw |ERROR(MissingFeature)| or fall back to synchronous calls,
+  depending on the {allow_sync_fallback} parameter.
+
+  The legacy fallback executes calls via |--remote-expr| using vim's
   |clientserver| capabilities, so the preconditions for it are vim being
   compiled with +clientserver and |v:servername| being set. Vim will try to
   set it to something when it starts if it is running in X context, e.g.
   'GVIM1'. Otherwise, the user needs to set it by passing |--servername| $NAME
-  to vim. If the two conditions are not met, asynchronous calls are not
-  possible, and the call will either throw |ERROR(MissingFeature)| or fall
-  back to synchronous calls, depending on the {allow_sync_fallback} parameter.
+  to vim.
   Throws ERROR(WrongType)
   Throws ERROR(MissingFeature) if neither async execution nor fallback is
   available.
@@ -541,6 +546,7 @@ Provides a mechanism for interacting with a syscall invocation, checking
 status, etc.
 
 Public variables:
+  * syscall: The |maktaba.Syscall| that triggered this invocation.
   * finished: 0 if the invocation is pending, 1 if finished. The result
     variables (status, stdout, stderr) will not exist if the invocation is not
     finished. Guaranteed to be 1 when an invocation's callback is called.
@@ -1660,6 +1666,16 @@ maktaba#syscall#Create({cmd})                       *maktaba#syscall#Create()*
   automatically escaped and joined. Also accepts an existing Syscall object
   and returns it for convenience.
   Throws ERROR(WrongType)
+
+maktaba#syscall#SetAsyncDisabledForTesting({disabled})
+                                *maktaba#syscall#SetAsyncDisabledForTesting()*
+  Disables asynchronous calls if {disabled} is true. Enables otherwise.
+
+maktaba#syscall#ForceSyncFallbackAllowedForTesting({force})
+                        *maktaba#syscall#ForceSyncFallbackAllowedForTesting()*
+  Sets whether to override |Syscall.CallAsync()|'s allow_sync_fallback
+  argument and unconditionally {force} it to 1. Passing 0 restores normal
+  behavior.
 
 maktaba#test#Override({target}, {replacement})       *maktaba#test#Override()*
   Overrides the function {target} such that when it is called, {replacement}
