@@ -61,6 +61,7 @@ endfunction
 " @private
 " @dict SyscallVimjobInvocation
 function! maktaba#syscall#async#HandleJobExit(unused_job, status) abort dict
+  " NOTE: Stdout & stderr are joined w/o newline separator since IO mode is raw.
   call self._invocation.Finish({
       \ 'status': a:status,
       \ 'stdout': join(self._stdout, ''),
