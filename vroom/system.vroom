@@ -372,6 +372,7 @@ To execute system calls asynchronously, use CallAsync.
   :function AsyncWait(invocation, delay) abort<CR>
   |  let l:deadline = localtime() + a:delay " wait for at most N seconds<CR>
   |  while !a:invocation.finished && localtime() < l:deadline<CR>
+  |    sleep 100m<CR>
   |  endwhile<CR>
   |  call maktaba#ensure#IsTrue(a:invocation.finished,
   | 'Async callback was expected to complete within %d seconds', a:delay)<CR>
@@ -381,8 +382,10 @@ To execute system calls asynchronously, use CallAsync.
   :function Callback(result) abort<CR>
   |  let g:callback_stdout = a:result.stdout<CR>
   |endfunction
+  :call maktaba#syscall#SetVimjobDisabledForTesting(1)
   :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
-  ! .*echo hi; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
+  ! .*echo hi; vim --servername .*
+  | --remote-expr "maktaba#syscall#clientserver#FinishInvocation.*
   :echomsg g:callback_stdout
   ~ hi
   :echomsg g:invocation.stdout
@@ -402,13 +405,14 @@ Asynchronous calls can also take a stdin parameter.
 
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
   :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
-  ! .*cat; vim --servername .* --remote-expr "maktaba#syscall#AsyncDone.*
+  ! .*cat; vim --servername .*
+  | --remote-expr "maktaba#syscall#clientserver#FinishInvocation.*
   :echomsg g:invocation.stdout
   ~ Hello
 
 Async calls fall back to synchronous calls if disabled or not available.
 
-  :call maktaba#syscall#SetAsyncDisabled(1)
+  :call maktaba#syscall#SetAsyncDisabledForTesting(1)
   :let g:syscall = maktaba#syscall#Create(['echo', 'hi'])
   :let g:invocation = g:syscall.CallAsync('Callback', 1)
   ! echo hi 2> .*
