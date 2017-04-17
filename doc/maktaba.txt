@@ -830,7 +830,7 @@ maktaba#error#Exception({type}, {message}, {fmtargs})
   Throws ERROR(WrongType) if {type} is not a string.
 
 maktaba#error#Message({type}, {message}, [args...])  *maktaba#error#Message()*
-  Makes an error message in the Google vimscript error format. The error
+  Makes an error message in the maktaba vimscript error format. The error
   message will look like:
 >
     ERROR({type}): {message}
@@ -860,7 +860,7 @@ maktaba#error#Try({func}, [exceptions], [default])       *maktaba#error#Try()*
   {func} may be any maktaba callable. See |maktaba#function#Create|.
 
   [exceptions] may either be a regex matched against |v:exception|, or a list
-  of Google error names and/or vim error numbers. For example, the following
+  of maktaba error names and/or vim error numbers. For example, the following
   are equivalent:
 >
     call maktaba#error#Try(g:fn, 'ERROR(BadValue):\|E107:')
