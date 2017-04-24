@@ -1,8 +1,7 @@
 " Neovim support covered in https://github.com/neovim/neovim/issues/3417.
 " NOTE: Avoids using pre-1430 support for consistent Infinity/NaN.
-let s:HAS_NATIVE_JSON =
-    \ !has('nvim') &&
-    \ v:version > 704 || v:version == 704 && has('patch1430')
+let s:HAS_NATIVE_JSON = exists('*json_decode') && exists('v:null') &&
+    \ (has('nvim') || v:version > 704 || v:version == 704 && has('patch1430'))
 
 " Sentinel constants used to serialize/deserialize JSON primitives.
 if !exists('maktaba#json#NULL')
