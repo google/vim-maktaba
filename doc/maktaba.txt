@@ -8,6 +8,7 @@ CONTENTS                                                    *maktaba-contents*
   3. Dictionaries..............................................|maktaba-dicts|
   4. Functions.............................................|maktaba-functions|
   5. Error Handling.......................................|maktaba-exceptions|
+  6. Python...................................................|maktaba-python|
 
 ==============================================================================
 INTRODUCTION                                                   *maktaba-intro*
@@ -1467,7 +1468,6 @@ maktaba#plugin#HasFlag({flag})                      *maktaba#plugin#HasFlag()*
 maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
   Imports python module {name} into vim from {plugin}. Checks for {name} in
   the plugin's python/ subdirectory for the named module.
-  Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
 
   For example:
 >
@@ -1478,18 +1478,28 @@ maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
 
     <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'>
 
+  Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
+  Throws ERROR(MissingFeature) if vim instance is missing Python support.
+
 maktaba#python#Eval({expr})                            *maktaba#python#Eval()*
   Evaluate python {expr} and return the result.
 
-  Polyfill for vim's |pyeval()| that works on vim versions older than 7.3.569.
-  You can call pyeval() directly if you don't intend to support vim versions
-  older than that.
+  Polyfill for vim's |pyeval()| or |py3eval()| that works on vim versions
+  older than 7.3.569. You can call pyeval() directly if you don't intend to
+  support vim versions older than that.
 
   Supports simple types (number, string, list, dict), but not other
   python-only types like None, True, or False that have no direct vimscript
   analog. Those will fail on older vim versions, so either take care to avoid
   them in the return value or just skip the polyfill and use pyeval()
   directly.
+
+  WARNING: This will not have access to l: or a: variables from the caller, so
+  use `vim.eval()` with caution inside {expr}. Call pyeval() directly if you
+  need to access those. Inlining simple values into {expr} can also work, but
+  watch out for issues with string quoting, etc.
+
+  Throws ERROR(MissingFeature) if vim instance is missing Python support.
 
 maktaba#rtp#Split([paths])                               *maktaba#rtp#Split()*
   Split [paths], a string of comma-separated path entries, into a list of
@@ -1897,6 +1907,35 @@ For use when a |has()| check fails.
 
                                                               *ERROR(Failure)*
 For use in code that should never be reached.
+
+==============================================================================
+PYTHON                                                        *maktaba-python*
+
+Maktaba offers some utilities for using Python consistently in plugins and
+uses Python if available for a few of its own operations to improve
+behavior/performance.
+
+COMPATIBILITY
+Vim can be compiled without any Python support, with the Python 2 interface
+only, with the Python 3 interface, or with support for either (with lots of
+caveats). See |if_pyth.txt| for context.
+
+Maktaba maintains compatibility with both Python 2 and Python 3, and can help
+plugins built on Maktaba to work with both versions, but there are still some
+unavoidable corner cases to be aware of:
+  * Plugin authors need to use Python syntax and imports compatible with both
+    versions if they intend to support both versions. Maktaba can't magically
+    fix those kinds of incompatibilities for you.
+  * For executing Python statements, explicitly detecting the version and
+    invoking |:python| or |:python3| is still the best way (and see
+    |script-here| to avoid errors).
+  * Catching errors gets tricky. Python errors tend to surface as multiple
+    lines of exception with "Traceback" or other output above the actual
+    error, and the error types can vary (Maktaba does not attempt to catch and
+    canonicalize errors from the different implementations and fallbacks).
+  * For users who try to use |python-2-and-3|, Maktaba may break the tie and
+    trigger Python 3 to load, breaking plugins that subsequently try to use
+    Python 2 (because a single vim instance can't run both).
 
 
 vim:tw=78:ts=8:ft=help:norl:
