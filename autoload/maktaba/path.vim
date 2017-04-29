@@ -15,6 +15,7 @@ else
 endif
 let s:trailing_slash = s:unescaped_slash . '$'
 let s:trailing_slashes = s:unescaped_slash . '+$'
+let s:nontrailing_slash = s:unescaped_slash . '\ze.'
 
 let s:drive_backslash = '\v^\a:\\\\'
 let s:drive_frontslash = '\v^\a://'
@@ -77,6 +78,14 @@ endfunction
 " file paths.
 function! maktaba#path#AsDir(path) abort
   return substitute(a:path, s:trailing_slashes, '', 'g') . s:slash
+endfunction
+
+
+""
+" Returns {path} with trailing slashes (if any) stripped (forward or backslash,
+" depending on platform).
+function! maktaba#path#StripTrailingSlash(path) abort
+  return substitute(a:path, s:trailing_slashes, '', '')
 endfunction
 
 
@@ -153,11 +162,21 @@ endfunction
 
 
 ""
-" Splits {path} on the system separator character.
+" Splits {path} on the system separator character, preserving root and trailing
+" slash, if any.
+" For example: >
+"   :echomsg maktaba#path#Split('relative/path')
+"   :echomsg maktaba#path#Split('/absolute/path')
+"   :echomsg maktaba#path#Split('path/to/dir/')
+" <
+" will echo
+" - `['relative', 'path']`
+" - `['/absolute', 'path']`
+" - `['path', 'to', 'dir/']`
 function! maktaba#path#Split(path) abort
+  " /foo/bar/baz/ splits to root '/' and components ['foo', 'bar', 'baz/'].
   let l:root = maktaba#path#RootComponent(a:path)
-  let l:components = split(a:path[len(l:root):], s:unescaped_slash)
-  " /foo/bar/baz splits to ['/', 'foo', 'bar', 'baz'].
+  let l:components = split(a:path[len(l:root):], s:nontrailing_slash, 1)
   if !empty(l:root)
     call insert(l:components, l:root)
   endif
@@ -226,8 +245,9 @@ function! maktaba#path#MakeRelative(root, path) abort
   call s:EnsurePathsHaveSharedRoot(a:root, a:path)
 
   " Starting from the beginning, discard directories common to both.
-  let l:pathparts = maktaba#path#Split(a:path)
-  let l:rootparts = maktaba#path#Split(a:root)
+  let l:is_dir = a:path =~# s:trailing_slash
+  let l:pathparts = maktaba#path#Split(maktaba#path#StripTrailingSlash(a:path))
+  let l:rootparts = maktaba#path#Split(maktaba#path#StripTrailingSlash(a:root))
   while !empty(l:pathparts) && !empty(l:rootparts) &&
       \ l:pathparts[0] ==# l:rootparts[0]
     call remove(l:pathparts, 0)
@@ -235,13 +255,16 @@ function! maktaba#path#MakeRelative(root, path) abort
   endwhile
 
   if empty(l:rootparts) && empty(l:pathparts)
-    return '.'
+    let l:relative_path = '.'
+  else
+    " l:rootparts now contains the directories we must traverse to reach the
+    " common ancestor of root and path. Replacing those with '..' takes us to
+    " the common ancestor. Then the remaining l:pathparts take us to the
+    " destination.
+    let l:relative_path =
+        \ maktaba#path#Join(map(l:rootparts, '".."') + l:pathparts)
   endif
-
-  " l:rootparts now contains the directories we must traverse to reach the
-  " common ancestor of root and path. Replacing those with '..' takes us to the
-  " common ancestor. Then the remaining l:pathparts take us to the destination.
-  return maktaba#path#Join(map(l:rootparts, '".."') + l:pathparts)
+  return l:is_dir ? maktaba#path#AsDir(l:relative_path) : l:relative_path
 endfunction
 
 
@@ -277,8 +300,7 @@ function! maktaba#path#MakeDirectory(dir) abort
   let l:dir = a:dir
   " Vim bug before 7.4 patch 6: mkdir chokes when a path has a trailing slash.
   if v:version < 704 || (v:version == 704 && !has('patch6'))
-    " This is a hackish way to remove a trailing slash.
-    let l:dir = maktaba#path#Join(maktaba#path#Split(l:dir))
+    let l:dir = substitute(l:dir, s:trailing_slashes, '', '')
   endif
 
   try

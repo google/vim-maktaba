@@ -98,7 +98,8 @@ function! s:PluginNameFromDir(dir) abort
   if len(l:splitpath) == 0
     throw maktaba#error#BadValue('Found empty path.')
   endif
-  let l:name = maktaba#plugin#CanonicalName(l:splitpath[-1])
+  let l:name = maktaba#plugin#CanonicalName(
+      \ maktaba#path#StripTrailingSlash(l:splitpath[-1]))
   return l:name
 endfunction
 
@@ -540,7 +541,8 @@ function! s:GetSubdirs() dict abort
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:direct_glob = maktaba#path#Join([self.location, '*', ''])
     let l:direct_dirs = split(glob(l:direct_glob, 1), "\n")
-    let self._dirs = map(l:direct_dirs, 'maktaba#path#Split(v:val)[-1]')
+    let self._dirs = map(
+        \ l:direct_dirs, 'maktaba#path#AsDir(maktaba#path#Split(v:val)[-1])')
   endif
   return self._dirs
 endfunction
@@ -555,7 +557,8 @@ function! s:GetAfterSubdirs() dict abort
     " Glob includes trailing slash, which makes glob() only detect directories.
     let l:after_glob = maktaba#path#Join([self.location, 'after', '*', ''])
     let l:after_dirs = split(glob(l:after_glob, 1), "\n")
-    let self._after_dirs = map(l:after_dirs, 'maktaba#path#Split(v:val)[-1]')
+    let self._after_dirs = map(
+        \ l:after_dirs, 'maktaba#path#AsDir(maktaba#path#Split(v:val)[-1])')
   endif
   return self._after_dirs
 endfunction
@@ -705,7 +708,8 @@ endfunction
 function! maktaba#plugin#HasDir(dir) dict abort
   let l:dirs = call('s:GetSubdirs', [], self)
   let l:after_dirs = call('s:GetAfterSubdirs', [], self)
-  return index(l:dirs, a:dir) > -1 || index(l:after_dirs, a:dir) > -1
+  return index(l:dirs, maktaba#path#AsDir(a:dir)) > -1 ||
+      \ index(l:after_dirs, maktaba#path#AsDir(a:dir)) > -1
 endfunction
 
 
