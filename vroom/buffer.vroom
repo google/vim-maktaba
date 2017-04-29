@@ -9,6 +9,45 @@ But before we dive into things, let's get maktaba installed:
   :let g:bootstrapfile = g:maktabadir . '/bootstrap.vim'
   :execute 'source' g:bootstrapfile
 
+Vim is missing a way to look up the text under a visual selection, for use in
+visual mode mappings for instance. maktaba#buffer#GetVisualSelection provides
+that.
+
+  :function CheckEqual(actual, expected) abort<CR>
+  |  return maktaba#ensure#IsEqual(a:expected, a:actual)<CR>
+  |endfunction
+
+  % Line 1<CR>
+  |Line 2<CR>
+  |Line 3<CR>
+  |Line 4<CR>
+  |Line 5<CR>
+  |Line 6
+
+  > 3gg5|v4gg$
+  :<C-U>call CheckEqual(maktaba#buffer#GetVisualSelection(), " 3\nLine 4")
+
+  > 4ggV5gg
+  :<C-U>call CheckEqual(maktaba#buffer#GetVisualSelection(), "Line 4\nLine 5")
+
+(The <C-U> is necessary to clear the range, since these aren't range functions.)
+
+It robustly handles unusual cases like vim's 'virtualedit' modes too, where the
+visual selection may start halfway into a tab or end beyond the end of a line.
+
+  @clear
+  % Line 1<CR>
+  |<Tab>Line 2<CR>
+  |Line 3
+
+  :set virtualedit=all
+  > /Line 2<CR>hvf2ll
+  :<C-U>call CheckEqual(maktaba#buffer#GetVisualSelection(), "\tLine 2")
+
+  :set virtualedit&
+
+
+
 Vim has a few built-in utilities for inserting text into buffers, but they're
 limited. maktaba#buffer#Overwrite lets plugin authors replace a range of lines
 with some given text.
