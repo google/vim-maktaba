@@ -82,6 +82,14 @@ endfunction
 
 
 ""
+" Returns {path} with trailing slashes (if any) stripped (forward or backslash,
+" depending on platform).
+function! maktaba#path#StripTrailingSlash(path) abort
+  return substitute(a:path, s:trailing_slashes, '', '')
+endfunction
+
+
+""
 " Returns the root component of {path}.
 " In unix, / is the only root.
 " In windows, the root can be \ (which vim treats as the default drive), a drive
@@ -237,8 +245,9 @@ function! maktaba#path#MakeRelative(root, path) abort
   call s:EnsurePathsHaveSharedRoot(a:root, a:path)
 
   " Starting from the beginning, discard directories common to both.
-  let l:pathparts = maktaba#path#Split(a:path)
-  let l:rootparts = maktaba#path#Split(a:root)
+  let l:is_dir = a:path =~# s:trailing_slash
+  let l:pathparts = maktaba#path#Split(maktaba#path#StripTrailingSlash(a:path))
+  let l:rootparts = maktaba#path#Split(maktaba#path#StripTrailingSlash(a:root))
   while !empty(l:pathparts) && !empty(l:rootparts) &&
       \ l:pathparts[0] ==# l:rootparts[0]
     call remove(l:pathparts, 0)
@@ -246,13 +255,16 @@ function! maktaba#path#MakeRelative(root, path) abort
   endwhile
 
   if empty(l:rootparts) && empty(l:pathparts)
-    return '.'
+    let l:relative_path = '.'
+  else
+    " l:rootparts now contains the directories we must traverse to reach the
+    " common ancestor of root and path. Replacing those with '..' takes us to
+    " the common ancestor. Then the remaining l:pathparts take us to the
+    " destination.
+    let l:relative_path =
+        \ maktaba#path#Join(map(l:rootparts, '".."') + l:pathparts)
   endif
-
-  " l:rootparts now contains the directories we must traverse to reach the
-  " common ancestor of root and path. Replacing those with '..' takes us to the
-  " common ancestor. Then the remaining l:pathparts take us to the destination.
-  return maktaba#path#Join(map(l:rootparts, '".."') + l:pathparts)
+  return l:is_dir ? maktaba#path#AsDir(l:relative_path) : l:relative_path
 endfunction
 
 

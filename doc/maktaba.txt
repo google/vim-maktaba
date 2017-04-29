@@ -1245,6 +1245,10 @@ maktaba#path#AsDir({path})                              *maktaba#path#AsDir()*
   directory paths, so utilities like |maktaba#path#Dirname()| don't try to
   interpret them as file paths.
 
+maktaba#path#StripTrailingSlash({path})    *maktaba#path#StripTrailingSlash()*
+  Returns {path} with trailing slashes (if any) stripped (forward or
+  backslash, depending on platform).
+
 maktaba#path#RootComponent({path})              *maktaba#path#RootComponent()*
   Returns the root component of {path}. In unix, / is the only root. In
   windows, the root can be \ (which vim treats as the default drive), a drive

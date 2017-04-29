@@ -30,7 +30,8 @@ function! s:GetLeafDir(path) abort
   if l:leaf isnot 0
     return l:leaf
   endif
-  let s:cache_leafdirs[a:path] = maktaba#path#Split(a:path)[-1]
+  let s:cache_leafdirs[a:path] =
+      \ maktaba#path#StripTrailingSlash(maktaba#path#Split(a:path)[-1])
   return s:cache_leafdirs[a:path]
 endfunction
 
