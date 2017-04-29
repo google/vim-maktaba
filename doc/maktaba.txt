@@ -587,6 +587,10 @@ maktaba#LateLoad([cycle])                                 *maktaba#LateLoad()*
 maktaba#autocmd#ClearGroup({augroup})           *maktaba#autocmd#ClearGroup()*
   Removes all autocmds in {augroup}, then removes {augroup}.
 
+maktaba#buffer#GetVisualSelection()      *maktaba#buffer#GetVisualSelection()*
+  Gets the text of the current or last visual selection. Useful for visual
+  mode mappings.
+
 maktaba#buffer#Overwrite({startline}, {endline}, {lines})
                                                   *maktaba#buffer#Overwrite()*
   Replace the lines from {startline} to {endline} in the current buffer with
