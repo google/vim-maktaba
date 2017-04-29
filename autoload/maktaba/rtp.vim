@@ -37,16 +37,6 @@ endfunction
 
 
 ""
-" Returns {path} with trailing slashes safely removed.
-" Used by @function(#Join) since 'runtimepath' typically stores paths without
-" trailing slashes.
-function! s:StripTrailingSlash(path) abort
-  " Uses maktaba#path#AsDir to ensure a single trailing slash, then removes it.
-  return maktaba#path#AsDir(a:path)[:-2]
-endfunction
-
-
-""
 " Split [paths], a string of comma-separated path entries, into a list of paths.
 " Handles unescaping the commas.
 " Paths will be canonicalized using @function(#AsDir) so they're unambiguously
@@ -75,8 +65,9 @@ endfunction
 " representation, with trailing slashes included.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)
-  return join(
-      \ map(copy(a:paths), "escape(s:StripTrailingSlash(v:val), '\,')"), ',')
+  return join(map(
+      \ copy(a:paths),
+      \ "escape(maktaba#path#StripTrailingSlash(v:val), '\,')"), ',')
 endfunction
 
 
