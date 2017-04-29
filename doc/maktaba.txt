@@ -1279,7 +1279,7 @@ maktaba#path#Split({path})                              *maktaba#path#Split()*
 <
   will echo
   `['relative', 'path']`
-  `['/absolute/path']`
+  `['/absolute', 'path']`
   `['path', 'to', 'dir/']`
 
 maktaba#path#Basename({path})                        *maktaba#path#Basename()*

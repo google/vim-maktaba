@@ -171,7 +171,7 @@ endfunction
 " <
 " will echo
 " - `['relative', 'path']`
-" - `['/absolute/path']`
+" - `['/absolute', 'path']`
 " - `['path', 'to', 'dir/']`
 function! maktaba#path#Split(path) abort
   " /foo/bar/baz/ splits to root '/' and components ['foo', 'bar', 'baz/'].
