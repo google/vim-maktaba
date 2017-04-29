@@ -30,10 +30,10 @@ helps you recognize relative paths.
   :echomsg string(maktaba#path#Split('relative/path'))
   ~ ['relative', 'path']
 
-Trailing slashes make no difference, though:
+Trailing slashes are preserved as well:
 
   :echomsg string(maktaba#path#Split('relative/path/'))
-  ~ ['relative', 'path']
+  ~ ['relative', 'path/']
 
 
 

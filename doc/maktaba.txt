@@ -1266,7 +1266,17 @@ maktaba#path#Join({components})                          *maktaba#path#Join()*
   is '/absolute'
 
 maktaba#path#Split({path})                              *maktaba#path#Split()*
-  Splits {path} on the system separator character.
+  Splits {path} on the system separator character, preserving root and
+  trailing slash, if any. For example:
+>
+    :echomsg maktaba#path#Split('relative/path')
+    :echomsg maktaba#path#Split('/absolute/path')
+    :echomsg maktaba#path#Split('path/to/dir/')
+<
+  will echo
+  `['relative', 'path']`
+  `['/absolute/path']`
+  `['path', 'to', 'dir/']`
 
 maktaba#path#Basename({path})                        *maktaba#path#Basename()*
   The basename of {path}. Trailing slash matters. Consider:

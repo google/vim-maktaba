@@ -15,6 +15,7 @@ else
 endif
 let s:trailing_slash = s:unescaped_slash . '$'
 let s:trailing_slashes = s:unescaped_slash . '+$'
+let s:nontrailing_slash = s:unescaped_slash . '\ze.'
 
 let s:drive_backslash = '\v^\a:\\\\'
 let s:drive_frontslash = '\v^\a://'
@@ -153,11 +154,21 @@ endfunction
 
 
 ""
-" Splits {path} on the system separator character.
+" Splits {path} on the system separator character, preserving root and trailing
+" slash, if any.
+" For example: >
+"   :echomsg maktaba#path#Split('relative/path')
+"   :echomsg maktaba#path#Split('/absolute/path')
+"   :echomsg maktaba#path#Split('path/to/dir/')
+" <
+" will echo
+" - `['relative', 'path']`
+" - `['/absolute/path']`
+" - `['path', 'to', 'dir/']`
 function! maktaba#path#Split(path) abort
+  " /foo/bar/baz/ splits to root '/' and components ['foo', 'bar', 'baz/'].
   let l:root = maktaba#path#RootComponent(a:path)
-  let l:components = split(a:path[len(l:root):], s:unescaped_slash)
-  " /foo/bar/baz splits to ['/', 'foo', 'bar', 'baz'].
+  let l:components = split(a:path[len(l:root):], s:nontrailing_slash, 1)
   if !empty(l:root)
     call insert(l:components, l:root)
   endif
@@ -277,8 +288,7 @@ function! maktaba#path#MakeDirectory(dir) abort
   let l:dir = a:dir
   " Vim bug before 7.4 patch 6: mkdir chokes when a path has a trailing slash.
   if v:version < 704 || (v:version == 704 && !has('patch6'))
-    " This is a hackish way to remove a trailing slash.
-    let l:dir = maktaba#path#Join(maktaba#path#Split(l:dir))
+    let l:dir = substitute(l:dir, s:trailing_slashes, '', '')
   endif
 
   try
