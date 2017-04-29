@@ -368,7 +368,16 @@ function! maktaba#json#Parse(json, ...) abort
     return s:PythonParsePartial(a:json, l:custom_values)
   endif
 
-  let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
+  " Allocate some recursion depth for recursive descent parser.
+  let l:saved_maxfuncdepth = maktaba#value#Save('&maxfuncdepth')
+  if &maxfuncdepth < 9999
+    set maxfuncdepth=9999
+  endif
+  try
+    let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
+  finally
+    call maktaba#value#Restore(l:saved_maxfuncdepth)
+  endtry
   if empty(l:remaining)
     return l:value
   endif
