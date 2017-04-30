@@ -47,11 +47,13 @@ function! s:SendToHandlers(logitem) abort
   " Append to s:log_queue.
   call add(s:log_queue, a:logitem)
   " Vim's 'history' setting controls the length of several history queues. Use
-  " it to also control the length of the internal log message queue.
-  if len(s:log_queue) > &history
+  " it to also control the length of the internal log message queue (leaving
+  " room for at least 1 truncation message even if 'history' is set to 0).
+  let l:max_messages = max([&history, 1])
+  if len(s:log_queue) > l:max_messages
     " Truncate leaving headroom for truncation message.
     let l:truncated_logs =
-        \ remove(s:log_queue, 0, len(s:log_queue) - &history)
+        \ remove(s:log_queue, 0, len(s:log_queue) - l:max_messages)
     let s:truncation_count += len(l:truncated_logs)
     let l:truncation_timestamp = l:truncated_logs[-1][1]
     let l:truncation_msg = printf(
