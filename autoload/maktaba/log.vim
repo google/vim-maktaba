@@ -36,7 +36,8 @@ function! s:DoMessage(level, context, message, ...) abort
     let l:message = a:message
   endif
 
-  call s:SendToHandlers([a:level, localtime(), a:context, l:message])
+  let l:timestamp = exists('*reltime') ? reltimefloat(reltime()) : localtime()
+  call s:SendToHandlers([a:level, l:timestamp, a:context, l:message])
 endfunction
 
 

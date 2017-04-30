@@ -46,7 +46,7 @@ arrive.
   :let g:LEVELS = maktaba#log#LEVELS
   :function LogHandler(level, timestamp, context, message) abort
   :  echomsg printf('Log message: %s %s [%s] %s', g:LEVELS.Name(a:level),
-  | string(a:timestamp), a:context, a:message)
+  | printf('%.3f', a:timestamp), a:context, a:message)
   :endfunction
   :let g:rm_echohandler = maktaba#log#AddHandler('LogHandler', 1)
 
@@ -55,18 +55,18 @@ awkward to get a logger plugin installed before anything else that needs it,
 maktaba holds on to a few recent messages for you. Here come the messages we
 logged earlier...
 
-  ~ Log message: DEBUG [0-9]+ \[VROOMFILE\] why (regex)
-  ~ Log message: INFO [0-9]+ \[VROOMFILE\] hello (regex)
-  ~ Log message: WARN [0-9]+ \[VROOMFILE\] there (regex)
-  ~ Log message: ERROR [0-9]+ \[VROOMFILE\] my (regex)
-  ~ Log message: SEVERE [0-9]+ \[VROOMFILE\] friend (regex)
+  ~ Log message: DEBUG [0-9.]+ \[VROOMFILE\] why (regex)
+  ~ Log message: INFO [0-9.]+ \[VROOMFILE\] hello (regex)
+  ~ Log message: WARN [0-9.]+ \[VROOMFILE\] there (regex)
+  ~ Log message: ERROR [0-9.]+ \[VROOMFILE\] my (regex)
+  ~ Log message: SEVERE [0-9.]+ \[VROOMFILE\] friend (regex)
 
-  ~ Log message: DEBUG [0-9]+ \[emptyplugin\] Hello from emptyplugin (regex)
+  ~ Log message: DEBUG [0-9.]+ \[emptyplugin\] Hello from emptyplugin (regex)
 
 New messages are logged as they arrive.
 
   :call g:vroom_logger.Debug('This just in.')
-  ~ Log message: DEBUG [0-9]+ \[VROOMFILE\] This just in. (regex)
+  ~ Log message: DEBUG [0-9.]+ \[VROOMFILE\] This just in. (regex)
 
 You may have noticed the return value from maktaba#log#AddHandler being saved as
 g:rm_echohandler above. AddHandler returns a remover function you can use to
@@ -99,10 +99,10 @@ message isn't there).
   :  let g:i += 1
   :endwhile
   :call maktaba#log#AddHandler('FirstFewHandler', 1)
-  ~ Log message: INFO [0-9]+ \[maktaba\] [0-9]+ messages not available (regex)
+  ~ Log message: INFO [0-9.]+ \[maktaba\] [0-9.]+ messages not available (regex)
   | because logging was configured late.
-  ~ Log message: DEBUG [0-9]+ \[VROOMFILE\] Message 2 (regex)
-  ~ Log message: DEBUG [0-9]+ \[VROOMFILE\] Message 3 (regex)
+  ~ Log message: DEBUG [0-9.]+ \[VROOMFILE\] Message 2 (regex)
+  ~ Log message: DEBUG [0-9.]+ \[VROOMFILE\] Message 3 (regex)
 
 This limit is not configurable, but it should give you more than enough headroom
 to get a real log collection plugin installed and running without losing
