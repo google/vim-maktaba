@@ -1230,9 +1230,13 @@ maktaba#log#Logger({context})                           *maktaba#log#Logger()*
   Creates a |maktaba.Logger| interface for {context}.
 
 maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
-  Registers {handler} to receive log messages. {handler} must refer to a
-  function that takes 4 arguments: level (number), timestamp (number), context
-  (string), and message (string).
+  Registers {handler} to receive log entries. {handler} must refer to a
+  function that takes 1 argument, an opaque data structure representing a log
+  entry. Handlers can collect these and them pass back as a list into maktaba
+  log entry manipulation functions like |maktaba#log#GetFormattedEntries()|.
+
+  As a legacy fallback, maktaba will support a handler that takes 4 arguments:
+  level (number), timestamp (number), context (string), and message (string).
 
   If [fire_recent] is 1 and messages have already been logged before a handler
   is added, some recent messages may be passed to the handler as soon as it's
@@ -1242,6 +1246,15 @@ maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   This function returns a function which, when applied, unregisters {handler}.
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
+
+maktaba#log#GetFormattedEntries({entries}, {minlevel}, [contexts])
+                                           *maktaba#log#GetFormattedEntries()*
+  Returns a list of human-readable strings each representing a log entry from
+  {entries}. Excludes messages with level less than {minlevel} or not
+  originating from one of [contexts]. To get the entire unfiltered list of
+  entries, pass a {minlevel} of `maktaba#log#LEVELS.DEBUG` and no [contexts]
+  arg. Each item in {entries} must be a value maktaba passed to a log handler
+  call.
 
 maktaba#path#AsDir({path})                              *maktaba#path#AsDir()*
   Returns {path} with trailing slash (forward or backslash, depending on
