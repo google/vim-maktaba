@@ -23,8 +23,13 @@ endfunction
 " to it.
 " The vim job implementation for @function(#CallAsync).
 function! maktaba#syscall#async#Start() abort dict
-  " NOTE: Doesn't need to override &shell since it's not used by job_start().
-  let self._job = job_start(self._syscall.GetCommand(), {
+  " Unlike system, job_start doesn't automatically create a shell
+  if &shell =~# maktaba#syscall#GetUsableShellRegex()
+    let shell_command = [&shell, &shellcmdflag, self._syscall.GetCommand()]
+  else
+    let shell_command = ['sh', '-c', self._syscall.GetCommand()]
+  endif
+  let self._job = job_start(shell_command, {
       \ 'out_mode': 'raw',
       \ 'err_mode': 'raw',
       \ 'out_cb': self.HandleStdout,

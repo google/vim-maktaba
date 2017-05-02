@@ -36,14 +36,13 @@ To execute system calls asynchronously, use CallAsync.
   |  let g:callback_stdout = a:result.stdout<CR>
   |endfunction
   :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  ! echo hi
   :echomsg g:callback_stdout
   ~ hi
   :echomsg g:invocation.stdout
   ~ hi
 
-Note vroom did NOT expect or hijack the system call above, but it's possible to
-instrument the system calls in vroom where needed by forcing synchronous
-execution.
+It is also possible to force synchronous execution.
 
   :call maktaba#syscall#SetAsyncDisabledForTesting(1)
   :call maktaba#syscall#ForceSyncFallbackAllowedForTesting(1)
@@ -57,5 +56,20 @@ Asynchronous calls can also take a stdin parameter.
 
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
   :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  ! cat
   :echomsg g:invocation.stdout
   ~ Hello
+
+And() and Or() can also be used to chain Asynchronous commands.
+
+  :let g:syscall = maktaba#syscall#Create('true').And('echo SUCCESS')
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  ! true && echo SUCCESS
+  :echomsg g:invocation.stdout
+  ~ SUCCESS
+
+  :let g:syscall = maktaba#syscall#Create('false').And('echo FAILURE')
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  ! false && echo FAILURE
+  :echomsg g:invocation.stdout
+  ~ FAILURE

@@ -396,7 +396,7 @@ endfunction
 
 ""
 " @private
-" Sets the regex that @function(Syscall.Call) and
+" Sets the regex that @function(Syscall.Call), @function(Syscall.CallAsync), and
 " @function(Syscall.CallForeground) use to decide whether 'shell' is usable. If
 " 'shell' is unusable, they will use /bin/sh instead. You should NOT use this
 " function to make vim use your preferred shell (ESPECIALLY if your shell is
@@ -408,6 +408,15 @@ endfunction
 function! maktaba#syscall#SetUsableShellRegex(regex) abort
   call maktaba#ensure#IsString(a:regex)
   let s:usable_shell = a:regex
+endfunction
+
+
+""
+" @private
+" Gets the regex that @function(Syscall.Call), @function(Syscall.CallAsync), and
+" @function(Syscall.CallForeground) use to decide whether 'shell' is usable.
+function! maktaba#syscall#GetUsableShellRegex() abort
+  return s:usable_shell
 endfunction
 
 
