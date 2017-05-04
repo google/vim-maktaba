@@ -94,7 +94,7 @@ function! s:FormatLogEntry(entry) abort
   endtry
   return printf('%s %s [%s] %s',
       \ l:level_name,
-      \ strftime('%Y-%m-%d@%H:%M:%S', l:timestamp),
+      \ strftime('%Y-%m-%dT%H:%M:%S', l:timestamp),
       \ l:context,
       \ l:message)
 endfunction

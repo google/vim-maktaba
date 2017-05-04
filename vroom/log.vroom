@@ -57,18 +57,18 @@ awkward to get a logger plugin installed before anything else that needs it,
 maktaba holds on to a few recent messages for you. Here come the messages we
 logged earlier...
 
-  ~ Log message: DEBUG [-0-9@:]+ \[VROOMFILE\] why (regex)
-  ~ Log message: INFO [-0-9@:]+ \[VROOMFILE\] hello (regex)
-  ~ Log message: WARN [-0-9@:]+ \[VROOMFILE\] there (regex)
-  ~ Log message: ERROR [-0-9@:]+ \[VROOMFILE\] my (regex)
-  ~ Log message: SEVERE [-0-9@:]+ \[VROOMFILE\] friend (regex)
+  ~ Log message: DEBUG [-0-9T:]+ \[VROOMFILE\] why (regex)
+  ~ Log message: INFO [-0-9T:]+ \[VROOMFILE\] hello (regex)
+  ~ Log message: WARN [-0-9T:]+ \[VROOMFILE\] there (regex)
+  ~ Log message: ERROR [-0-9T:]+ \[VROOMFILE\] my (regex)
+  ~ Log message: SEVERE [-0-9T:]+ \[VROOMFILE\] friend (regex)
 
-  ~ Log message: DEBUG [-0-9@:]+ \[emptyplugin\] Hello from emptyplugin (regex)
+  ~ Log message: DEBUG [-0-9T:]+ \[emptyplugin\] Hello from emptyplugin (regex)
 
 New messages are logged as they arrive.
 
   :call g:vroom_logger.Debug('This just in.')
-  ~ Log message: DEBUG [-0-9@:]+ \[VROOMFILE\] This just in\. (regex)
+  ~ Log message: DEBUG [-0-9T:]+ \[VROOMFILE\] This just in\. (regex)
 
 You may have noticed the return value from maktaba#log#AddHandler being saved as
 g:rm_echohandler above. AddHandler returns a remover function you can use to
@@ -85,7 +85,7 @@ lets you control that.
 
   :let g:rm_echohandler = maktaba#log#AddHandler('LogHandler', 0)
   :call g:vroom_logger.Info('I am now totally awake.')
-  ~ Log message: INFO [-0-9@:]+ \[VROOMFILE\] I am now totally awake\. (regex)
+  ~ Log message: INFO [-0-9T:]+ \[VROOMFILE\] I am now totally awake\. (regex)
 
   :call maktaba#function#Call(g:rm_echohandler)
 
@@ -100,7 +100,7 @@ fallback for now.
   |endfunction
   :let g:rm_echohandler = maktaba#log#AddHandler('LegacyLogHandler', 0)
   :call g:vroom_logger.Info('Testing.')
-  ~ Log message \(legacy\): INFO [-0-9@:]+ \[VROOMFILE\] Testing\. (regex)
+  ~ Log message \(legacy\): INFO [-0-9T:]+ \[VROOMFILE\] Testing\. (regex)
 
   :call maktaba#function#Call(g:rm_echohandler)
 
@@ -126,10 +126,10 @@ isn't there).
   :  let g:i += 1
   :endwhile
   :call maktaba#log#AddHandler('FirstFewHandler', 1)
-  ~ Log message: INFO [-0-9@:]+ \[maktaba\] [0-9]+ messages not (regex)
+  ~ Log message: INFO [-0-9T:]+ \[maktaba\] [0-9]+ messages not (regex)
   | available because logging was configured late.
-  ~ Log message: DEBUG [-0-9@:]+ \[VROOMFILE\] Message 2 (regex)
-  ~ Log message: DEBUG [-0-9@:]+ \[VROOMFILE\] Message 3 (regex)
+  ~ Log message: DEBUG [-0-9T:]+ \[VROOMFILE\] Message 2 (regex)
+  ~ Log message: DEBUG [-0-9T:]+ \[VROOMFILE\] Message 3 (regex)
 
 This limit is not configurable, but it should give you more than enough headroom
 to get a real log collection plugin installed and running without losing
