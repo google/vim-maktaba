@@ -10,6 +10,29 @@ endfunction
 
 
 ""
+" Gets the text of the current or last visual selection.
+" Useful for visual mode mappings.
+function! maktaba#buffer#GetVisualSelection() abort
+  let [l:lnum1, l:col1] = getpos("'<")[1:2]
+  let [l:lnum2, l:col2] = getpos("'>")[1:2]
+  " 'selection' is a rarely-used option for overriding whether the last
+  " character is included in the selection. Bizarrely, it always affects the
+  " last character even when selecting from the end backwards.
+  if &selection !=# 'inclusive'
+    let l:col2 -= 1
+  endif
+  let l:lines = getline(l:lnum1, l:lnum2)
+  if !empty(l:lines)
+    " If there is only 1 line, the part after the selection must be removed
+    " first because `col2` is relative to the start of the line.
+    let l:lines[-1] = l:lines[-1][: l:col2 - 1]
+    let l:lines[0] = l:lines[0][l:col1 - 1 : ]
+  endif
+  return join(l:lines, "\n")
+endfunction
+
+
+""
 " Replace the lines from {startline} to {endline} in the current buffer with
 " {lines}.
 " {startline} and {endline} are numbers. {endline} is inclusive following vim's
@@ -58,15 +81,17 @@ function! maktaba#buffer#Overwrite(startline, endline, lines) abort
 
   " If python is available, use difflib-based python implementation, which can
   " overwrite only modified chunks and leave equal chunks undisturbed.
-  if has('python')
+  if has('python3') || has('python')
     " TODO: This can throw NotFound if the module fails to load, in which case
     " we perhaps want to log a warning and fall back to the Vimscript
     " implementation.
     call maktaba#python#ImportModule(s:plugin, 'maktaba')
-    python maktaba.OverwriteBufferLines(
-        \ int(vim.eval('a:startline')),
-        \ int(vim.eval('a:endline')),
-        \ vim.eval('a:lines'))
+    let l:python_command = has('python3') ? 'python3' : 'python'
+    execute l:python_command
+        \ "maktaba.OverwriteBufferLines(" .
+            \ "int(vim.eval('a:startline')), " .
+            \ "int(vim.eval('a:endline')), " .
+            \ "vim.eval('a:lines'))"
     return
   endif
 

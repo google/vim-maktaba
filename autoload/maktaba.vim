@@ -2,7 +2,7 @@
 " @section Introduction, intro
 " @stylized Maktaba
 " @library
-" @order intro version dicts functions exceptions
+" @order intro version dicts functions exceptions python
 " A vimscript library that hides the worst parts of vimscript and helps you
 " provide consistent plugins.
 "

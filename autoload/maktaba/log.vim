@@ -8,14 +8,16 @@ endif
 
 ""
 " The enumeration dict encapsulating the list of logging levels.
-let maktaba#log#LEVELS = maktaba#enum#Create([
-    \ 'DEBUG',
-    \ 'INFO',
-    \ 'WARN',
-    \ 'ERROR',
-    \ 'SEVERE',
-    \ ])
-lockvar! maktaba#log#LEVELS
+if !exists('maktaba#log#LEVELS')
+  let maktaba#log#LEVELS = maktaba#enum#Create([
+      \ 'DEBUG',
+      \ 'INFO',
+      \ 'WARN',
+      \ 'ERROR',
+      \ 'SEVERE',
+      \ ])
+  lockvar! maktaba#log#LEVELS
+endif
 
 let s:LEVELS = maktaba#log#LEVELS
 
@@ -46,17 +48,32 @@ endfunction
 
 
 ""
+" Call {Handler} with {logitem}, trying both 1-arg and legacy 4-arg
+" signatures.
+function! s:CallHandler(Handler, logitem) abort
+  try
+    call maktaba#function#Call(a:Handler, [a:logitem])
+  catch /E119:/
+    " Not enough arguments. Fall back to legacy 4-arg handler signature.
+    call maktaba#function#Call(a:Handler, a:logitem)
+  endtry
+endfunction
+
+
+""
 " Append {logitem} to s:log_queue and pass to handlers.
 function! s:SendToHandlers(logitem) abort
   let l:maktaba = maktaba#Maktaba()
   " Append to s:log_queue.
   call add(s:log_queue, a:logitem)
   " Vim's 'history' setting controls the length of several history queues. Use
-  " it to also control the length of the internal log message queue.
-  if len(s:log_queue) > &history
+  " it to also control the length of the internal log message queue (leaving
+  " room for at least 1 truncation message even if 'history' is set to 0).
+  let l:max_messages = max([&history, 1])
+  if len(s:log_queue) > l:max_messages
     " Truncate leaving headroom for truncation message.
     let l:truncated_logs =
-        \ remove(s:log_queue, 0, len(s:log_queue) - &history)
+        \ remove(s:log_queue, 0, len(s:log_queue) - l:max_messages)
     let s:truncation_count += len(l:truncated_logs)
     let l:truncation_timestamp = l:truncated_logs[-1][1]
     let l:truncation_msg = printf(
@@ -70,7 +87,7 @@ function! s:SendToHandlers(logitem) abort
 
   " Send to handlers.
   for l:Handler in l:maktaba.globals.loghandlers.Items()
-    call maktaba#function#Call(l:Handler, a:logitem)
+    call s:CallHandler(l:Handler, a:logitem)
   endfor
 endfunction
 
@@ -100,6 +117,23 @@ function! maktaba#log#SetNotificationLevel(level) abort
       \ a:level is -1 || maktaba#value#IsIn(a:level, s:LEVELS.Values()),
       \ 'Expected {level} to be maktaba#log#LEVELS value or -1')
   let s:notification_level = a:level
+endfunction
+
+
+""
+" Gets a string representing a single log {entry}.
+function! s:FormatLogEntry(entry) abort
+  let [l:level, l:timestamp, l:context, l:message] = a:entry
+  try
+    let l:level_name = s:LEVELS.Name(l:level)
+  catch /ERROR(NotFound):/
+    let l:level_name = '?'
+  endtry
+  return printf('%s %s [%s] %s',
+      \ l:level_name,
+      \ strftime('%Y-%m-%dT%H:%M:%S', l:timestamp),
+      \ l:context,
+      \ l:message)
 endfunction
 
 
@@ -164,9 +198,13 @@ endfunction
 
 ""
 " @usage {handler} [fire_recent]
-" Registers {handler} to receive log messages. {handler} must refer to a
-" function that takes 4 arguments: level (number), timestamp (number),
-" context (string), and message (string).
+" Registers {handler} to receive log entries. {handler} must refer to a
+" function that takes 1 argument, an opaque data structure representing a log
+" entry. Handlers can collect these and them pass back as a list into maktaba
+" log entry manipulation functions like @function(#GetFormattedEntries).
+"
+" As a legacy fallback, maktaba will support a handler that takes 4 arguments:
+" level (number), timestamp (number), context (string), and message (string).
 "
 " If [fire_recent] is 1 and messages have already been logged before a handler
 " is added, some recent messages may be passed to the handler as soon as it's
@@ -184,8 +222,28 @@ function! maktaba#log#AddHandler(Handler, ...) abort
   if l:fire_recent
     " Send recent queued messages to handler.
     for l:logitem in s:log_queue
-      call maktaba#function#Call(a:Handler, l:logitem)
+      call s:CallHandler(a:Handler, l:logitem)
     endfor
   endif
   return l:remover
+endfunction
+
+
+""
+" Returns a list of human-readable strings each representing a log entry from
+" {entries}.
+" Excludes messages with level less than {minlevel} or not originating from
+" one of [contexts]. To get the entire unfiltered list of entries, pass a
+" {minlevel} of `maktaba#log#LEVELS.DEBUG` and no [contexts] arg.
+" Each item in {entries} must be a value maktaba passed to a log handler call.
+function! maktaba#log#GetFormattedEntries(entries, minlevel, ...) abort
+  call maktaba#ensure#IsIn(a:minlevel, s:LEVELS.Values())
+  let l:filter = 'v:val[0] >= a:minlevel'
+  if a:0 >= 1
+    let l:contexts = a:1
+    call maktaba#ensure#IsList(l:contexts)
+    let l:filter .= ' && index(l:contexts, v:val[2]) != -1'
+  endif
+  let l:filtered_entries = filter(copy(a:entries), l:filter)
+  return map(l:filtered_entries, 's:FormatLogEntry(v:val)')
 endfunction

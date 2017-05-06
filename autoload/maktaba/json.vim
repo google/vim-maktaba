@@ -1,8 +1,7 @@
 " Neovim support covered in https://github.com/neovim/neovim/issues/3417.
 " NOTE: Avoids using pre-1430 support for consistent Infinity/NaN.
-let s:HAS_NATIVE_JSON =
-    \ !has('nvim') &&
-    \ v:version > 704 || v:version == 704 && has('patch1430')
+let s:HAS_NATIVE_JSON = exists('*json_decode') && exists('v:null') &&
+    \ (has('nvim') || v:version > 704 || v:version == 704 && has('patch1430'))
 
 " Sentinel constants used to serialize/deserialize JSON primitives.
 if !exists('maktaba#json#NULL')
@@ -49,8 +48,8 @@ del sys.path[:1]
 EOF
 endfunction
 
-" Try to initialize Vim's Python environment. If that fails, we'll use the
-" Vimscript implementations instead.
+" Try to initialize Vim's Python environment if native JSON support isn't
+" available. If that fails, we'll use the Vimscript implementations instead.
 " maktaba#json#python#Disable() can be used to skip trying to use the
 " Python implementation.
 
@@ -58,7 +57,9 @@ endfunction
 "   7.3.569 added bindeval().
 "   7.3.996 added the vim.List and vim.Dictionary types.
 "   7.3.1042 fixes assigning a dict() containing Unicode keys to a Vim value.
-if v:version < 703 || (v:version == 703 && !has('patch1042'))
+if s:HAS_NATIVE_JSON
+  let s:use_python = 0
+elseif v:version < 703 || (v:version == 703 && !has('patch1042'))
       \ || maktaba#json#python#IsDisabled()
       \ || has('nvim') " neovim does not implement bindeval, which maktaba uses.
   let s:use_python = 0  " Not a recent Vim, or explicitly disabled
@@ -367,7 +368,16 @@ function! maktaba#json#Parse(json, ...) abort
     return s:PythonParsePartial(a:json, l:custom_values)
   endif
 
-  let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
+  " Allocate some recursion depth for recursive descent parser.
+  let l:saved_maxfuncdepth = maktaba#value#Save('&maxfuncdepth')
+  if &maxfuncdepth < 9999
+    set maxfuncdepth=9999
+  endif
+  try
+    let [l:value, l:remaining] = s:ParsePartial(l:json, l:custom_values)
+  finally
+    call maktaba#value#Restore(l:saved_maxfuncdepth)
+  endtry
   if empty(l:remaining)
     return l:value
   endif

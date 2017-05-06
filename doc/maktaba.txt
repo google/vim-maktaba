@@ -8,6 +8,7 @@ CONTENTS                                                    *maktaba-contents*
   3. Dictionaries..............................................|maktaba-dicts|
   4. Functions.............................................|maktaba-functions|
   5. Error Handling.......................................|maktaba-exceptions|
+  6. Python...................................................|maktaba-python|
 
 ==============================================================================
 INTRODUCTION                                                   *maktaba-intro*
@@ -459,9 +460,16 @@ Syscall.Call([throw_errors])                                  *Syscall.Call()*
 
 Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   Executes the system call asynchronously and invokes {callback} on
-  completion. {callback} function will be called with the following arguments:
-  {callback}(result_dict), where result_dict contains stdout, stderr and
-  status (code). For example:
+  completion. If the current vim instance does not support async execution
+  (details below), setting {allow_sync_fallback} allows the system call to be
+  executed synchronously as a fallback instead of failing with an error.
+
+  Returns a |maktaba.SyscallInvocation| to interact with the invocation, check
+  status, etc.
+
+  {callback} function will be called with the SyscallInvocation as an
+  argument, as {callback}(SyscallInvocation), and the invocation provides
+  access to stdout, stderr and status (code). For example:
 >
     function Handler(result) abort
       if a:result.status != 0
@@ -472,8 +480,9 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
     endfunction
     call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 <
-  WARNING: The callback is responsible for checking result_dict.status and
-  handling unexpected exit codes. Otherwise all failures are silent.
+  WARNING: The callback is responsible for checking SyscallInvocation.status
+  and handling unexpected exit codes. Otherwise all syscall failures are
+  silent.
 
   NOTE: If {callback} depends on cursor location or other vim state, the
   caller should capture parameters and bind them to the callback:
@@ -492,19 +501,23 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
 <
 
   As a legacy fallback, if the callback fails expecting more arguments, it
-  will be called with the arguments: {callback}(env_dict, result_dict), where
-  env_dict contains tab, buffer, path, column and line info, and the
-  result_dict contains stdout, stderr and status (code). This fallback will be
-  deprecated and stop working in future versions of maktaba.
+  will be called with the arguments: {callback}(env_dict, SyscallInvocation),
+  where env_dict contains tab, buffer, path, column and line info. This
+  fallback will be deprecated and stop working in future versions of maktaba.
 
-  Asynchronous calls are executed via |--remote-expr| using vim's
+  Asynchronous calls are executed via vim's |job| support. If the vim instance
+  is missing job support, this will try to fall back to legacy |clientserver|
+  invocation, which has a few preconditions of its own (see below). If neither
+  option is available, asynchronous calls are not possible, and the call will
+  either throw |ERROR(MissingFeature)| or fall back to synchronous calls,
+  depending on the {allow_sync_fallback} parameter.
+
+  The legacy fallback executes calls via |--remote-expr| using vim's
   |clientserver| capabilities, so the preconditions for it are vim being
   compiled with +clientserver and |v:servername| being set. Vim will try to
   set it to something when it starts if it is running in X context, e.g.
   'GVIM1'. Otherwise, the user needs to set it by passing |--servername| $NAME
-  to vim. If the two conditions are not met, asynchronous calls are not
-  possible, and the call will either throw |ERROR(MissingFeature)| or fall
-  back to synchronous calls, depending on the {allow_sync_fallback} parameter.
+  to vim.
   Throws ERROR(WrongType)
   Throws ERROR(MissingFeature) if neither async execution nor fallback is
   available.
@@ -527,6 +540,23 @@ Syscall.GetCommand()                                    *Syscall.GetCommand()*
   Gets the literal command string that would be executed by |Syscall.Call()|
   or |Syscall.CallForeground()|, with words joined and special characters
   escaped.
+
+                                                   *maktaba.SyscallInvocation*
+A maktaba representation of a single invocation of a |maktaba.Syscall|.
+Provides a mechanism for interacting with a syscall invocation, checking
+status, etc.
+
+Public variables:
+  * syscall: The |maktaba.Syscall| that triggered this invocation.
+  * finished: 0 if the invocation is pending, 1 if finished. The result
+    variables (status, stdout, stderr) will not exist if the invocation is not
+    finished. Guaranteed to be 1 when an invocation's callback is called.
+  * status: the shell exit code from the invocation (typically 0 for success).
+  * stdout: the invocation's entire stdout string.
+  * stderr: the invocation's entire stderr string, if available.
+
+Note that one Syscall invoked multiple times would produce multiple
+independent SyscallInvocations.
 
 ==============================================================================
 FUNCTIONS                                                  *maktaba-functions*
@@ -556,6 +586,10 @@ maktaba#LateLoad([cycle])                                 *maktaba#LateLoad()*
 
 maktaba#autocmd#ClearGroup({augroup})           *maktaba#autocmd#ClearGroup()*
   Removes all autocmds in {augroup}, then removes {augroup}.
+
+maktaba#buffer#GetVisualSelection()      *maktaba#buffer#GetVisualSelection()*
+  Gets the text of the current or last visual selection. Useful for visual
+  mode mappings.
 
 maktaba#buffer#Overwrite({startline}, {endline}, {lines})
                                                   *maktaba#buffer#Overwrite()*
@@ -801,7 +835,7 @@ maktaba#error#Exception({type}, {message}, {fmtargs})
   Throws ERROR(WrongType) if {type} is not a string.
 
 maktaba#error#Message({type}, {message}, [args...])  *maktaba#error#Message()*
-  Makes an error message in the Google vimscript error format. The error
+  Makes an error message in the maktaba vimscript error format. The error
   message will look like:
 >
     ERROR({type}): {message}
@@ -831,7 +865,7 @@ maktaba#error#Try({func}, [exceptions], [default])       *maktaba#error#Try()*
   {func} may be any maktaba callable. See |maktaba#function#Create|.
 
   [exceptions] may either be a regex matched against |v:exception|, or a list
-  of Google error names and/or vim error numbers. For example, the following
+  of maktaba error names and/or vim error numbers. For example, the following
   are equivalent:
 >
     call maktaba#error#Try(g:fn, 'ERROR(BadValue):\|E107:')
@@ -1206,9 +1240,13 @@ maktaba#log#Logger({context})                           *maktaba#log#Logger()*
   Creates a |maktaba.Logger| interface for {context}.
 
 maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
-  Registers {handler} to receive log messages. {handler} must refer to a
-  function that takes 4 arguments: level (number), timestamp (number), context
-  (string), and message (string).
+  Registers {handler} to receive log entries. {handler} must refer to a
+  function that takes 1 argument, an opaque data structure representing a log
+  entry. Handlers can collect these and them pass back as a list into maktaba
+  log entry manipulation functions like |maktaba#log#GetFormattedEntries()|.
+
+  As a legacy fallback, maktaba will support a handler that takes 4 arguments:
+  level (number), timestamp (number), context (string), and message (string).
 
   If [fire_recent] is 1 and messages have already been logged before a handler
   is added, some recent messages may be passed to the handler as soon as it's
@@ -1219,11 +1257,24 @@ maktaba#log#AddHandler({handler}, [fire_recent])    *maktaba#log#AddHandler()*
   Hold on to it if you expect you'll need to remove {handler}.
   [fire_recent] is 0 if omitted.
 
+maktaba#log#GetFormattedEntries({entries}, {minlevel}, [contexts])
+                                           *maktaba#log#GetFormattedEntries()*
+  Returns a list of human-readable strings each representing a log entry from
+  {entries}. Excludes messages with level less than {minlevel} or not
+  originating from one of [contexts]. To get the entire unfiltered list of
+  entries, pass a {minlevel} of `maktaba#log#LEVELS.DEBUG` and no [contexts]
+  arg. Each item in {entries} must be a value maktaba passed to a log handler
+  call.
+
 maktaba#path#AsDir({path})                              *maktaba#path#AsDir()*
   Returns {path} with trailing slash (forward or backslash, depending on
   platform). Maktaba uses paths with trailing slashes to unambiguously denote
   directory paths, so utilities like |maktaba#path#Dirname()| don't try to
   interpret them as file paths.
+
+maktaba#path#StripTrailingSlash({path})    *maktaba#path#StripTrailingSlash()*
+  Returns {path} with trailing slashes (if any) stripped (forward or
+  backslash, depending on platform).
 
 maktaba#path#RootComponent({path})              *maktaba#path#RootComponent()*
   Returns the root component of {path}. In unix, / is the only root. In
@@ -1246,7 +1297,17 @@ maktaba#path#Join({components})                          *maktaba#path#Join()*
   is '/absolute'
 
 maktaba#path#Split({path})                              *maktaba#path#Split()*
-  Splits {path} on the system separator character.
+  Splits {path} on the system separator character, preserving root and
+  trailing slash, if any. For example:
+>
+    :echomsg maktaba#path#Split('relative/path')
+    :echomsg maktaba#path#Split('/absolute/path')
+    :echomsg maktaba#path#Split('path/to/dir/')
+<
+  will echo
+  `['relative', 'path']`
+  `['/absolute', 'path']`
+  `['path', 'to', 'dir/']`
 
 maktaba#path#Basename({path})                        *maktaba#path#Basename()*
   The basename of {path}. Trailing slash matters. Consider:
@@ -1448,7 +1509,6 @@ maktaba#plugin#HasFlag({flag})                      *maktaba#plugin#HasFlag()*
 maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
   Imports python module {name} into vim from {plugin}. Checks for {name} in
   the plugin's python/ subdirectory for the named module.
-  Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
 
   For example:
 >
@@ -1459,18 +1519,28 @@ maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
 
     <module 'foo.bar' from 'repopath/foo/python/foo/bar.py'>
 
+  Throws ERROR(NotFound) if the module or python/ subdirectory wasn't found.
+  Throws ERROR(MissingFeature) if vim instance is missing Python support.
+
 maktaba#python#Eval({expr})                            *maktaba#python#Eval()*
   Evaluate python {expr} and return the result.
 
-  Polyfill for vim's |pyeval()| that works on vim versions older than 7.3.569.
-  You can call pyeval() directly if you don't intend to support vim versions
-  older than that.
+  Polyfill for vim's |pyeval()| or |py3eval()| that works on vim versions
+  older than 7.3.569. You can call pyeval() directly if you don't intend to
+  support vim versions older than that.
 
   Supports simple types (number, string, list, dict), but not other
   python-only types like None, True, or False that have no direct vimscript
   analog. Those will fail on older vim versions, so either take care to avoid
   them in the return value or just skip the polyfill and use pyeval()
   directly.
+
+  WARNING: This will not have access to l: or a: variables from the caller, so
+  use `vim.eval()` with caution inside {expr}. Call pyeval() directly if you
+  need to access those. Inlining simple values into {expr} can also work, but
+  watch out for issues with string quoting, etc.
+
+  Throws ERROR(MissingFeature) if vim instance is missing Python support.
 
 maktaba#rtp#Split([paths])                               *maktaba#rtp#Split()*
   Split [paths], a string of comma-separated path entries, into a list of
@@ -1647,6 +1717,16 @@ maktaba#syscall#Create({cmd})                       *maktaba#syscall#Create()*
   automatically escaped and joined. Also accepts an existing Syscall object
   and returns it for convenience.
   Throws ERROR(WrongType)
+
+maktaba#syscall#SetAsyncDisabledForTesting({disabled})
+                                *maktaba#syscall#SetAsyncDisabledForTesting()*
+  Disables asynchronous calls if {disabled} is true. Enables otherwise.
+
+maktaba#syscall#ForceSyncFallbackAllowedForTesting({force})
+                        *maktaba#syscall#ForceSyncFallbackAllowedForTesting()*
+  Sets whether to override |Syscall.CallAsync()|'s allow_sync_fallback
+  argument and unconditionally {force} it to 1. Passing 0 restores normal
+  behavior.
 
 maktaba#test#Override({target}, {replacement})       *maktaba#test#Override()*
   Overrides the function {target} such that when it is called, {replacement}
@@ -1868,6 +1948,35 @@ For use when a |has()| check fails.
 
                                                               *ERROR(Failure)*
 For use in code that should never be reached.
+
+==============================================================================
+PYTHON                                                        *maktaba-python*
+
+Maktaba offers some utilities for using Python consistently in plugins and
+uses Python if available for a few of its own operations to improve
+behavior/performance.
+
+COMPATIBILITY
+Vim can be compiled without any Python support, with the Python 2 interface
+only, with the Python 3 interface, or with support for either (with lots of
+caveats). See |if_pyth.txt| for context.
+
+Maktaba maintains compatibility with both Python 2 and Python 3, and can help
+plugins built on Maktaba to work with both versions, but there are still some
+unavoidable corner cases to be aware of:
+  * Plugin authors need to use Python syntax and imports compatible with both
+    versions if they intend to support both versions. Maktaba can't magically
+    fix those kinds of incompatibilities for you.
+  * For executing Python statements, explicitly detecting the version and
+    invoking |:python| or |:python3| is still the best way (and see
+    |script-here| to avoid errors).
+  * Catching errors gets tricky. Python errors tend to surface as multiple
+    lines of exception with "Traceback" or other output above the actual
+    error, and the error types can vary (Maktaba does not attempt to catch and
+    canonicalize errors from the different implementations and fallbacks).
+  * For users who try to use |python-2-and-3|, Maktaba may break the tie and
+    trigger Python 3 to load, breaking plugins that subsequently try to use
+    Python 2 (because a single vim instance can't run both).
 
 
 vim:tw=78:ts=8:ft=help:norl:

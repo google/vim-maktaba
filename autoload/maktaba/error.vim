@@ -112,7 +112,7 @@ endfunction
 
 
 ""
-" Makes an error message in the Google vimscript error format.
+" Makes an error message in the maktaba vimscript error format.
 " The error message will look like:
 " >
 "   ERROR({type}): {message}
@@ -242,7 +242,7 @@ endfunction
 " {func} may be any maktaba callable. See |maktaba#function#Create|.
 "
 " [exceptions] may either be a regex matched against |v:exception|, or a list of
-" Google error names and/or vim error numbers. For example, the following are
+" maktaba error names and/or vim error numbers. For example, the following are
 " equivalent:
 " >
 "   call maktaba#error#Try(g:fn, 'ERROR(BadValue):\|E107:')

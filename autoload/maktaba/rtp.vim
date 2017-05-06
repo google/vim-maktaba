@@ -30,18 +30,9 @@ function! s:GetLeafDir(path) abort
   if l:leaf isnot 0
     return l:leaf
   endif
-  let s:cache_leafdirs[a:path] = maktaba#path#Split(a:path)[-1]
+  let s:cache_leafdirs[a:path] =
+      \ maktaba#path#StripTrailingSlash(maktaba#path#Split(a:path)[-1])
   return s:cache_leafdirs[a:path]
-endfunction
-
-
-""
-" Returns {path} with trailing slashes safely removed.
-" Used by @function(#Join) since 'runtimepath' typically stores paths without
-" trailing slashes.
-function! s:StripTrailingSlash(path) abort
-  " Uses maktaba#path#AsDir to ensure a single trailing slash, then removes it.
-  return maktaba#path#AsDir(a:path)[:-2]
 endfunction
 
 
@@ -74,8 +65,9 @@ endfunction
 " representation, with trailing slashes included.
 function! maktaba#rtp#Join(paths) abort
   call maktaba#ensure#IsList(a:paths)
-  return join(
-      \ map(copy(a:paths), "escape(s:StripTrailingSlash(v:val), '\,')"), ',')
+  return join(map(
+      \ copy(a:paths),
+      \ "escape(maktaba#path#StripTrailingSlash(v:val), '\,')"), ',')
 endfunction
 
 

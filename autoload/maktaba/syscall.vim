@@ -2,16 +2,20 @@
 
 let s:plugin = maktaba#Maktaba()
 
-if !exists('s:callbacks')
-  let s:callbacks = {}
+if !exists('s:usable_shell')
+  let s:usable_shell = '\v^/bin/sh$'
 endif
 
 if !exists('s:async_disabled')
   let s:async_disabled = 0
 endif
 
-if !exists('s:usable_shell')
-  let s:usable_shell = '\v^/bin/sh$'
+if !exists('s:vimjob_disabled')
+  let s:vimjob_disabled = 0
+endif
+
+if !exists('s:force_sync_fallback_allowed')
+  let s:force_sync_fallback_allowed = 0
 endif
 
 
@@ -78,17 +82,6 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
 endfunction
 
 
-" Compiles a dictionary describing the current vim state.
-function! s:CurrentEnv()
-  return {
-      \ 'tab': tabpagenr(),
-      \ 'buffer': bufnr('%'),
-      \ 'path': expand('%:p'),
-      \ 'column': col('.'),
-      \ 'line': line('.')}
-endfunction
-
-
 ""
 " @private
 " @dict Syscall
@@ -116,37 +109,9 @@ endfunction
 " @public
 " Returns whether the current vim session supports asynchronous calls.
 function! maktaba#syscall#IsAsyncAvailable() abort
-  return !s:async_disabled && has('clientserver') && !empty(v:servername)
-endfunction
-
-
-""
-" @private
-" @dict Syscall
-" Calls |system()| asynchronously, and invokes a @function(this.callback) once
-" the command completes, passing in stdout, stderr and exit code to it.
-" The specific implementation for @function(#CallAsync).
-function! maktaba#syscall#DoCallAsync() abort dict
-  let l:error_file = tempname()
-  let l:output_file = tempname()
-  let l:callback_cmd = join([
-      \ v:progname,
-      \ '--servername ' . v:servername,
-      \ '--remote-expr',
-      \ printf('"maktaba#syscall#AsyncDone(''%s'', ''%s'', $?)"',
-            \ l:output_file, l:error_file)], " ")
-  let l:full_cmd = printf('(%s; %s >/dev/null) > %s 2> %s &',
-      \ self.GetCommand(), l:callback_cmd, l:output_file, l:error_file)
-  let s:callbacks[l:output_file] = {
-      \ 'function': maktaba#ensure#IsCallable(self.callback),
-      \ 'env': s:CurrentEnv()}
-
-  if has_key(self, 'stdin')
-    call system(l:full_cmd, self.stdin)
-  else
-    call system(l:full_cmd)
-  endif
-  return {}
+  return !s:async_disabled && (
+      \ (!s:vimjob_disabled && has('job')) ||
+      \ (has('clientserver') && !empty(v:servername)))
 endfunction
 
 
@@ -279,9 +244,16 @@ endfunction
 ""
 " @dict Syscall
 " Executes the system call asynchronously and invokes {callback} on completion.
-" {callback} function will be called with the following arguments:
-" {callback}(result_dict), where result_dict contains stdout, stderr and status
-" (code).
+" If the current vim instance does not support async execution (details below),
+" setting {allow_sync_fallback} allows the system call to be executed
+" synchronously as a fallback instead of failing with an error.
+"
+" Returns a @dict(SyscallInvocation) to interact with the invocation, check
+" status, etc.
+"
+" {callback} function will be called with the SyscallInvocation as an argument,
+" as {callback}(SyscallInvocation), and the invocation provides access to
+" stdout, stderr and status (code).
 " For example: >
 "   function Handler(result) abort
 "     if a:result.status != 0
@@ -292,8 +264,8 @@ endfunction
 "   endfunction
 "   call maktaba#syscall#Create(['sleep', '3']).CallAsync('Handler', 1)
 " <
-" WARNING: The callback is responsible for checking result_dict.status and
-" handling unexpected exit codes. Otherwise all failures are silent.
+" WARNING: The callback is responsible for checking SyscallInvocation.status and
+" handling unexpected exit codes. Otherwise all syscall failures are silent.
 "
 " NOTE: If {callback} depends on cursor location or other vim state, the caller
 " should capture parameters and bind them to the callback: >
@@ -311,72 +283,74 @@ endfunction
 " <
 "
 " As a legacy fallback, if the callback fails expecting more arguments, it will
-" be called with the arguments: {callback}(env_dict, result_dict), where
-" env_dict contains tab, buffer, path, column and line info, and the result_dict
-" contains stdout, stderr and status (code). This fallback will be deprecated
-" and stop working in future versions of maktaba.
+" be called with the arguments: {callback}(env_dict, SyscallInvocation), where
+" env_dict contains tab, buffer, path, column and line info. This fallback will
+" be deprecated and stop working in future versions of maktaba.
 "
-" Asynchronous calls are executed via |--remote-expr| using vim's |clientserver|
-" capabilities, so the preconditions for it are vim being compiled with
-" +clientserver and |v:servername| being set. Vim will try to set it to
-" something when it starts if it is running in X context, e.g. 'GVIM1'.
-" Otherwise, the user needs to set it by passing |--servername| $NAME to
-" vim. If the two conditions are not met, asynchronous calls are not possible,
-" and the call will either throw |ERROR(MissingFeature)| or fall back to
-" synchronous calls, depending on the {allow_sync_fallback} parameter.
+" Asynchronous calls are executed via vim's |job| support. If the vim instance
+" is missing job support, this will try to fall back to legacy |clientserver|
+" invocation, which has a few preconditions of its own (see below). If neither
+" option is available, asynchronous calls are not possible, and the call will
+" either throw |ERROR(MissingFeature)| or fall back to synchronous calls,
+" depending on the {allow_sync_fallback} parameter.
+"
+" The legacy fallback executes calls via |--remote-expr| using vim's
+" |clientserver| capabilities, so the preconditions for it are vim being
+" compiled with +clientserver and |v:servername| being set. Vim will try to set
+" it to something when it starts if it is running in X context, e.g. 'GVIM1'.
+" Otherwise, the user needs to set it by passing |--servername| $NAME to vim.
 " @throws WrongType
 " @throws MissingFeature if neither async execution nor fallback is available.
 function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
-  let self.callback = maktaba#ensure#IsCallable(a:Callback)
   call maktaba#ensure#IsBool(a:allow_sync_fallback)
+  let l:invocation = maktaba#syscall#invocation#Create(
+      \ self,
+      \ maktaba#ensure#IsCallable(a:Callback))
   if !maktaba#syscall#IsAsyncAvailable()
-    if a:allow_sync_fallback
+    if a:allow_sync_fallback || s:force_sync_fallback_allowed
       call s:plugin.logger.Warn('Async support not available. ' .
           \ 'Falling back to synchronous execution for system call: ' .
           \ self.GetCommand())
       let l:return_data = self.Call(0)
       let l:return_data.status = v:shell_error
-      try
-        " Try prototype callback({result_dict}).
-        call maktaba#function#Call(self.callback, [l:return_data])
-      catch /E119:/
-        " Not enough arguments.
-        " Fall back to legacy prototype callback({env_dict}, {result_dict}).
-        " TODO(#180): Deprecate and shout an error for this case.
-        call maktaba#function#Call(
-            \ self.callback, [s:CurrentEnv(), l:return_data])
-      endtry
-      return
+      call l:invocation.Finish(l:return_data)
+      return l:invocation
     else
       " Neither async nor sync is available. Throw error with salient reason.
       if s:async_disabled
-        let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled.'
-      elseif !has('clientserver')
-        let l:reason =
-            \ 'vim was compiled without +clientserver. See :help clientserver.'
-      elseif empty(v:servername)
-        let l:reason =
-            \ 'no --servername flag passed to vim. See :help servername.'
+        let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled'
       else
-        throw maktaba#error#Failure(
-            \ 'Async execution was not available for unknown reason.')
+        let l:reason = 'no +job support and no fallback available'
       endif
       throw maktaba#error#MissingFeature(
-          \ 'Cannot run async commands: ' . l:reason)
+          \ 'Cannot run async commands (%s). See :help Syscall.CallAsync',
+          \ l:reason)
     endif
   endif
 
-  let l:call_func = maktaba#function#Create(
-      \ 'maktaba#syscall#DoCallAsync', [], self)
-  " Errors indicate a problem with the CallAsync implementation, so they're
-  " thrown as ERROR(Failure) and not expected to be caught by callers.
-  try
-    call s:DoSyscallCommon(self, l:call_func, 1)
-  catch /ERROR(ShellError):/
-    throw maktaba#error#Failure('Problem dispatching async syscall: %s',
-        \ maktaba#error#Split(v:exception)[1])
-  endtry
+  if !s:vimjob_disabled && has('job')
+    let l:vimjob_invocation =
+        \ maktaba#syscall#async#CreateInvocation(self, l:invocation)
+    call l:vimjob_invocation.Start()
+  else
+    " TODO(#190): Remove clientserver implementation.
+    let l:clientserver_invocation =
+        \ maktaba#syscall#clientserver#CreateInvocation(self, l:invocation)
+    let l:call_func =
+        \ maktaba#function#Method(l:clientserver_invocation, 'Start')
+    " Errors indicate a problem with the CallAsync implementation, so they're
+    " thrown as ERROR(Failure) and not expected to be caught by callers.
+    try
+      call s:DoSyscallCommon(self, l:call_func, 1)
+    catch /ERROR(ShellError):/
+      throw maktaba#error#Failure('Problem dispatching async syscall: %s',
+          \ maktaba#error#Split(v:exception)[1])
+    endtry
+  endif
+
+  return l:invocation
 endfunction
+
 
 ""
 " @dict Syscall
@@ -422,7 +396,7 @@ endfunction
 
 ""
 " @private
-" Sets the regex that @function(Syscall.Call) and
+" Sets the regex that @function(Syscall.Call), @function(Syscall.CallAsync), and
 " @function(Syscall.CallForeground) use to decide whether 'shell' is usable. If
 " 'shell' is unusable, they will use /bin/sh instead. You should NOT use this
 " function to make vim use your preferred shell (ESPECIALLY if your shell is
@@ -439,37 +413,33 @@ endfunction
 
 ""
 " @private
-" Forces the disabling of asynchronous calls, to enable testing.
-function! maktaba#syscall#SetAsyncDisabled(disabled)
-  let s:async_disabled = a:disabled
+" Gets the regex that @function(Syscall.Call), @function(Syscall.CallAsync), and
+" @function(Syscall.CallForeground) use to decide whether 'shell' is usable.
+function! maktaba#syscall#GetUsableShellRegex() abort
+  return s:usable_shell
+endfunction
+
+
+""
+" Disables asynchronous calls if {disabled} is true. Enables otherwise.
+function! maktaba#syscall#SetAsyncDisabledForTesting(disabled) abort
+  let s:async_disabled = maktaba#ensure#IsBool(a:disabled)
+endfunction
+
+
+""
+" Sets whether to override @function(Syscall.CallAsync)'s allow_sync_fallback
+" argument and unconditionally {force} it to 1. Passing 0 restores normal
+" behavior.
+function! maktaba#syscall#ForceSyncFallbackAllowedForTesting(force) abort
+  let s:force_sync_fallback_allowed = maktaba#ensure#IsBool(a:force)
 endfunction
 
 
 ""
 " @private
-" Executes the asynchronous callback setup by @function(Syscall.CallAsync).
-" The callback must be of prototype: callback(result_dict) or legacy prototype
-" callback(env_dict, result_dict). The latter will be deprecated and stop
-" working in future versions of maktaba.
-function! maktaba#syscall#AsyncDone(stdout_file, stderr_file, exit_code)
-  let l:callback_info = s:callbacks[a:stdout_file]
-  let l:return_data = {}
-  let l:return_data.status = a:exit_code
-  let l:return_data.stdout = join(readfile(a:stdout_file), "\n")
-  if filereadable(a:stderr_file)
-    let l:return_data.stderr = join(readfile(a:stderr_file), "\n")
-    call delete(a:stderr_file)
-  endif
-  unlet s:callbacks[a:stdout_file]
-  call delete(a:stdout_file)
-  try
-    " Try prototype callback({result_dict}).
-    call maktaba#function#Call(l:callback_info.function, [l:return_data])
-  catch /E119:/
-    " Not enough arguments.
-    " Fall back to legacy prototype callback({env_dict}, {result_dict}).
-    " TODO(#180): Deprecate and shout an error for this case.
-    call maktaba#function#Call(
-        \ l:callback_info.function, [l:callback_info.env, l:return_data])
-  endtry
+" Disables vim job async implementation if {disabled} is true. Enables
+" otherwise.
+function! maktaba#syscall#SetVimjobDisabledForTesting(disabled) abort
+  let s:vimjob_disabled = maktaba#ensure#IsBool(a:disabled)
 endfunction

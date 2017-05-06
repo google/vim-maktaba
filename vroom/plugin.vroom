@@ -166,7 +166,8 @@ and location:
 
   :echomsg g:plugin.name
   ~ myplugin
-  :echomsg maktaba#path#Split(g:plugin.location)[-1]
+  :echomsg maktaba#path#StripTrailingSlash(
+  |maktaba#path#Split(g:plugin.location)[-1])
   ~ myplugin
 
 These, too, are somewhat boring (except for the fact that you should NEVER EVER
