@@ -27,8 +27,26 @@ the usual Debug, Info, Warn, Error, and Severe functions:
   :call g:vroom_logger.Debug('why')
   :call g:vroom_logger.Info('hello')
   :call g:vroom_logger.Warn('there')
+  ~ [VROOMFILE] there
   :call g:vroom_logger.Error('my')
+  ~ [VROOMFILE] my
   :call g:vroom_logger.Severe('friend')
+  ~ [VROOMFILE] friend
+
+By default, messages logged at WARN or above are also shown immediately to the
+user. Call maktaba#log#SetNotificationLevel to configure a different level.
+
+  :let g:LEVELS = maktaba#log#LEVELS
+  :call maktaba#log#SetNotificationLevel(g:LEVELS.SEVERE)
+  :call g:vroom_logger.Error('Threepio! Where could he be?!')
+  :call g:vroom_logger.Severe('Shut down all the garbage mashers!!')
+  ~ [VROOMFILE] Shut down all the garbage mashers!!
+
+Setting the display level to -1 disables printing these log messages completely.
+
+  :call maktaba#log#SetNotificationLevel(-1)
+  :call g:vroom_logger.Severe('Shut down all the garbage mashers!!')
+
 
 Each plugin gets a logger attached automatically for its context:
 
@@ -62,7 +80,9 @@ logged earlier...
   ~ Log message: WARN [-0-9T:]+ \[VROOMFILE\] there (regex)
   ~ Log message: ERROR [-0-9T:]+ \[VROOMFILE\] my (regex)
   ~ Log message: SEVERE [-0-9T:]+ \[VROOMFILE\] friend (regex)
-
+  ~ .* (regex)
+  ~ .* (regex)
+  ~ .* (regex)
   ~ Log message: DEBUG [-0-9T:]+ \[emptyplugin\] Hello from emptyplugin (regex)
 
 New messages are logged as they arrive.

@@ -21,6 +21,10 @@ endif
 
 let s:LEVELS = maktaba#log#LEVELS
 
+if !exists('s:notification_level')
+  let s:notification_level = s:LEVELS.WARN
+endif
+
 
 ""
 " @usage {level} {context} {message} [args...]
@@ -37,6 +41,9 @@ function! s:DoMessage(level, context, message, ...) abort
   endif
 
   call s:SendToHandlers([a:level, localtime(), a:context, l:message])
+  if s:notification_level isnot -1 && a:level >= s:notification_level
+    call s:NotifyMessage(printf('[%s] %s', a:context, l:message), a:level)
+  endif
 endfunction
 
 
@@ -82,6 +89,34 @@ function! s:SendToHandlers(logitem) abort
   for l:Handler in l:maktaba.globals.loghandlers.Items()
     call s:CallHandler(l:Handler, a:logitem)
   endfor
+endfunction
+
+
+function! s:NotifyMessage(message, level) abort
+  if a:level >= s:LEVELS.ERROR
+    call maktaba#error#Shout(a:message)
+  elseif a:level >= s:LEVELS.WARN
+    call maktaba#error#Warn(a:message)
+  else
+    echomsg a:message
+  endif
+endfunction
+
+
+""
+" Sets the minimum {level} of log messages that will trigger a user
+" notification, or -1 to disable notifications. By default, the user will be
+" notified after every message logged at WARN or higher.
+"
+" Notifications will be sent using @function(maktaba#error#Shout) for ERROR
+" and SEVERE messages, @function(maktaba#error#Warn) for WARN, and |:echomsg|
+" for INFO and DEBUG.
+" @throws BadValue
+function! maktaba#log#SetNotificationLevel(level) abort
+  call maktaba#ensure#IsTrue(
+      \ a:level is -1 || maktaba#value#IsIn(a:level, s:LEVELS.Values()),
+      \ 'Expected {level} to be maktaba#log#LEVELS value or -1')
+  let s:notification_level = a:level
 endfunction
 
 
