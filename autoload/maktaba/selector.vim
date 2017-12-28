@@ -1,9 +1,24 @@
+" Copyright 2017 Google Inc. All rights reserved.
+"
+" Licensed under the Apache License, Version 2.0 (the "License");
+" you may not use this file except in compliance with the License.
+" You may obtain a copy of the License at
+"
+"     http://www.apache.org/licenses/LICENSE-2.0
+"
+" Unless required by applicable law or agreed to in writing, software
+" distributed under the License is distributed on an "AS IS" BASIS,
+" WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+" See the License for the specific language governing permissions and
+" limitations under the License.
+
 let s:QUIT_KEY = 'q'
 let s:HELP_KEY = 'H'
 
 if !exists('s:selectors_by_buffer_number')
   let s:selectors_by_buffer_number = {}
 endif
+
 
 " The default keymappings.
 function! s:GetDefaultKeyMappings() abort
@@ -16,6 +31,7 @@ function! s:GetDefaultKeyMappings() abort
       \ s:QUIT_KEY : ['maktaba#selector#NoOp', 'Close', 'Close the window']
       \ }
 endfunction
+
 
 " Create the full key mappings dict.
 function! s:ExpandedKeyMappings(mappings) abort
@@ -49,6 +65,7 @@ function! s:ExpandedKeyMappings(mappings) abort
   return l:expanded_mappings
 endfunction
 
+
 ""
 " Unzips {infolist}, a list of selector entries, into line text and data.
 " Each selector entry may be either a string, or a pair (LINE, DATA) stored in a
@@ -75,6 +92,7 @@ function! s:SplitLinesAndData(infolist) abort
   return [l:lines, l:data]
 endfunction
 
+
 " Set the Window Options for the created window.
 function! s:SetWindowOptions(selector) abort
   if v:version >= 700
@@ -94,6 +112,7 @@ function! s:SetWindowOptions(selector) abort
   endif
 endfunction
 
+
 " Comment out lines -- used in creating help text
 function! s:CommentLines(str)
   let l:out = []
@@ -106,6 +125,7 @@ function! s:CommentLines(str)
   endfor
   return l:out
 endfunction
+
 
 " The base syntax defines the comment syntax in the selector window, which is
 " used for the Help menus.
@@ -121,6 +141,7 @@ function! s:BaseSyntax() abort
   highlight default link SelectorKey2 Keyword
   highlight default link SelectorKey3 Keyword
 endfunction
+
 
 " A default key mapping function -- not very useful.
 function! s:DefaultAfterKey(line, ...) abort
@@ -287,6 +308,7 @@ function! maktaba#selector#DoGetLineData(lineno) dict abort
   throw maktaba#error#NotFound('Associated data for selector line %d', l:lineno)
 endfunction
 
+
 ""
 " @private
 " Get a list of header lines for the selector window that will be displayed as
@@ -325,12 +347,14 @@ function! maktaba#selector#DoGetHelpLines() dict abort
   endif
 endfunction
 
+
 ""
 " @private
 function! maktaba#selector#ToggleCurrentHelp(...) abort
   let l:selector = s:selectors_by_buffer_number[bufnr('%')]
   call l:selector.ToggleHelp()
 endfunction
+
 
 ""
 " @dict Selector.ToggleHelp
@@ -348,6 +372,7 @@ function! maktaba#selector#DoToggleHelp() dict abort
   let &modifiable = l:prev_mod
 endfunction
 
+
 " Initialize the key bindings
 function! s:InstantiateKeyMaps(mappings) abort
   for l:scrubbed_key in keys(a:mappings)
@@ -359,11 +384,13 @@ function! s:InstantiateKeyMaps(mappings) abort
   endfor
 endfunction
 
+
 ""
 " @private
 function! maktaba#selector#DefaultExtraOptions() abort
   setlocal nonumber
 endfunction
+
 
 ""
 " @private
@@ -375,6 +402,7 @@ function! maktaba#selector#DefaultSetSyntax() abort
   highlight default link filepart Directory
   highlight default link javaext Function
 endfunction
+
 
 ""
 " @private
@@ -404,6 +432,7 @@ function! maktaba#selector#KeyCall(scrubbed_key) abort
   endif
 endfunction
 
+
 ""
 " @private
 " Close the window and return to the initial-calling window.
@@ -411,6 +440,7 @@ function! maktaba#selector#CloseWindow() abort
   bdelete
   call maktaba#selector#ReturnToWindow()
 endfunction
+
 
 ""
 " @private
@@ -420,6 +450,7 @@ function! maktaba#selector#ReturnToWindow() abort
   call setpos('.', s:curpos_holder)
   call winrestview(s:current_savedview)
 endfunction
+
 
 ""
 " @private
