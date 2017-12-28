@@ -145,7 +145,9 @@ endfunction
 
 ""
 " @exception
-" For attempts to use functionality that is not yet supported.
+" For attempts to use functionality that is not supported, usually for cases
+" where an interface implies support that isn't implemented due to technical
+" limitations.
 function! maktaba#error#NotImplemented(message, ...) abort
   return maktaba#error#Exception('NotImplemented', a:message, a:000)
 endfunction
@@ -153,7 +155,7 @@ endfunction
 
 ""
 " @exception
-" For when someone tried to use the wrong type of arguments.
+" For when a caller tried to use the wrong type of arguments to a function.
 function! maktaba#error#WrongType(message, ...) abort
   return maktaba#error#Exception('WrongType', a:message, a:000)
 endfunction
@@ -161,7 +163,7 @@ endfunction
 
 ""
 " @exception
-" For when someone tried to use insane values.
+" For when a caller tried to pass an unusable value to a function.
 function! maktaba#error#BadValue(message, ...) abort
   return maktaba#error#Exception('BadValue', a:message, a:000)
 endfunction
@@ -178,7 +180,8 @@ endfunction
 
 ""
 " @exception
-" For use when a |has()| check fails.
+" For use when this vim instance is missing support for necessary functionality,
+" e.g. when a |has()| check fails or |v:servername| wasn't set.
 function! maktaba#error#MissingFeature(message, ...) abort
   return maktaba#error#Exception('MissingFeature', a:message, a:000)
 endfunction
@@ -187,6 +190,8 @@ endfunction
 ""
 " @exception
 " For use in code that should never be reached.
+" Should only be thrown to indicate there's a bug in the plugin, and should
+" never be caught or declared with `@throws`.
 function! maktaba#error#Failure(message, ...) abort
   return maktaba#error#Exception('Failure', a:message, a:000)
 endfunction
@@ -210,17 +215,16 @@ function! maktaba#error#Split(exception) abort
 endfunction
 
 
-
 function! s:ExceptionMatches(exceptions, errortext) abort
   if maktaba#value#IsString(a:exceptions)
-    return v:exception =~# a:exceptions
+    return a:errortext =~# a:exceptions
   endif
   for l:exception in a:exceptions
     if maktaba#value#IsNumber(l:exception) || l:exception =~# '\v^\d+$'
-      if v:exception =~# 'E' . l:exception . ':'
+      if a:errortext =~# 'E' . l:exception . ':'
         return 1
       endif
-    elseif v:exception =~# printf('ERROR(%s):', l:exception)
+    elseif a:errortext =~# printf('ERROR(%s):', l:exception)
       return 1
     endif
   endfor
