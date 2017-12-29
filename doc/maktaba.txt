@@ -1987,23 +1987,28 @@ For when someone tries to do something they shouldn't.
 For when someone expected something to be there, and it wasn't.
 
                                                        *ERROR(NotImplemented)*
-For attempts to use functionality that is not yet supported.
+For attempts to use functionality that is not supported, usually for cases
+where an interface implies support that isn't implemented due to technical
+limitations.
 
                                                             *ERROR(WrongType)*
-For when someone tried to use the wrong type of arguments.
+For when a caller tried to use the wrong type of arguments to a function.
 
                                                              *ERROR(BadValue)*
-For when someone tried to use insane values.
+For when a caller tried to pass an unusable value to a function.
 
                                                      *ERROR(InvalidArguments)*
 For when a function is given the wrong number of arguments. Prefer
 |ERROR(WrongType)| and |ERROR(BadValue)| when relevant.
 
                                                        *ERROR(MissingFeature)*
-For use when a |has()| check fails.
+For use when this vim instance is missing support for necessary functionality,
+e.g. when a |has()| check fails or |v:servername| wasn't set.
 
                                                               *ERROR(Failure)*
-For use in code that should never be reached.
+For use in code that should never be reached. Should only be thrown to
+indicate there's a bug in the plugin, and should never be caught or declared
+with `@throws`.
 
 ==============================================================================
 PYTHON                                                        *maktaba-python*
