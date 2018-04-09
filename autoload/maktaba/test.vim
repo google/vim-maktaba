@@ -90,7 +90,9 @@ function! maktaba#test#Override(target, replacement) abort
     let &runtimepath = l:tmpdir
     " Force autoload by triggering an autoload func call that can never work.
     let l:nonexistent_func_name = a:target . 'NonexistentFunc_' . s:nonce
-    execute 'delfunction!' l:nonexistent_func_name
+    if exists('*' . l:nonexistent_func_name)
+      execute 'delfunction' l:nonexistent_func_name
+    endif
     silent! execute 'call' l:nonexistent_func_name . '()'
   finally
     let &runtimepath = l:prev_rtp
