@@ -27,6 +27,25 @@ let s:apply_function_lines = [
 
 
 ""
+" Force vim to load file under {rootpath} that defines autoload {funcname}.
+" Manually sourcing the file doesn't work reliably since vim 8.0.1378.
+function! s:ForceLoadAutoload(rootpath, funcname) abort
+  let l:prev_rtp = &runtimepath
+  try
+    let &runtimepath = a:rootpath
+    " Force autoload by triggering an autoload func call that can never work.
+    let l:nonexistent_func_name = a:funcname . 'NonexistentFunc_' . s:nonce
+    if exists('*' . l:nonexistent_func_name)
+      execute 'delfunction' l:nonexistent_func_name
+    endif
+    silent! execute 'call' l:nonexistent_func_name . '()'
+  finally
+    let &runtimepath = l:prev_rtp
+  endtry
+endfunction
+
+
+""
 " Overrides the function {target} such that when it is called, {replacement} is
 " called instead. This is particularly useful for overloading autoloaded
 " functions, which can only be done in files that are named correctly.
@@ -56,45 +75,35 @@ function! maktaba#test#Override(target, replacement) abort
         \ ' Autoload function replacement must be a string or funcdict.'
   endif
 
+  let l:tmpdir = tempname()
+  " The parts of name#spaced#Function are ['name', 'spaced', 'Function']
+  let l:parts = split(a:target, '#')
+  let l:is_autoload = len(l:parts) >= 2
+
+  if l:is_autoload
+    " A target function name#spaced#Function should be written to a file with
+    " a parent dir autoload/name and a base filename spaced.vim.
+    let l:dir = join([l:tmpdir, 'autoload'] + l:parts[:-3], s:slash)
+    let l:basename = l:parts[-2] . '.vim'
+  else
+    let l:dir = l:tmpdir
+    let l:basename = 'test_override.vim'
+  endif
+  let l:file = join([l:dir, l:basename], s:slash)
+
+  " Write file that defines the target function and force vim to autoload it.
+  if !isdirectory(l:dir)
+    call mkdir(l:dir, 'p')
+  endif
   let l:data = s:apply_function_lines + [
       \ 'function! ' . a:target . '(...) abort',
       \ '  return s:ApplyFunction(' . string(a:replacement) . ', a:000)',
       \ 'endfunction',
       \ ]
-  " The parts of name#spaced#Function are ['name', 'spaced', 'Function']
-  let l:parts = split(a:target, '#')
-
-  " In the trivial case of non-autoload target (no "#" in name), just define
-  " function directly.
-  if len(l:parts) < 2
-    execute join(l:data, "\n")
-    return
-  endif
-
-  " In the autoload case, write a vimscript file and get it autoloaded.
-  let l:tmpdir = fnamemodify(tempname(), ':h')
-  " The parent dir of the file defining name#spaced#Function is autoload/name.
-  let l:dir = join([l:tmpdir, 'autoload'] + l:parts[:-3], s:slash)
-  " The filepath of the file defining name#spaced#Function is
-  " autoload/name/spaced.vim.
-  let l:file = join([l:tmpdir, 'autoload'] + l:parts[:-2], s:slash) . '.vim'
-
-  " Write file that defines the target function and force vim to autoload it.
-  " Manually sourcing the file doesn't work reliably since vim 8.0.1378.
-  if !isdirectory(l:dir)
-    call mkdir(l:dir, 'p')
-  endif
   call writefile(l:data, l:file)
-  let l:prev_rtp = &runtimepath
-  try
-    let &runtimepath = l:tmpdir
-    " Force autoload by triggering an autoload func call that can never work.
-    let l:nonexistent_func_name = a:target . 'NonexistentFunc_' . s:nonce
-    if exists('*' . l:nonexistent_func_name)
-      execute 'delfunction' l:nonexistent_func_name
-    endif
-    silent! execute 'call' l:nonexistent_func_name . '()'
-  finally
-    let &runtimepath = l:prev_rtp
-  endtry
+  if !l:is_autoload
+    execute 'source' l:file
+  else
+    call s:ForceLoadAutoload(l:tmpdir, a:target)
+  endif
 endfunction
