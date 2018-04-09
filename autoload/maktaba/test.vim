@@ -34,10 +34,10 @@ function! s:ForceLoadAutoload(rootpath, funcname) abort
   try
     let &runtimepath = a:rootpath
     " Force autoload by triggering an autoload func call that can never work.
+    " Adding a unique suffix to the function name gives a name in the same
+    " autoload namespace that won't be defined. The nonce makes it especially
+    " unlikely that a function with the same name would already exist.
     let l:nonexistent_func_name = a:funcname . 'NonexistentFunc_' . s:nonce
-    if exists('*' . l:nonexistent_func_name)
-      execute 'delfunction' l:nonexistent_func_name
-    endif
     silent! execute 'call' l:nonexistent_func_name . '()'
   finally
     let &runtimepath = l:prev_rtp
