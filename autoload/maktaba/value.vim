@@ -73,7 +73,7 @@ endfunction
 ""
 " Whether {value} is in {list}.
 " @throws BadValue if {list} is not a list.
-function! maktaba#value#IsIn(Value, list)
+function! maktaba#value#IsIn(Value, list) abort
   return index(maktaba#ensure#IsList(a:list), a:Value) >= 0
 endfunction
 
@@ -107,17 +107,17 @@ endfunction
 function! maktaba#value#TypeName(Value) abort
   let l:type = type(a:Value)
   if l:type == 0
-    return "number"
+    return 'number'
   elseif l:type == 1
-    return "string"
+    return 'string'
   elseif l:type == 2
-    return "funcref"
+    return 'funcref'
   elseif l:type == 3
-    return "list"
+    return 'list'
   elseif l:type == 4
-    return "dictionary"
+    return 'dictionary'
   elseif l:type == 5
-    return "float"
+    return 'float'
   elseif l:type == 6
     return 'boolean'
   elseif l:type == 7
