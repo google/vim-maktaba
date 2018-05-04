@@ -101,7 +101,8 @@ endfunction
 
 ""
 " Returns the type of {value} as a string.
-" One of "number", "string", "funcref", "list", "dictionary", or "float".
+" One of "number", "string", "funcref", "list", "dictionary", "float",
+" "boolean", "null", "none", "job", or "channel".
 " See also |type()|.
 function! maktaba#value#TypeName(Value) abort
   let l:type = type(a:Value)
@@ -117,7 +118,20 @@ function! maktaba#value#TypeName(Value) abort
     return "dictionary"
   elseif l:type == 5
     return "float"
+  elseif l:type == 6
+    return 'boolean'
+  elseif l:type == 7
+    " v:none exists in Vim, but not Neovim.
+    if exists('v:none') && a:Value is v:none
+      return 'none'
+    endif
+    return 'null'
+  elseif l:type == 8
+    return 'job'
+  elseif l:type == 9
+    return 'channel'
   endif
+  return printf('unknown type (%d)', l:type)
 endfunction
 
 
