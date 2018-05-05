@@ -121,7 +121,8 @@ function! maktaba#value#TypeName(Value) abort
   elseif l:type == 6
     return 'boolean'
   elseif l:type == 7
-    " v:none exists in Vim, but not Neovim.
+    " None (v:null or v:none) in Vim.
+    " Null (v:null) in Neovim.
     if exists('v:none') && a:Value is v:none
       return 'none'
     endif
