@@ -54,7 +54,7 @@ function! maktaba#python#ImportModule(plugin, name) abort
   execute s:python_command "sys.path.insert(0, vim.eval('l:path'))"
   try
     execute s:python_command 'import ' . a:name
-  catch /Vim(python3\?):/
+  catch /Vim(python3\?\|return):/  " return is used by Neovim (https://github.com/neovim/neovim/issues/7294).
     throw maktaba#error#NotFound('Python module %s', a:name)
   finally
     execute s:python_command 'del sys.path[:1]'
