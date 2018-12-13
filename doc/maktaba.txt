@@ -1847,7 +1847,8 @@ maktaba#value#EmptyValue({value})                 *maktaba#value#EmptyValue()*
 
 maktaba#value#TypeName({value})                     *maktaba#value#TypeName()*
   Returns the type of {value} as a string. One of "number", "string",
-  "funcref", "list", "dictionary", or "float". See also |type()|.
+  "funcref", "list", "dictionary", "float", "boolean", "null", "none", "job",
+  or "channel". See also |type()|.
 
 maktaba#value#TypeMatches({value}, {reference})  *maktaba#value#TypeMatches()*
   1 if {value} has the same type as {reference}, 0 otherwise.
