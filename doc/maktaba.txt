@@ -359,9 +359,7 @@ Plugin.MapPrefix({letter}, [throw])                       *Plugin.MapPrefix()*
 Plugin.IsLibrary()                                        *Plugin.IsLibrary()*
   Checks that this plugin is a library plugin. In order to be a library
   plugin, the plugin must contain an autoload/ directory and must not contain
-  ftplugin/, ftdetect/, syntax/, indent/, nor instant/ directories. If it
-  contains a plugin/ directory, that directory must contain only a flags.vim
-  file.
+  ftplugin/, ftdetect/, syntax/, indent/, plugin/, nor instant/ directories.
 
 Plugin.GetExtensionRegistry()                  *Plugin.GetExtensionRegistry()*
   Returns the |maktaba.ExtensionRegistry| belonging to this plugin.
