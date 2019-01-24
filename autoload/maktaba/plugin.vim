@@ -875,8 +875,7 @@ endfunction
 " Checks that this plugin is a library plugin.
 " In order to be a library plugin, the plugin must contain an autoload/
 " directory and must not contain ftplugin/, ftdetect/, syntax/, indent/,
-" nor instant/ directories. If it contains a plugin/ directory, that directory
-" must contain only a flags.vim file.
+" plugin/, nor instant/ directories.
 function! maktaba#plugin#IsLibrary() dict abort
   for l:special in maktaba#plugin#NonlibraryDirs()
     if self.HasDir(l:special)
