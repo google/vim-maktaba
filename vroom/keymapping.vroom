@@ -1,0 +1,113 @@
+Vim has a very configurable mappings system that allows users to assign custom
+behavior to certain keystrokes.
+
+Maktaba offers some high-level helpers to plugin developers to help work with
+mappings programmatically. It introduces its own "KeyMapping" type as a handle
+to key mappings it defines that can be used to easily unmap or otherwise
+interact with the underlying vim mapping.
+
+Before we explore that, let's install maktaba:
+
+  :set nocompatible
+  :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
+  :let g:bootstrapfile = g:maktabadir . '/bootstrap.vim'
+  :execute 'source' g:bootstrapfile
+  :let g:maktaba = maktaba#plugin#Get('maktaba')
+
+
+
+Now we'll create a mapping. Let's prank the user so whenever they try to enter
+insert mode by pressing "i", they'll get denied.
+
+  :let evil_mapping = maktaba#keymapping#Map('i', ':echomsg "Nope!"<'. 'CR>')
+
+(Please excuse the weird '<'.'CR>' workaround. The special keycodes confuse
+vroom.)
+
+Now let's try it out!
+
+  :normal i
+  ~ Nope!
+
+Well, that was fun, but let's unlet our mapping and restore the original
+behavior.
+
+  :call evil_mapping.Unmap()
+
+  @messages (STRICT)
+  :normal i<Esc>
+  @messages
+
+You can also use the handle from maktaba to verify that our prank mapping is no
+longer mapped.
+
+  :echomsg evil_mapping.IsMapped()
+  ~ 0
+
+
+That example defined a mapping in vim's default mapping modes of n, v, and o
+(normal, visual, and operator-pending). We can also configure which modes should
+get the mappings. Let's define an insert-mode mapping to automatically close
+open parentheses.
+
+  :let paren_mapping = maktaba#keymapping#Map('(', '()', 'i')
+  :echomsg paren_mapping.IsMapped()
+  ~ 1
+
+  :normal i(<Esc>
+  ()
+  @end
+
+  :let paren_mapping.Unmap()
+
+
+
+Vim also supports special arguments to mappings, such as the "<unique>" arg to
+avoid overriding any existing mapping. Let's define a unique mapping and verify
+that it's behaving politely.
+
+Maktaba provides a builder interface for mappings configuration more complex
+than LHS, RHS, and mode. That will let us pass arguments in to the mapping we're
+defining.
+
+  :let first_mapping = maktaba#keymapping#Map('!', '?')
+  :let polite_spec = maktaba#keymappingspec#Spec('!', '??')
+  |.WithArgs(['<unique>'])
+  :call maktaba#error#Try(maktaba#function#Method(polite_spec, 'Map'))
+  ~ Vim(noremap):E227: * (glob)
+
+
+
+You might in some scenarios want to set up a one-shot mapping that triggers the
+next time a certain keystroke is pressed and then removes itself. Let's define a
+mapping suitable for quickly pasting a line of text you just grabbed two lines
+below.
+
+  :let paste_below_keymap = maktaba#keymappingspec#Spec('J', 'jpk', 'n')
+  |.MapOnce()
+
+If you press J once, it will trigger the mapping and paste the text.
+
+  % 1<CR>
+  |2<CR>
+  |3
+
+  :1delete
+  :normal J
+
+  2
+  3
+  1
+  @end
+
+If you press J again after that, the mapping is already gone. Instead it will
+trigger vim's built-in behavior of joining lines.
+
+  > J
+  2
+  3 1
+  @end
+
+
+See keymap-advanced.vroom for more advanced things maktaba can do with keymaps,
+such as defining a one-shot keymap that expires after the keypress timeout.
