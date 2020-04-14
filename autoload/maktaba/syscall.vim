@@ -79,7 +79,7 @@ endfunction
 
 ""
 " @exception
-" For when a @dict(Syscall) returns an exit code.
+" For when a @dict(Syscall) returns a non-zero exit code.
 function! maktaba#syscall#ShellError(syscall, return_data) abort
   " Translate exit code into thrown ShellError.
   let l:extra_info_msg = ''

@@ -2010,7 +2010,7 @@ indicate there's a bug in the plugin, and should never be caught or declared
 with `@throws`.
 
                                                            *ERROR(ShellError)*
-For when a |maktaba.Syscall| returns an exit code.
+For when a |maktaba.Syscall| returns a non-zero exit code.
 
 ==============================================================================
 PYTHON                                                        *maktaba-python*
