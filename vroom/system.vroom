@@ -241,6 +241,15 @@ This function converts non-zero status codes into ShellError exceptions:
   $ 1 (status)
   ~ ERROR(ShellError): Error running: nothing '!@#$'
 
+  :let g:failcmd = '(echo "Some stderr output !@#$%s^&*()[]" >&2 && exit 1)'
+  :call maktaba#error#Try(g:syscall_fn.WithArgs(g:failcmd))
+  ! (echo "Some stderr output *" >&2 && exit 1) 2> /tmp/* (glob)
+  ~ ERROR(ShellError): Error running: * (glob)
+  ~ Some stderr output !@#$%s^&*()[] (verbatim)
+
+Note the "%s" on stderr used to cause problems in older versions of maktaba (see
+google/vim-maktaba#223).
+
 You can suppress error messages by passing in a 0 as maktaba#system#Call's third
 argument (throw_errors):
 

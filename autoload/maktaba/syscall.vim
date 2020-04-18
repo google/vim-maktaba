@@ -73,12 +73,24 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
     return l:return_data
   endif
 
+  throw maktaba#syscall#ShellError(a:syscall, l:return_data)
+endfunction
+
+
+""
+" @exception
+" For when a @dict(Syscall) returns a non-zero exit code.
+function! maktaba#syscall#ShellError(syscall, return_data) abort
   " Translate exit code into thrown ShellError.
-  let l:err_msg = 'Error running: %s'
-  if has_key(l:return_data, 'stderr')
-    let l:err_msg .= "\n" . l:return_data.stderr
+  let l:extra_info_msg = ''
+  if has_key(a:return_data, 'stderr')
+    let l:extra_info_msg = "\n" . a:return_data.stderr
   endif
-  throw maktaba#error#Message('ShellError', l:err_msg, a:syscall.GetCommand())
+  return maktaba#error#Message(
+      \ 'ShellError',
+      \ 'Error running: %s%s',
+      \ a:syscall.GetCommand(),
+      \ l:extra_info_msg)
 endfunction
 
 
