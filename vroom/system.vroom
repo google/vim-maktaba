@@ -247,6 +247,9 @@ This function converts non-zero status codes into ShellError exceptions:
   ~ ERROR(ShellError): Error running: * (glob)
   ~ Some stderr output !@#$%s^&*()[] (verbatim)
 
+Note the "%s" on stderr used to cause problems in older versions of maktaba (see
+google/vim-maktaba#223).
+
 You can suppress error messages by passing in a 0 as maktaba#system#Call's third
 argument (throw_errors):
 
