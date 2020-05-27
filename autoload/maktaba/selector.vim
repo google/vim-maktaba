@@ -143,12 +143,6 @@ function! s:BaseSyntax() abort
 endfunction
 
 
-" A default key mapping function -- not very useful.
-function! s:DefaultAfterKey(line, ...) abort
-  execute 'edit ' . a:line
-endfunction
-
-
 ""
 " @dict Selector
 " Representation of a set of data for a user to select from, e.g. list of files.
