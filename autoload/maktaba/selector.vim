@@ -23,7 +23,7 @@ endif
 " The default keymappings.
 function! s:GetDefaultKeyMappings() abort
   return {
-      \ '<CR>' : ['s:DefaultAfterKey', 'Close', 'Do something'],
+      \ '<CR>' : ['maktaba#selector#NoOp', 'Close', 'Do something'],
       \ s:HELP_KEY : [
           \ 'maktaba#selector#ToggleCurrentHelp',
           \ 'NoOp',
