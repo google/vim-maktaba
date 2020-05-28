@@ -36,3 +36,8 @@ Below is a walkthrough of the various elements supported by Maktaba.
 
   call maktaba#ui#selector#Create(l:text).Show()
   ```
+
+* **Other Links**:
+
+  * Help Docs: `:h selector`
+  * Vroom Examples: [Vroom tests](../../../vroom/selector.vroom)
