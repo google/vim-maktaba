@@ -45,11 +45,11 @@ buffers easily.
   @end
 
 
-Now we can use maktaba#selector#Create to create a new buffer with multiple
+Now we can use maktaba#ui#selector#Create to create a new buffer with multiple
 lines that can be selected.
 
   :let g:lines = ["one/one.1", "two/two.2", "three/three.3"]
-  :let g:selector = maktaba#selector#Create(g:lines)
+  :let g:selector = maktaba#ui#selector#Create(g:lines)
   |.WithMappings(g:example_keys).WithSyntax(function('HandleResetSyntax'))
   |.WithName('Window_Name')
   |.Show()

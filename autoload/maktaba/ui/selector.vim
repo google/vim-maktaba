@@ -23,12 +23,12 @@ endif
 " The default keymappings.
 function! s:GetDefaultKeyMappings() abort
   return {
-      \ '<CR>' : ['maktaba#selector#NoOp', 'Close', 'Do something'],
+      \ '<CR>' : ['maktaba#ui#selector#NoOp', 'Close', 'Do something'],
       \ s:HELP_KEY : [
-          \ 'maktaba#selector#ToggleCurrentHelp',
+          \ 'maktaba#ui#selector#ToggleCurrentHelp',
           \ 'NoOp',
           \ 'Toggle verbose help messages'],
-      \ s:QUIT_KEY : ['maktaba#selector#NoOp', 'Close', 'Close the window']
+      \ s:QUIT_KEY : ['maktaba#ui#selector#NoOp', 'Close', 'Close the window']
       \ }
 endfunction
 
@@ -36,9 +36,9 @@ endfunction
 " Create the full key mappings dict.
 function! s:ExpandedKeyMappings(mappings) abort
   let l:window_action_mapping = {
-      \ 'Close' : 'maktaba#selector#CloseWindow',
-      \ 'Return' : 'maktaba#selector#ReturnToWindow',
-      \ 'NoOp'  : 'maktaba#selector#NoOp'
+      \ 'Close' : 'maktaba#ui#selector#CloseWindow',
+      \ 'Return' : 'maktaba#ui#selector#ReturnToWindow',
+      \ 'NoOp'  : 'maktaba#ui#selector#NoOp'
       \ }
   " A map from the key (scrubbed of <>s) to:
   "   - The main action
@@ -157,21 +157,21 @@ endfunction
 " Each entry in {infolist} may be either a line to display, or a 2-item list
 " containing `[LINE, DATA]`. If present, DATA will be passed to the action
 " function as a second argument.
-function! maktaba#selector#Create(infolist) abort
+function! maktaba#ui#selector#Create(infolist) abort
   let l:selector = {
       \ '_infolist': a:infolist,
       \ '_name': '__SelectorWindow__',
       \ '_is_verbose': 0,
-      \ '_ApplySyntax': function('maktaba#selector#DefaultSetSyntax'),
-      \ '_ApplyExtraOptions': function('maktaba#selector#DefaultExtraOptions'),
-      \ '_GetHelpLines': function('maktaba#selector#DoGetHelpLines'),
-      \ 'WithMappings': function('maktaba#selector#DoWithMappings'),
-      \ 'WithSyntax': function('maktaba#selector#DoWithSyntax'),
-      \ 'WithExtraOptions': function('maktaba#selector#DoWithExtraOptions'),
-      \ 'WithName': function('maktaba#selector#DoWithName'),
-      \ 'Show': function('maktaba#selector#DoShow'),
-      \ 'ToggleHelp': function('maktaba#selector#DoToggleHelp'),
-      \ '_GetLineData': function('maktaba#selector#DoGetLineData')}
+      \ '_ApplySyntax': function('maktaba#ui#selector#DefaultSetSyntax'),
+      \ '_ApplyExtraOptions': function('maktaba#ui#selector#DefaultExtraOptions'),
+      \ '_GetHelpLines': function('maktaba#ui#selector#DoGetHelpLines'),
+      \ 'WithMappings': function('maktaba#ui#selector#DoWithMappings'),
+      \ 'WithSyntax': function('maktaba#ui#selector#DoWithSyntax'),
+      \ 'WithExtraOptions': function('maktaba#ui#selector#DoWithExtraOptions'),
+      \ 'WithName': function('maktaba#ui#selector#DoWithName'),
+      \ 'Show': function('maktaba#ui#selector#DoShow'),
+      \ 'ToggleHelp': function('maktaba#ui#selector#DoToggleHelp'),
+      \ '_GetLineData': function('maktaba#ui#selector#DoGetLineData')}
   return l:selector.WithMappings({})
 endfunction
 
@@ -194,7 +194,7 @@ endfunction
 "  - "Close" -- close the SelectorWindow before completing the action
 "  - "Return" -- Return to previous window and keep the Selector Window open
 "  - "NoOp" -- Perform no action (keeping the SelectorWindow open).
-function! maktaba#selector#DoWithMappings(keymappings) dict abort
+function! maktaba#ui#selector#DoWithMappings(keymappings) dict abort
   let l:custom_mappings = maktaba#ensure#IsDict(a:keymappings)
   let l:mappings = extend(
       \ s:GetDefaultKeyMappings(), l:custom_mappings, 'force')
@@ -208,7 +208,7 @@ endfunction
 " Configures an {ApplySyntax} function to be called in the selector window.
 " This will by applied in addition to standard syntax rules for rendering the
 " help header, etc.
-function! maktaba#selector#DoWithSyntax(ApplySyntax) dict abort
+function! maktaba#ui#selector#DoWithSyntax(ApplySyntax) dict abort
   let self._ApplySyntax = maktaba#ensure#IsCallable(a:ApplySyntax)
   return self
 endfunction
@@ -219,7 +219,7 @@ endfunction
 " Configures {ApplyExtraOptions} for additional window-local settings for
 " selector window.
 " If not configured, the default extra options just disable 'number'.
-function! maktaba#selector#DoWithExtraOptions(ApplyExtraOptions) dict abort
+function! maktaba#ui#selector#DoWithExtraOptions(ApplyExtraOptions) dict abort
   let self._ApplyExtraOptions = maktaba#ensure#IsCallable(a:ApplyExtraOptions)
   return self
 endfunction
@@ -229,7 +229,7 @@ endfunction
 " @dict Selector.WithName
 " Configures {name} to show as the window name on the selector.
 " If not configured, the default name is "__SelectorWindow__".
-function! maktaba#selector#DoWithName(name) dict abort
+function! maktaba#ui#selector#DoWithName(name) dict abort
   let self._name = maktaba#ensure#IsString(a:name)
   return self
 endfunction
@@ -242,7 +242,7 @@ endfunction
 " @default minheight=5
 " @default maxheight=25
 " @default position='botright'
-function! maktaba#selector#DoShow(...) dict abort
+function! maktaba#ui#selector#DoShow(...) dict abort
   let l:min_win_height = (a:0 >= 1 && a:1 isnot -1) ?
       \ maktaba#ensure#IsNumber(a:1) : 5
   let l:max_win_height = (a:0 >= 2 && a:2 isnot -1) ?
@@ -281,7 +281,7 @@ function! maktaba#selector#DoShow(...) dict abort
 
   " Restore the previous windows view
   let l:buffer_window = winnr()
-  call maktaba#selector#ReturnToWindow()
+  call maktaba#ui#selector#ReturnToWindow()
   call winrestview(s:current_savedview)
   execute l:buffer_window  'wincmd w'
 
@@ -294,7 +294,7 @@ endfunction
 " Gets data associated with {lineno}, as passed in 2-item form of infolist when
 " creating a selector with @function(#Create).
 " @throws NotFound if no data was configured for requested line.
-function! maktaba#selector#DoGetLineData(lineno) dict abort
+function! maktaba#ui#selector#DoGetLineData(lineno) dict abort
   let l:lineno = a:lineno - len(self._GetHelpLines())
   if has_key(b:selector_lines_data, l:lineno)
     return b:selector_lines_data[l:lineno]
@@ -308,7 +308,7 @@ endfunction
 " Get a list of header lines for the selector window that will be displayed as
 " comments at the top. Documents all key mappings if `self.verbose` is 1,
 " otherwise just documents that H toggles help.
-function! maktaba#selector#DoGetHelpLines() dict abort
+function! maktaba#ui#selector#DoGetHelpLines() dict abort
   if self._is_verbose
     " Map from comments to keys.
     let l:comments_keys = {}
@@ -344,7 +344,7 @@ endfunction
 
 ""
 " @private
-function! maktaba#selector#ToggleCurrentHelp(...) abort
+function! maktaba#ui#selector#ToggleCurrentHelp(...) abort
   let l:selector = s:selectors_by_buffer_number[bufnr('%')]
   call l:selector.ToggleHelp()
 endfunction
@@ -353,7 +353,7 @@ endfunction
 ""
 " @dict Selector.ToggleHelp
 " Toggle whether verbose help is shown for the selector.
-function! maktaba#selector#DoToggleHelp() dict abort
+function! maktaba#ui#selector#DoToggleHelp() dict abort
   " TODO(dbarnett): Don't modify buffer if none exists.
   let l:prev_read = &readonly
   let l:prev_mod = &modifiable
@@ -373,7 +373,7 @@ function! s:InstantiateKeyMaps(mappings) abort
     let l:items = a:mappings[l:scrubbed_key]
     let l:actual_key = l:items[3]
     let l:mapping = 'nnoremap <buffer> <silent> ' . l:actual_key
-        \ . " :call maktaba#selector#KeyCall('" . l:scrubbed_key . "')<CR>"
+        \ . " :call maktaba#ui#selector#KeyCall('" . l:scrubbed_key . "')<CR>"
     execute l:mapping
   endfor
 endfunction
@@ -381,7 +381,7 @@ endfunction
 
 ""
 " @private
-function! maktaba#selector#DefaultExtraOptions() abort
+function! maktaba#ui#selector#DefaultExtraOptions() abort
   setlocal nonumber
 endfunction
 
@@ -390,7 +390,7 @@ endfunction
 " @private
 " The default syntax function.  Mostly, this exists to test that setting-syntax
 " works, and it's expected that this will be overwritten
-function! maktaba#selector#DefaultSetSyntax() abort
+function! maktaba#ui#selector#DefaultSetSyntax() abort
   syntax match filepart '/\?\(\w*/\)*\w*' nextgroup=javaext
   syntax match javaext '[.][a-z]*$'
   highlight default link filepart Directory
@@ -403,7 +403,7 @@ endfunction
 " Perform the key action.
 "
 " The {scrubbed_key} allows us to retrieve the original key.
-function! maktaba#selector#KeyCall(scrubbed_key) abort
+function! maktaba#ui#selector#KeyCall(scrubbed_key) abort
   let l:selector = s:selectors_by_buffer_number[bufnr('%')]
   let l:contents = getline('.')
   let l:action_func = l:selector._mappings[a:scrubbed_key][0]
@@ -430,16 +430,16 @@ endfunction
 ""
 " @private
 " Close the window and return to the initial-calling window.
-function! maktaba#selector#CloseWindow() abort
+function! maktaba#ui#selector#CloseWindow() abort
   bdelete
-  call maktaba#selector#ReturnToWindow()
+  call maktaba#ui#selector#ReturnToWindow()
 endfunction
 
 
 ""
 " @private
 " Return the user to the previous window
-function! maktaba#selector#ReturnToWindow() abort
+function! maktaba#ui#selector#ReturnToWindow() abort
   execute s:last_winnum . 'wincmd w'
   call setpos('.', s:curpos_holder)
   call winrestview(s:current_savedview)
@@ -449,5 +449,5 @@ endfunction
 ""
 " @private
 " A default function
-function! maktaba#selector#NoOp(...) abort
+function! maktaba#ui#selector#NoOp(...) abort
 endfunction

@@ -370,7 +370,7 @@ Plugin.GetExtensionRegistry()                  *Plugin.GetExtensionRegistry()*
 
                                                             *maktaba.Selector*
 Representation of a set of data for a user to select from, e.g. list of files.
-It can be created with |maktaba#selector#Create()|, configured with syntax
+It can be created with |maktaba#ui#selector#Create()|, configured with syntax
 highlighting, key mappings, etc. and shown as a vim window.
 
 Selector.WithMappings({keymappings})                 *Selector.WithMappings()*
@@ -1676,14 +1676,6 @@ maktaba#rtp#Load({dir})                                   *maktaba#rtp#Load()*
 maktaba#rtp#DirDefinesFiletypes({dir})     *maktaba#rtp#DirDefinesFiletypes()*
   Whether or not runtimepath directory {dir} defines a new filetype.
 
-maktaba#selector#Create({infolist})                *maktaba#selector#Create()*
-  Creates a |maktaba.Selector| from {infolist} that can be configured and
-  shown.
-
-  Each entry in {infolist} may be either a line to display, or a 2-item list
-  containing `[LINE, DATA]`. If present, DATA will be passed to the action
-  function as a second argument.
-
 maktaba#setting#ParseHandle({text})            *maktaba#setting#ParseHandle()*
   Parses a flag handle off of {text}, returns a tuple containing [flagname,
   foci, leftover]. See |maktaba#setting#Handle()|; the only difference is that
@@ -1798,6 +1790,14 @@ maktaba#test#Override({target}, {replacement})       *maktaba#test#Override()*
   Due to vim's naming limitations, this function must make (and source) an
   adequately named temporary file. As such, {replacement} MUST be a string,
   funcref, or funcdict usable from any given scope (i.e., not script-local).
+
+maktaba#ui#selector#Create({infolist})          *maktaba#ui#selector#Create()*
+  Creates a |maktaba.Selector| from {infolist} that can be configured and
+  shown.
+
+  Each entry in {infolist} may be either a line to display, or a 2-item list
+  containing `[LINE, DATA]`. If present, DATA will be passed to the action
+  function as a second argument.
 
 maktaba#user#Name()                                      *maktaba#user#Name()*
   Gets the user's name.
