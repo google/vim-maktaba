@@ -23,7 +23,7 @@ endif
 " The default keymappings.
 function! s:GetDefaultKeyMappings() abort
   return {
-      \ '<CR>' : ['s:DefaultAfterKey', 'Close', 'Do something'],
+      \ '<CR>' : ['maktaba#selector#NoOp', 'Close', 'Do something'],
       \ s:HELP_KEY : [
           \ 'maktaba#selector#ToggleCurrentHelp',
           \ 'NoOp',
@@ -140,12 +140,6 @@ function! s:BaseSyntax() abort
   highlight default link SelectorKey Keyword
   highlight default link SelectorKey2 Keyword
   highlight default link SelectorKey3 Keyword
-endfunction
-
-
-" A default key mapping function -- not very useful.
-function! s:DefaultAfterKey(line, ...) abort
-  execute 'edit ' . a:line
 endfunction
 
 
