@@ -14,6 +14,10 @@ if !exists('s:vimjob_disabled')
   let s:vimjob_disabled = 0
 endif
 
+if !exists('s:terminal_disabled')
+  let s:terminal_disabled = 0
+endif
+
 if !exists('s:force_sync_fallback_allowed')
   let s:force_sync_fallback_allowed = 0
 endif
@@ -135,7 +139,16 @@ endfunction
 function! maktaba#syscall#DoCallForeground(pause) abort dict
   let l:return_data = {}
   if a:pause
-    execute '!' . s:EscapeSpecialChars(self.GetCommand())
+    " Neovim has supported terminals for all versioned releases so we don't need
+    " a version or feature check here.
+    if !s:terminal_disabled && has('nvim')
+        let l:cmd = 'noautocmd new | terminal '
+    elseif !s:terminal_disabled && has('terminal')
+        let l:cmd = 'terminal '
+    else
+        let l:cmd = '!'
+    endif
+    execute l:cmd . s:EscapeSpecialChars(self.GetCommand())
   else
     silent execute '!' . s:EscapeSpecialChars(self.GetCommand())
     redraw!
@@ -454,4 +467,12 @@ endfunction
 " otherwise.
 function! maktaba#syscall#SetVimjobDisabledForTesting(disabled) abort
   let s:vimjob_disabled = maktaba#ensure#IsBool(a:disabled)
+endfunction
+
+
+""
+" @private
+" Disables internal use of |:terminal| if {disabled} is true. Enables otherwise.
+function! maktaba#syscall#SetTermCmdDisabledForTesting(disabled) abort
+  let s:terminal_disabled = maktaba#ensure#IsBool(a:disabled)
 endfunction

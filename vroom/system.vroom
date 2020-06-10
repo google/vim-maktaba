@@ -113,6 +113,7 @@ you should run the system call with CallForeground.
 CallForeground takes a pause argument. If pause is 1, the output will stay on
 screen until the user presses Enter.
 
+  :call maktaba#syscall#SetTermCmdDisabledForTesting(1)
   :let g:out1 = maktaba#syscall#Create(['echo', 'hi']).CallForeground(1)
   ! echo hi
   $ hi
