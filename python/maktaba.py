@@ -29,5 +29,5 @@ def OverwriteBufferLines(startline, endline, lines):
   sequence = difflib.SequenceMatcher(None, orig_lines, lines)
   offset = startline - 1
   for tag, i1, i2, j1, j2 in reversed(sequence.get_opcodes()):
-    if tag is not 'equal':
+    if tag != 'equal':
       vim.current.buffer[i1+offset:i2+offset] = lines[j1:j2]
