@@ -126,7 +126,7 @@ endfunction
 " Returns whether the current vim session supports asynchronous calls.
 function! maktaba#syscall#IsAsyncAvailable() abort
   return !s:async_disabled && (
-      \ (!s:vimjob_disabled && has('job')) ||
+      \ (!s:vimjob_disabled && (has('job') || has('nvim'))) ||
       \ (has('clientserver') && !empty(v:servername)))
 endfunction
 
@@ -312,12 +312,12 @@ endfunction
 " env_dict contains tab, buffer, path, column and line info. This fallback will
 " be deprecated and stop working in future versions of maktaba.
 "
-" Asynchronous calls are executed via vim's |job| support. If the vim instance
-" is missing job support, this will try to fall back to legacy |clientserver|
-" invocation, which has a few preconditions of its own (see below). If neither
-" option is available, asynchronous calls are not possible, and the call will
-" either throw |ERROR(MissingFeature)| or fall back to synchronous calls,
-" depending on the {allow_sync_fallback} parameter.
+" Asynchronous calls are executed via vim's |job| support, or neovim's
+" |job-control|. If the vim instance is missing job support, this will try to
+" fall back to legacy |clientserver| invocation, which has a few preconditions
+" of its own (see below). If neither option is available, asynchronous calls are
+" not possible, and the call will either throw |ERROR(MissingFeature)| or fall
+" back to synchronous calls, depending on the {allow_sync_fallback} parameter.
 "
 " The legacy fallback executes calls via |--remote-expr| using vim's
 " |clientserver| capabilities, so the preconditions for it are vim being
@@ -345,7 +345,7 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
       if s:async_disabled
         let l:reason = 'disabled by maktaba#syscall#SetAsyncDisabled'
       else
-        let l:reason = 'no +job support and no fallback available'
+        let l:reason = 'no +job support, not nvim, and no fallback available'
       endif
       throw maktaba#error#MissingFeature(
           \ 'Cannot run async commands (%s). See :help Syscall.CallAsync',
@@ -356,6 +356,10 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
   if !s:vimjob_disabled && has('job')
     let l:vimjob_invocation =
         \ maktaba#syscall#async#CreateInvocation(self, l:invocation)
+    call l:vimjob_invocation.Start()
+  elseif !s:vimjob_disabled && has('nvim')
+    let l:vimjob_invocation =
+        \ maktaba#syscall#neovim#CreateInvocation(self, l:invocation)
     call l:vimjob_invocation.Start()
   else
     " TODO(#190): Remove clientserver implementation.

@@ -1,6 +1,13 @@
 In addition to the functionality featured in system.vroom, the maktaba#syscall#
 helpers feature asynchronous execution powered by vim's native jobs feature.
 
+First, we need to work around for nvim prompting users to press enter.
+(See https://github.com/google/vim-codefmt/pull/131)
+
+  :if has('nvim')<CR>
+  |  set cmdheight=30<CR>
+  |endif<CR>
+
 Before we dive in, let's get maktaba installed and set up the shell override:
 
   @system (STRICT)
@@ -14,7 +21,7 @@ Before we dive in, let's get maktaba installed and set up the shell override:
 The examples featured in this file only work with vim instances that support
 vim jobs.
 
-  :if !has('job')<CR>
+  :if !has('job') && !has('nvim')<CR>
   |  echomsg maktaba#error#MissingFeature(
   |      'Must have +job support to run system-vimjob.vroom examples')<CR>
   |endif
