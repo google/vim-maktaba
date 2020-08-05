@@ -1,6 +1,11 @@
 In addition to the functionality featured in system.vroom, the maktaba#syscall#
 helpers feature asynchronous execution powered by vim's native jobs feature.
 
+Note that we use delays of 0.1s on the asynchronous calls to ensure nvim has
+enough time to flush the contents of stdout to vroom.  This shouldn't be
+necessary for non-test usage.
+(See https://github.com/google/vim-maktaba/pull/234 for more details.)
+
 First, we need to work around for nvim prompting users to press enter.
 (See https://github.com/google/vim-codefmt/pull/131)
 
