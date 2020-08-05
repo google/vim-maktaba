@@ -23,7 +23,7 @@ vim jobs.
 
   :if !has('job') && !has('nvim')<CR>
   |  echomsg maktaba#error#MissingFeature(
-  |      'Must have +job support to run system-vimjob.vroom examples')<CR>
+  |      'Must have +job support or nvim to run system-job.vroom examples')<CR>
   |endif
 
 
@@ -42,9 +42,9 @@ To execute system calls asynchronously, use CallAsync.
   :function Callback(result) abort<CR>
   |  let g:callback_stdout = a:result.stdout<CR>
   |endfunction
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
   ! echo hi
-  :echomsg g:callback_stdout
+  :echomsg g:callback_stdout (0.1s)
   ~ hi
   :echomsg g:invocation.stdout
   ~ hi
@@ -53,7 +53,7 @@ It is also possible to force synchronous execution.
 
   :call maktaba#syscall#SetAsyncDisabledForTesting(1)
   :call maktaba#syscall#ForceSyncFallbackAllowedForTesting(1)
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
   ! echo hi.*
 
   :call maktaba#syscall#SetAsyncDisabledForTesting(0)
@@ -62,21 +62,21 @@ It is also possible to force synchronous execution.
 Asynchronous calls can also take a stdin parameter.
 
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
   ! cat
-  :echomsg g:invocation.stdout
+  :echomsg g:invocation.stdout (0.1s)
   ~ Hello
 
 And() and Or() can also be used to chain Asynchronous commands.
 
   :let g:syscall = maktaba#syscall#Create('true').And('echo SUCCESS')
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
   ! true && echo SUCCESS
-  :echomsg g:invocation.stdout
+  :echomsg g:invocation.stdout (0.1s)
   ~ SUCCESS
 
   :let g:syscall = maktaba#syscall#Create('false').And('echo FAILURE')
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
   ! false && echo FAILURE
-  :echomsg g:invocation.stdout
+  :echomsg g:invocation.stdout (0.1s)
   ~ FAILURE
