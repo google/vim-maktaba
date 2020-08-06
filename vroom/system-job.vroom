@@ -47,9 +47,9 @@ To execute system calls asynchronously, use CallAsync.
   :function Callback(result) abort<CR>
   |  let g:callback_stdout = a:result.stdout<CR>
   |endfunction
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.2s)
   ! echo hi
-  :echomsg g:callback_stdout (0.1s)
+  :echomsg g:callback_stdout
   ~ hi
   :echomsg g:invocation.stdout
   ~ hi
@@ -58,7 +58,7 @@ It is also possible to force synchronous execution.
 
   :call maktaba#syscall#SetAsyncDisabledForTesting(1)
   :call maktaba#syscall#ForceSyncFallbackAllowedForTesting(1)
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.2s)
   ! echo hi.*
 
   :call maktaba#syscall#SetAsyncDisabledForTesting(0)
@@ -67,21 +67,21 @@ It is also possible to force synchronous execution.
 Asynchronous calls can also take a stdin parameter.
 
   :let g:syscall = maktaba#syscall#Create(['cat']).WithStdin("Hello")
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.2s)
   ! cat
-  :echomsg g:invocation.stdout (0.1s)
+  :echomsg g:invocation.stdout
   ~ Hello
 
 And() and Or() can also be used to chain Asynchronous commands.
 
   :let g:syscall = maktaba#syscall#Create('true').And('echo SUCCESS')
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.2s)
   ! true && echo SUCCESS
-  :echomsg g:invocation.stdout (0.1s)
+  :echomsg g:invocation.stdout
   ~ SUCCESS
 
   :let g:syscall = maktaba#syscall#Create('false').And('echo FAILURE')
-  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.1s)
+  :let g:invocation = AsyncWait(g:syscall.CallAsync('Callback', 0), 2) (0.2s)
   ! false && echo FAILURE
-  :echomsg g:invocation.stdout (0.1s)
+  :echomsg g:invocation.stdout
   ~ FAILURE
