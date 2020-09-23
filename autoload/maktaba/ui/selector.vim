@@ -372,7 +372,7 @@ function! s:InstantiateKeyMaps(mappings) abort
   for l:scrubbed_key in keys(a:mappings)
     let l:items = a:mappings[l:scrubbed_key]
     let l:actual_key = l:items[3]
-    let l:mapping = 'nnoremap <buffer> <silent> ' . l:actual_key
+    let l:mapping = 'nnoremap <buffer> <silent> <nowait> ' . l:actual_key
         \ . " :call maktaba#ui#selector#KeyCall('" . l:scrubbed_key . "')<CR>"
     execute l:mapping
   endfor
