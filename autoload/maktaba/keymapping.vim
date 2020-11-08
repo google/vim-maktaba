@@ -1,7 +1,7 @@
 ""
 " @dict KeyMapping
-" A maktaba representation of a vim key mapping, which is used to configure and
-" unmap it from vim.
+" A maktaba representation of a Vim key mapping, which is used to configure and
+" unmap it from Vim.
 
 
 if !exists('s:next_keymap_id')
@@ -35,6 +35,7 @@ function! s:GetFuncCallKeystrokes(funcstr, mode) abort
   elseif a:mode ==# 'i'
     return printf('<C-\><C-o>:call %s<CR>', a:funcstr)
   elseif a:mode ==# 'v'
+    " Needs C-u to remove "'<,'>" range inserted for commands from visual mode.
     " Uses "gv" at the end to re-enter visual mode.
     return printf(':<C-u>call %s<CR>gv', a:funcstr)
   elseif a:mode ==# 's'
@@ -48,7 +49,16 @@ endfunction
 
 ""
 " @dict KeyMapping
-" Unmaps the mapping in vim.
+" Returns 1 if the mapping is still defined, 0 otherwise
+function! maktaba#keymapping#IsMapped() dict abort
+  let l:foundmap = maparg(self._lhs, self._mode, 0, 1)
+  return !empty(l:foundmap) && l:foundmap == self._maparg
+endfunction
+
+
+""
+" @dict KeyMapping
+" Unmaps the mapping in Vim.
 " Returns 1 if mapping was found and unmapped, 0 if mapping was gone already.
 function! maktaba#keymapping#Unmap() dict abort
   if self.IsMapped()
@@ -70,18 +80,6 @@ endfunction
 
 ""
 " @dict KeyMapping
-" Returns 1 if the mapping is still defined, 0 otherwise
-"
-" Caveat: This detection can currently false positive if the original mapping
-" was unmapped but then another similar one mapped afterwards.
-function! maktaba#keymapping#IsMapped() dict abort
-  let l:foundmap = maparg(self._lhs, self._mode, 0, 1)
-  return !empty(l:foundmap) && l:foundmap == self._maparg
-endfunction
-
-
-""
-" @dict KeyMapping
 " Return a copy of the spec used to issue this mapping.
 function! maktaba#keymapping#GetSpec() dict abort
   return copy(self._spec)
@@ -94,16 +92,15 @@ let s:GetSpec = function('maktaba#keymapping#GetSpec')
 
 
 ""
-" Set up a key mapping in vim, mapping key sequence {lhs} to replacement
-" sequence {rhs} in the given [mode]. This is a convenience wrapper for
-" @function(#Spec) and its |KeyMappingSpec.Map| that supports the basic mapping
-" options. It is equivalent to calling: >
-"   :call maktaba#keymapping#Spec({lhs}, {rhs}, [mode]).Map()
+" Set up a key mapping in Vim, mapping key sequence {lhs} to replacement
+" sequence {rhs} in the given [mode]. It is equivalent to calling: >
+"   :call maktaba#keymappingspec#Spec({lhs}, {rhs}, [mode]).Map()
 " <
 "
-" See those functions for usage and behavior details.
+" See the |maktaba#keymappingspec#Spec()| and |KeyMappingSpec.Map()| functions
+" for usage and behavior details.
 "
-" @default mode=all of 'n', 'v', and 'o' (vim's default)
+" @default mode=all of 'n', 'v', and 'o' (Vim's default)
 function! maktaba#keymapping#Map(lhs, rhs, ...) abort
   if a:0 >= 1
     let l:spec = maktaba#keymappingspec#Spec(a:lhs, a:rhs, a:1)
@@ -179,7 +176,7 @@ endfunction
 ""
 " @private
 " @dict KeyMapping
-" Defines the key mapping in vim via the |:map| commands for the keymap in self.
+" Defines the key mapping in Vim via the |:map| commands for the keymap in self.
 " Core internal implementation of @function(KeyMappingSpec.Map).
 function! maktaba#keymapping#MapSelf() dict abort
   " TODO(dbarnett): Perform a sweep for expired mapping timeouts before trying
@@ -199,7 +196,7 @@ endfunction
 ""
 " @private
 " @dict KeyMapping
-" Define a buffer-local one-shot vim mapping from spec that will only trigger
+" Define a buffer-local one-shot Vim mapping from spec that will only trigger
 " once and then unmap itself.
 "
 " @throws NotImplemented if used with `WithRemap(1)`
@@ -226,7 +223,7 @@ endfunction
 ""
 " @private
 " @dict KeyMapping
-" Define a short-lived vim mapping from spec that will only trigger once and
+" Define a short-lived Vim mapping from spec that will only trigger once and
 " will also expire if 'timeoutlen' duration expires with 'timeout' setting
 " active. See |KeyMappingSpec.MapOnceWithTimeout()| for details.
 "

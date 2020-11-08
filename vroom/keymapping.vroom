@@ -29,7 +29,7 @@ Now let's try it out!
   :normal i
   ~ Nope!
 
-Well, that was fun, but let's unlet our mapping and restore the original
+Well, that was fun, but let's unmap our mapping and restore the original
 behavior.
 
   :call evil_mapping.Unmap()
@@ -62,19 +62,36 @@ open parentheses.
 
 
 
-Vim also supports special arguments to mappings, such as the "<unique>" arg to
-avoid overriding any existing mapping. Let's define a unique mapping and verify
-that it's behaving politely.
+Vim also supports special arguments to mappings to affect mapping behavior (see
+:help :map-arguments). Let's use the <buffer> argument to define a buffer-local
+mapping.
 
 Maktaba provides a builder interface for mappings configuration more complex
 than LHS, RHS, and mode. That will let us pass arguments in to the mapping we're
 defining.
 
-  :let first_mapping = maktaba#keymapping#Map('!', '?')
-  :let polite_spec = maktaba#keymappingspec#Spec('!', '??')
-  |.WithArgs(['<unique>'])
-  :call maktaba#error#Try(maktaba#function#Method(polite_spec, 'Map'))
-  ~ Vim(noremap):E227: * (glob)
+  :let buffer_mapping = maktaba#keymappingspec#Spec('!', '?')
+  |.WithArgs(['<buffer>'])
+  |.Map()
+  :let mapping_info = maparg('!', '', 0, 1)
+  :echomsg mapping_info.buffer
+  ~ 1
+  :call buffer_mapping.Unmap()
+
+
+By default Maktaba uses <unique> and defines non-recursive mappings to avoid
+unpleasant surprises, since programmatically-defined mappings usually wouldn't
+intend to silently override existing mappings or expand recursively-nested
+mappings. The spec interface allows you to override these default behaviors.
+
+  :let recursive_nonunique_mapping = maktaba#keymappingspec#Spec('!', '?')
+  |.WithArgs([], 1)
+  |.WithRemap(1)
+  |.Map()
+  :let mapping_info = maparg('!', '', 0, 1)
+  :echomsg mapping_info.noremap
+  ~ 0
+  :call recursive_nonunique_mapping.Unmap()
 
 
 
