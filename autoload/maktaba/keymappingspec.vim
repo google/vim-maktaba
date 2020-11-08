@@ -114,7 +114,7 @@ endfunction
 "
 " For example, this defines a mapping that immediately unfolds one level but
 " unfolds all levels if the ">" keypress is repeated: >
-"   nnoremap z> zr:call maktaba#keymappingspec#Spec('n', '>', 'zR')
+"   nnoremap z> zr:call maktaba#keymappingspec#Spec('>', 'zR', 'n')
 "       \.WithArgs(['<buffer>']).MapOnceWithTimeout()<CR>
 " <
 "

@@ -29,8 +29,7 @@ Now let's define that mapping and try it out!
   :function ListenForAnotherIWithTimout()<CR>
   |  call maktaba#keymappingspec#Spec('i', '<'.'Esc>I', 'i').MapOnceWithTimeout()<CR>
   |endfunction
-  :call maktaba#keymapping#Map('i',
-  | ':call ListenForAnotherIWithTimout()<' . 'CR>i', 'n')
+  :execute 'nnoremap i :call ListenForAnotherIWithTimout()<' . 'CR>i'
 
   % sometext sometext
   > i[_]<Esc>
