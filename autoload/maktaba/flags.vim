@@ -5,9 +5,9 @@
 " list) are not sourced until after .vimrc files. Thus, users may only set list
 " and dict settings, they may not easily add to or remove from default settings.
 "
-" For example, suppose a plugin provides a whitelist which you would like to
-" alter. You can set the whitelist in your vimrc, but you cannot add to it:
-" the whitelist doesn't exist until plugin-time, after the vimrc exits.
+" For example, suppose a plugin provides an allowlist which you would like to
+" alter. You can set the allowlist in your vimrc, but you cannot add to it:
+" the allowlist doesn't exist until plugin-time, after the vimrc exits.
 "
 " The solution is flags. Each Maktaba plugin which uses |maktaba#plugin#Enter|
 " has a plugin dictionary, which has a flag dictionary containing Flag objects,
