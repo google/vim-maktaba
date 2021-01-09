@@ -1,0 +1,62 @@
+This file explores some advanced key mapping utilities. You may want to look
+through keymapping.vroom before digging into these concepts.
+
+At any rate, before digging in, let's install maktaba:
+
+  :set nocompatible
+  :let g:maktabadir = fnamemodify($VROOMFILE, ':p:h:h')
+  :let g:bootstrapfile = g:maktabadir . '/bootstrap.vim'
+  :execute 'source' g:bootstrapfile
+  :let g:maktaba = maktaba#plugin#Get('maktaba')
+
+You might sometimes want to define a one-shot mapping that only lives for a
+moment, to detect if a user presses a key immediately after something else
+happens and respond with a particular behavior. Maktaba provides a
+MapOnceWithTimeout helper to make this easy.
+
+For example, <Shift-I> is kind of an awkward key combination to insert at the
+beginning of the line. Let's make it so "ii" will do the same, but only if you
+press the second "i" quickly. Otherwise, it will type a literal "i" in insert
+mode like it normally would.
+
+What "quick" means here is based on vim's 'timeout' and 'timeoutlen' settings.
+Let's configure those to something reasonable first.
+
+  :set timeout timeoutlen=1000
+
+Now let's define that mapping and try it out!
+
+  :function ListenForAnotherIWithTimout()<CR>
+  |  call maktaba#keymappingspec#Spec('i', '<'.'Esc>I', 'i').MapOnceWithTimeout()<CR>
+  |endfunction
+  :execute 'nnoremap i :call ListenForAnotherIWithTimout()<' . 'CR>i'
+
+  % sometext sometext
+  > i[_]<Esc>
+  sometext sometex[_]t
+  @clear
+
+One "i" entered insert mode towards the end of the line. Pressing "i" twice will
+switch to inserting at the beginning of the line.
+
+  % sometext sometext
+  :normal ii[_]
+  [_]sometext sometext
+  @clear
+
+But if you wait for a moment between keypresses or have timeoutlen=0, you won't
+trigger your short-lived mapping (you'll get the original behavior of inserting
+a literal "i" instead).
+
+  :set timeoutlen=0
+  % sometext sometext
+  > $ii[_]<Esc>
+  sometext sometexi[_]t
+
+
+We could have set up similar behavior by mapping "ii" in vim, but with an
+annoying quirk that every time you press "i" to enter insert mode, vim won't
+enter insert mode immediately, but will wait for a short delay to see if you're
+going to type a second "i". With MapOnceWithTimeout, you can get the best of
+both, entering insert mode immediately but still being able to keep typing and
+trigger the alternate behavior.

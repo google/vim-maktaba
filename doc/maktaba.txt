@@ -243,6 +243,72 @@ Flag.Translate({value})                                     *Flag.Translate()*
   Returns the value that the flag will have after being set to {value} (after
   running {value} through all registered translators).
 
+                                                          *maktaba.KeyMapping*
+A maktaba representation of a Vim key mapping, which is used to configure and
+unmap it from Vim.
+
+KeyMapping.IsMapped()                                  *KeyMapping.IsMapped()*
+  Returns 1 if the mapping is still defined, 0 otherwise
+
+KeyMapping.Unmap()                                        *KeyMapping.Unmap()*
+  Unmaps the mapping in Vim. Returns 1 if mapping was found and unmapped, 0 if
+  mapping was gone already.
+
+KeyMapping.GetSpec()                                    *KeyMapping.GetSpec()*
+  Return a copy of the spec used to issue this mapping.
+
+                                                      *maktaba.KeyMappingSpec*
+A spec for a key mapping that can be mapped in Vim with
+|KeyMappingSpec.Map()|.
+
+KeyMappingSpec.WithArgs({args}, [overwrite])       *KeyMappingSpec.WithArgs()*
+  Add {args} as |map-arguments| to spec (appended to any already configured on
+  spec), or overwrite instead of appending if [overwrite] is passed and is
+  true. {args} is a list of strings in the literal syntax accepted by |:map|,
+  such as `['<buffer>', '<nowait>']`.
+  [overwrite] is 0 if omitted.
+
+KeyMappingSpec.WithRemap({enabled})               *KeyMappingSpec.WithRemap()*
+  Configure whether spec should have nested/recursive mappings {enabled}.
+  Throws ERROR(WrongType)
+
+KeyMappingSpec.Map()                                    *KeyMappingSpec.Map()*
+  Define a Vim mapping from spec via the |:map| commands.
+
+KeyMappingSpec.MapOnce()                            *KeyMappingSpec.MapOnce()*
+  Define a buffer-local one-shot Vim mapping from spec that will only trigger
+  once and then unmap itself.
+
+  Not supported for recursive mappings.
+  Throws ERROR(NotImplemented) if used with `WithRemap(1)`
+
+KeyMappingSpec.MapOnceWithTimeout()      *KeyMappingSpec.MapOnceWithTimeout()*
+  Define a short-lived Vim mapping from spec that will only trigger once and
+  will also expire if 'timeoutlen' duration expires with 'timeout' setting
+  active.
+
+  This is useful to detect if the user presses a key immediately after
+  something else happens, and respond with a particular behavior.
+
+  It can also be used for an improved version of Vim's |map-ambiguous|
+  behavior when one mapping is a prefix of another. You can create a prefix
+  mapping that does one thing immediately and then a different follow-up
+  behavior on another keystroke.
+
+  For example, this defines a mapping that immediately unfolds one level but
+  unfolds all levels if the ">" keypress is repeated:
+>
+    nnoremap z> zr:call maktaba#keymappingspec#Spec('>', 'zR', 'n')
+        \.WithArgs(['<buffer>']).MapOnceWithTimeout()<CR>
+<
+
+  Caveat: Unlike Vim's |map-ambiguous| behavior, this currently doesn't stop
+  waiting for keypresses if another unrelated key is pressed while it's
+  waiting. Caveat: For long mappings, you might notice that the timeout is
+  currently for the entire mapping and not for each keystroke. If you need to
+  work around that you can define a chain of single-key mappings that each map
+  the next key in the sequence.
+
                                                               *maktaba.Logger*
 Interface for a plugin to send log messages to maktaba.
 
@@ -1177,6 +1243,32 @@ maktaba#json#python#Disable()                  *maktaba#json#python#Disable()*
 maktaba#json#python#IsDisabled()            *maktaba#json#python#IsDisabled()*
   Returns whether the Python implementation of the maktaba#json functions is
   disabled, and prevents further changes.
+
+maktaba#keymapping#Map({lhs}, {rhs}, [mode])        *maktaba#keymapping#Map()*
+  Set up a key mapping in Vim, mapping key sequence {lhs} to replacement
+  sequence {rhs} in the given [mode]. It is equivalent to calling:
+>
+    :call maktaba#keymappingspec#Spec({lhs}, {rhs}, [mode]).Map()
+<
+
+  See the |maktaba#keymappingspec#Spec()| and |KeyMappingSpec.Map()| functions
+  for usage and behavior details.
+
+  [mode] is all of 'n', 'v', and 'o' (Vim's default) if omitted.
+
+maktaba#keymappingspec#Spec({lhs}, {rhs}, [mode])
+                                               *maktaba#keymappingspec#Spec()*
+  Create a |maktaba.KeyMappingSpec| that can be configured with options and
+  then mapped in Vim with |KeyMappingSpec.Map()|. The eventual mapping will
+  map {lhs} to {rhs} in the given [mode].
+
+  Initialized with recursive mappings disallowed by default (see |:noremap|).
+  To allow them, use |KeyMappingSpec.WithRemap()|.
+
+  Arguments will be configured with |map-<unique>| by default. Use the
+  "overwrite" option of `.WithArgs(…, 1)` if you want to map without <unique>.
+
+  [mode] is all of 'n', 'v', and 'o' (Vim's default) if omitted.
 
 maktaba#library#Import({library})                   *maktaba#library#Import()*
   Imports {library}.
