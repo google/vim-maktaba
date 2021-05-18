@@ -180,6 +180,26 @@ function! s:FileHandleToFlagHandle(handle) abort
 endfunction
 
 
+" Ensures {plugin}'s plugin/flags.vim file has been sourced (if it has one and
+" has not already had an instant/flags.vim file sourced).
+function! s:EnsureFlagsLoaded(plugin) abort
+  if a:plugin._loaded_flags
+    return
+  endif
+  try
+    call a:plugin.Load('flags')
+    if !a:plugin._loaded_flags
+      call a:plugin.logger.Warn(
+          \ 'plugin/flags.vim seems to be missing maktaba#plugin#Enter call')
+    endif
+  catch /ERROR(NotFound):/
+    " Plugin has no plugin/flags.vim file. That's totally fine if it only uses
+    " built-in flags like plugin[commands].
+  endtry
+  let a:plugin._loaded_flags = 1
+endfunction
+
+
 ""
 " @private
 " Used by maktaba#library to help throw good error messages about non-library
@@ -225,6 +245,8 @@ function! maktaba#plugin#Enter(file) abort
   let [l:plugindir, l:filedir, l:handle] = s:SplitEnteredFile(a:file)
   let l:plugin = maktaba#plugin#GetOrInstall(l:plugindir)
   let l:controller = l:plugin._entered[l:filedir]
+  let l:is_flags_file = (l:filedir ==# 'plugin' || l:filedir ==# 'instant')
+      \ && l:handle ==# 'flags^'
 
   if l:filedir ==# 'ftplugin'
     call extend(l:controller, {l:handle : []}, 'keep')
@@ -240,7 +262,7 @@ function! maktaba#plugin#Enter(file) abort
     return [l:plugin, 0]
   endif
 
-  if l:filedir !=# 'autoload'
+  if l:filedir !=# 'autoload' && !l:is_flags_file
     " Check the 'plugin' or 'instant' flag dictionaries for word on the this
     " file, using the defaults specified in the s:defaultoff variable.
     let l:flag = l:plugin.Flag(l:filedir)
@@ -255,6 +277,9 @@ function! maktaba#plugin#Enter(file) abort
   " Note that a file isn't entered when it is sourced: it is entered when this
   " function OKs an enter. (In other words, don't move this line up.)
   call add(l:controller, l:handle)
+  if l:is_flags_file
+    let l:plugin._loaded_flags = 1
+  endif
   return [l:plugin, 1]
 endfunction
 
@@ -469,6 +494,7 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
       \ 'GetExtensionRegistry': function('maktaba#plugin#GetExtensionRegistry'),
       \ '_entered': l:entrycontroller,
+      \ '_loaded_flags': 0,
       \ }
   " If plugin has an addon-info.json file with a "name" declared, overwrite the
   " default name with the custom one.
@@ -506,10 +532,10 @@ function! s:CreatePluginObject(name, location, settings) abort
 
   " These special flags let the user control the loading of parts of the plugin.
   if isdirectory(maktaba#path#Join([l:plugin.location, 'plugin']))
-    call l:plugin.Flag('plugin', {})
+    let l:plugin.flags.plugin = maktaba#flags#Create('plugin', {})
   endif
   if isdirectory(maktaba#path#Join([l:plugin.location, 'instant']))
-    call l:plugin.Flag('instant', {})
+    let l:plugin.flags.instant = maktaba#flags#Create('instant', {})
   endif
 
   " Load flags file first.
@@ -757,6 +783,8 @@ endfunction
 "   maktaba#plugin#Get('myplugin').Flag('foo')
 "   maktaba#plugin#Get('myplugin').flags.foo.Get()
 " <
+" except that the second version will not trigger flags to load if they haven't
+" been loaded already.
 "
 " You may access a portion of a flag (a specific value in a dict flag, or
 " a specific item in a list flag) using a fairly natural square bracket
@@ -785,6 +813,8 @@ endfunction
 "   maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
 "   maktaba#plugin#Get('myplugin').flags.foo.Set('bar')
 " <
+" except that the second version will not trigger flags to load if they haven't
+" been loaded already.
 "
 " Also supports dict flag syntax: >
 "   maktaba#plugin#Get('myplugin').Flag('plugin[autocmds]', 1)
@@ -792,6 +822,7 @@ endfunction
 "
 " @throws BadValue if {flag} is an invalid flag name.
 function! maktaba#plugin#Flag(flag, ...) dict abort
+  call s:EnsureFlagsLoaded(self)
   let [l:flag, l:foci] = maktaba#setting#Handle(a:flag)
   if !has_key(self.flags, l:flag)
     if a:0 == 0 || !empty(l:foci)
