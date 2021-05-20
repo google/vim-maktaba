@@ -551,13 +551,13 @@ Syscall.CallAsync({callback}, {allow_sync_fallback})     *Syscall.CallAsync()*
   where env_dict contains tab, buffer, path, column and line info. This
   fallback will be deprecated and stop working in future versions of maktaba.
 
-  Asynchronous calls are executed via vim's |job| support.  For nvim, they are
-  executed using |job_control|.  If the vim instance is missing job support,
-  this will try to fall back to legacy |clientserver| invocation, which has a
-  few preconditions of its own (see below). If neither option is available,
-  asynchronous calls are not possible, and the call will either throw
-  |ERROR(MissingFeature)| or fall back to synchronous calls, depending on the
-  {allow_sync_fallback} parameter.
+  Asynchronous calls are executed via vim's |job| support, or neovim's
+  |job-control|. If the vim instance is missing job support, this will try to
+  fall back to legacy |clientserver| invocation, which has a few preconditions
+  of its own (see below). If neither option is available, asynchronous calls
+  are not possible, and the call will either throw |ERROR(MissingFeature)| or
+  fall back to synchronous calls, depending on the {allow_sync_fallback}
+  parameter.
 
   The legacy fallback executes calls via |--remote-expr| using vim's
   |clientserver| capabilities, so the preconditions for it are vim being
