@@ -188,6 +188,8 @@ function! s:EnsureFlagsLoaded(plugin) abort
   endif
   try
     call a:plugin.Load('flags')
+    " If file was loaded and called maktaba#plugin#Enter, it should now have
+    " PLUGIN._loaded_flags set as a side effect.
     if !a:plugin._loaded_flags
       call a:plugin.logger.Warn(
           \ 'plugin/flags.vim seems to be missing maktaba#plugin#Enter call')
@@ -245,6 +247,8 @@ function! maktaba#plugin#Enter(file) abort
   let [l:plugindir, l:filedir, l:handle] = s:SplitEnteredFile(a:file)
   let l:plugin = maktaba#plugin#GetOrInstall(l:plugindir)
   let l:controller = l:plugin._entered[l:filedir]
+  " Check for special path plugin/flags.vim or instant/flags.vim (which gets a
+  " handle 'flags^' in s:SplitEnteredFile's handle syntax).
   let l:is_flags_file = (l:filedir ==# 'plugin' || l:filedir ==# 'instant')
       \ && l:handle ==# 'flags^'
 
@@ -262,6 +266,11 @@ function! maktaba#plugin#Enter(file) abort
     return [l:plugin, 0]
   endif
 
+  " Only load this full file if its corresponding flag is enabled.
+  " For example, plugin/autocmds.vim should exit early if the user configured
+  " !plugin[autocmds] in their flags.
+  " This override mechanism has no effect for autoload files (which should be
+  " reloadable) or for flags files (which should never need to be disabled).
   if l:filedir !=# 'autoload' && !l:is_flags_file
     " Check the 'plugin' or 'instant' flag dictionaries for word on the this
     " file, using the defaults specified in the s:defaultoff variable.
@@ -783,7 +792,7 @@ endfunction
 "   maktaba#plugin#Get('myplugin').Flag('foo')
 "   maktaba#plugin#Get('myplugin').flags.foo.Get()
 " <
-" except that the second version will not trigger flags to load if they haven't
+" except that the second version will not trigger flag loading if they haven't
 " been loaded already.
 "
 " You may access a portion of a flag (a specific value in a dict flag, or
@@ -792,7 +801,7 @@ endfunction
 "   maktaba#plugin#Get('myplugin').Flag('plugin[autocmds]')
 " <
 " This is equivalent to: >
-"   maktaba#plugin#Get('myplugin').flags.plugin.Get()['autocmds']
+"   maktaba#plugin#Get('myplugin').Flag('plugin')['autocmds']
 " <
 " This syntax can be chained: >
 "   maktaba#plugin#Get('myplugin').Flag('complex[key][0]')
@@ -813,7 +822,7 @@ endfunction
 "   maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
 "   maktaba#plugin#Get('myplugin').flags.foo.Set('bar')
 " <
-" except that the second version will not trigger flags to load if they haven't
+" except that the second version will not trigger flag loading if they haven't
 " been loaded already.
 "
 " Also supports dict flag syntax: >

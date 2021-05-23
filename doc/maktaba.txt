@@ -301,8 +301,8 @@ Plugin.Flag({flag})                                            *Plugin.Flag()*
     maktaba#plugin#Get('myplugin').Flag('foo')
     maktaba#plugin#Get('myplugin').flags.foo.Get()
 <
-  except that the second version will not trigger flags to load if they
-  haven't been loaded already.
+  except that the second version will not trigger flag loading if they haven't
+  been loaded already.
 
   You may access a portion of a flag (a specific value in a dict flag, or a
   specific item in a list flag) using a fairly natural square bracket syntax:
@@ -311,7 +311,7 @@ Plugin.Flag({flag})                                            *Plugin.Flag()*
 <
   This is equivalent to:
 >
-    maktaba#plugin#Get('myplugin').flags.plugin.Get()['autocmds']
+    maktaba#plugin#Get('myplugin').Flag('plugin')['autocmds']
 <
   This syntax can be chained:
 >
@@ -332,8 +332,8 @@ Plugin.Flag({flag}, {value})
     maktaba#plugin#Get('myplugin').Flag('foo', 'bar')
     maktaba#plugin#Get('myplugin').flags.foo.Set('bar')
 <
-  except that the second version will not trigger flags to load if they
-  haven't been loaded already.
+  except that the second version will not trigger flag loading if they haven't
+  been loaded already.
 
   Also supports dict flag syntax:
 >
