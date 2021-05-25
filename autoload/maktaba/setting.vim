@@ -112,8 +112,9 @@ endfunction
 " Gets the flag in {plugin} relevant to the setting.
 " @throws NotFound if {plugin} does not define the appropriate flag.
 function! maktaba#setting#GetFlag(plugin) dict abort
-  if has_key(a:plugin.flags, self._flagname)
-    return a:plugin.flags[self._flagname]
+  let l:plugin_flags = a:plugin.AllFlags()
+  if has_key(l:plugin_flags, self._flagname)
+    return l:plugin_flags[self._flagname]
   endif
   let l:msg = 'Flag "%s" not defined in %s.'
   throw maktaba#error#NotFound(l:msg, self._flagname, a:plugin.name)

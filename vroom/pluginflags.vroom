@@ -11,7 +11,7 @@ maktaba:
 Good. Now let's grab a plugin object:
 
   :let g:thisdir = fnamemodify($VROOMFILE, ':p:h')
-  :let g:path = maktaba#path#Join([g:thisdir, 'fakeplugins', 'fullplugin'])
+  :let g:path = maktaba#path#Join([g:thisdir, 'fakeplugins', 'myplugin'])
   :let g:plugin = maktaba#plugin#Install(g:path)
 
 There are two functions that you'll use to manipulate flags. The first, and the
@@ -20,11 +20,10 @@ most self explanatory, is the HasFlag function.
   :call maktaba#ensure#IsFalse(g:plugin.HasFlag('undefined'))
 
 You'll remember from pluginfiles.vroom that plugins with instant/ and plugin/
-directories automatically get 'plugin' and 'instant' flags. Let's verify that
-now:
+directories automatically get 'plugin' and 'instant' flags. This one has a
+plugin/ directory so it gets a 'plugin' flag automatically defined:
 
   :call maktaba#ensure#IsTrue(g:plugin.HasFlag('plugin'))
-  :call maktaba#ensure#IsTrue(g:plugin.HasFlag('instant'))
 
 This is all well and good, but what you really want to do is get and set flags.
 You do this using the Flag function.
@@ -40,7 +39,8 @@ return the value of the flag:
 If you give it two parameters, it sets the flag (defining it if necessary), as
 seen above.
 
-Note that you should only define new flags in an instant/flags.vim file.
+Note that you should only define new flags in a plugin/flags.vim file (or legacy
+instant/flags.vim file).
 
 
 
@@ -67,6 +67,22 @@ maktaba#value#Focus, see value.vroom for more details.
 
 
 
+So far, we've been setting flags after the plugin is already initialized, but
+it's also possible to configure flags as part of plugin installation:
+
+  :let g:path2 = maktaba#path#Join([g:thisdir, 'fakeplugins', 'fullplugin'])
+  :let g:settings = maktaba#setting#ParseAll('number+=2')
+  :let g:fullplugin = maktaba#plugin#Install(g:path2, g:settings)
+
+  :echomsg g:fullplugin.Flag('number')
+  ~ 2
+
+This approach configures the flag early in plugin setup, and is the only way to 
+ensure some special flags like instant[somefile] are configured before their
+corresponding files are sourced.
+
+
+
 Flag values are locked. You cannot change them.
 
   :call g:plugin.Flag('mylist', [])
@@ -87,27 +103,33 @@ then commit the changes back with another call to Flag.
 
 The Flag function is usually sufficient for defining and manipulating flags.
 Sometimes, however, you need a little more power. In those cases, you can access
-the flag objects directly: they live in the 'flags' dictionary on the plugin
-object.
+the flag objects directly: you can access them via the AllFlags method on the
+plugin object.
 
-  :call maktaba#ensure#IsTrue(has_key(g:plugin, 'flags'))
+  :echomsg has_key(g:plugin.AllFlags(), 'mylist')
+  ~ 1
 
 The objects in this dictionary are flag OBJECTS, not flag values. You can use
 them to get and set the flag.
 
-  :call g:plugin.flags.mylist.Set(['newlist'])
-  :echomsg string(g:plugin.flags.mylist.Get())
+  :call g:plugin.AllFlags().mylist.Set(['newlist'])
+  :echomsg string(g:plugin.AllFlags().mylist.Get())
   ~ ['newlist']
 
 This allows you to use some advanced flag functionality, such as flag
 translators:
 
   :call g:plugin.Flag('invertme', 0)
-  :call g:plugin.flags['invertme'].AddTranslator('empty')
+  :call g:plugin.AllFlags().invertme.AddTranslator('empty')
 
   :call g:plugin.Flag('invertme', 1)
   :echomsg g:plugin.Flag('invertme')
   ~ 0
+
+You can also access these flags via the 'flags' dictionary on the plugin object:
+
+  :echomsg has_key(g:plugin.flags, 'mylist')
+  ~ 1
 
 To learn about the full power of flag objects, see flags.vroom.
 
@@ -118,7 +140,7 @@ need only interact with flags via the Flag function. Let's recap how flags are
 used on all the various levels:
 
 1. All flags should be created and set to their default values in your plugin's
-|  instant/flags.vim file.
+|  plugin/flags.vim file.
 2. Plugin code should access flags via the Flag function. In general, plugins
 |  should not set their own flags: they should set defaults and leave them be.
 3. Users change the values of flags, generally by interacting with commands

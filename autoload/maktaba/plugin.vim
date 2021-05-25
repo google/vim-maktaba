@@ -494,6 +494,7 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'Source': function('maktaba#plugin#Source'),
       \ 'Load': function('maktaba#plugin#Load'),
       \ 'AddonInfo': function('maktaba#plugin#AddonInfo'),
+      \ 'AllFlags': function('maktaba#plugin#AllFlags'),
       \ 'Flag': function('maktaba#plugin#Flag'),
       \ 'HasFlag': function('maktaba#plugin#HasFlag'),
       \ 'HasDir': function('maktaba#plugin#HasDir'),
@@ -782,6 +783,17 @@ function! maktaba#plugin#AddonInfo() dict abort
 endfunction
 
 
+
+""
+" @dict Plugin
+" Returns a dictionary of @dict(Flag) handles defined on the plugin, with flag
+" names as keys.
+function! maktaba#plugin#AllFlags() dict abort
+  call s:EnsureFlagsLoaded(self)
+  return self.flags
+endfunction
+
+
 ""
 " @usage {flag}
 " @dict Plugin
@@ -848,8 +860,10 @@ endfunction
 
 
 ""
+" @dict Plugin
 " Whether or not the plugin has a flag named {flag}.
 function! maktaba#plugin#HasFlag(flag) dict abort
+  call s:EnsureFlagsLoaded(self)
   return has_key(self.flags, a:flag)
 endfunction
 
