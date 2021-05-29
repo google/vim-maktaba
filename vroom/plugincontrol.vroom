@@ -81,7 +81,10 @@ There are several other types of plugin files besides those in plugin/. Maktaba
 provides a concept of instant/ files, which will be activated as soon as
 possible after the plugin is activated.
 
-  :let g:instant_a = PluginPath(['instant', 'a.vim'])
+  :let g:legacyflagspath = maktaba#path#Join([g:repo, 'legacyflagsplugin'])
+  :let g:legacyflagsplugin = maktaba#plugin#Install(g:legacyflagspath)
+  :let g:instant_a = maktaba#path#Join([
+  |g:legacyflagsplugin.location, 'instant', 'a.vim'])
   :call maktaba#ensure#IsTrue(maktaba#plugin#Enter(g:instant_a)[1])
   :call maktaba#ensure#IsFalse(maktaba#plugin#Enter(g:instant_a)[1])
 

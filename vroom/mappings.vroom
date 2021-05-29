@@ -19,6 +19,7 @@ instance, if you try to load the 'mappings' file, nothing happens:
 
   @messages (STRICT)
   :call g:plugin.Load('mappings')
+  ~ The flags file is sourced on first flag access if not already loaded.
   @messages
 
 Unless you have EXPLICITLY enabled mappings:
