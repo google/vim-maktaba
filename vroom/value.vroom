@@ -23,11 +23,9 @@ they equal?
 
   :echomsg [] == 0
   ~ E691: Can only compare List with List
-  ~ E15: Invalid expression: [] == 0
 
   :echomsg {} == function('empty')
   ~ E735: Can only compare Dictionary with Dictionary
-  ~ E15: Invalid expression: {} == function('empty')
 
 A simple "No" would have done...
 

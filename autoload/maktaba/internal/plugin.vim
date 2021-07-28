@@ -4,8 +4,8 @@ if !exists('s:plugins')
 endif
 
 " Mapping from normalized locations to the corresponding plugin object.
-" Used to look up plugins by location in maktaba#plugin#Install and
-" maktaba#plugin#GetOrInstall.
+" Used to look up plugins by location in maktaba#internal#plugin#Install and
+" maktaba#internal#plugin#GetOrInstall.
 " May have multiple locations mapped to the same plugin in the case of symlinks.
 if !exists('s:plugins_by_location')
   let s:plugins_by_location = {}
@@ -98,7 +98,7 @@ function! s:PluginNameFromDir(dir) abort
   if len(l:splitpath) == 0
     throw maktaba#error#BadValue('Found empty path.')
   endif
-  let l:name = maktaba#plugin#CanonicalName(
+  let l:name = maktaba#internal#plugin#CanonicalName(
       \ maktaba#path#StripTrailingSlash(l:splitpath[-1]))
   return l:name
 endfunction
@@ -188,7 +188,7 @@ function! s:EnsureFlagsLoaded(plugin) abort
   endif
   try
     call a:plugin.Load('flags')
-    " If file was loaded and called maktaba#plugin#Enter, it should now have
+    " If file was loaded and called maktaba#internal#plugin#Enter, it should now have
     " PLUGIN._loaded_flags set as a side effect.
     if !a:plugin._loaded_flags
       call a:plugin.logger.Warn(
@@ -206,7 +206,7 @@ endfunction
 " @private
 " Used by maktaba#library to help throw good error messages about non-library
 " directories.
-function! maktaba#plugin#NonlibraryDirs() abort
+function! maktaba#internal#plugin#NonlibraryDirs() abort
   return ['plugin', 'instant', 'ftdetect', 'ftplugin', 'indent', 'syntax']
 endfunction
 
@@ -243,9 +243,9 @@ endfunction
 " multiple files, and there is no clear moment when the plugin is "loaded". If
 " you feel you must adhere to this convention, be sure to set the appropriate
 " g:loaded_* variable when appropriate.
-function! maktaba#plugin#Enter(file) abort
+function! maktaba#internal#plugin#Enter(file) abort
   let [l:plugindir, l:filedir, l:handle] = s:SplitEnteredFile(a:file)
-  let l:plugin = maktaba#plugin#GetOrInstall(l:plugindir)
+  let l:plugin = maktaba#internal#plugin#GetOrInstall(l:plugindir)
   let l:controller = l:plugin._entered[l:filedir]
   " Check for special path plugin/flags.vim or instant/flags.vim (which gets a
   " handle 'flags^' in s:SplitEnteredFile's handle syntax).
@@ -296,9 +296,9 @@ endfunction
 ""
 " Scans 'runtimepath' for any unregistered plugins and registers them with
 " maktaba. May trigger instant/ hooks for newly-registered plugins.
-function! maktaba#plugin#Detect() abort
+function! maktaba#internal#plugin#Detect() abort
   for [l:name, l:location] in items(s:GetUnregisteredLeafdirs())
-    call maktaba#plugin#GetOrInstall(l:location)
+    call maktaba#internal#plugin#GetOrInstall(l:location)
   endfor
 endfunction
 
@@ -306,8 +306,8 @@ endfunction
 ""
 " A list of all installed plugins in alphabetical order.
 " Automatically detects unregistered plugins using @function(#Detect).
-function! maktaba#plugin#RegisteredPlugins() abort
-  call maktaba#plugin#Detect()
+function! maktaba#internal#plugin#RegisteredPlugins() abort
+  call maktaba#internal#plugin#Detect()
   return sort(keys(s:plugins))
 endfunction
 
@@ -319,9 +319,9 @@ endfunction
 " non-Maktaba plugins.
 " Detects plugins added to 'runtimepath' even if they haven't been explicitly
 " registered with maktaba.
-function! maktaba#plugin#IsRegistered(plugin) abort
+function! maktaba#internal#plugin#IsRegistered(plugin) abort
   try
-    call maktaba#plugin#Get(a:plugin)
+    call maktaba#internal#plugin#Get(a:plugin)
   catch /ERROR(NotFound):/
     return 0
   endtry
@@ -339,7 +339,7 @@ endfunction
 " maktaba. If you've loaded a plugin in the directory "plugins/vim-myplugin"
 " then maktaba can't handle a plugin named "plugins/myplugin". Make sure your
 " plugins have sufficiently different names!
-function! maktaba#plugin#CanonicalName(plugin) abort
+function! maktaba#internal#plugin#CanonicalName(plugin) abort
   " NOTE: This function is performance-sensitive.
   return matchstr(a:plugin, '\v\C^(vim-)?\zs.{-}\ze(\.vim)?$')
 endfunction
@@ -398,7 +398,7 @@ endfunction
 " @throws BadValue if {dir} is empty.
 " @throws AlreadyExists if the plugin already exists.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
-function! maktaba#plugin#Install(dir, ...) abort
+function! maktaba#internal#plugin#Install(dir, ...) abort
   let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
   if has_key(s:plugins, l:name)
@@ -415,21 +415,21 @@ endfunction
 " Detects plugins added to 'runtimepath' even if they haven't been explicitly
 " registered with maktaba.
 " @throws NotFound if the plugin object does not exist.
-function! maktaba#plugin#Get(name) abort
+function! maktaba#internal#plugin#Get(name) abort
   if has_key(s:plugins, a:name)
     return s:plugins[a:name]
   endif
 
   " If literal name didn't match, fall back to canonicalized name.
-  let l:name = maktaba#plugin#CanonicalName(a:name)
+  let l:name = maktaba#internal#plugin#CanonicalName(a:name)
   if has_key(s:plugins, l:name)
     return s:plugins[l:name]
   endif
 
   " Check if any dir on runtimepath is a plugin that hasn't been detected yet.
   for [l:leafdir, l:leafpath] in items(s:GetUnregisteredLeafdirs())
-    if maktaba#plugin#CanonicalName(l:leafdir) is# l:name
-      return maktaba#plugin#GetOrInstall(l:leafpath)
+    if maktaba#internal#plugin#CanonicalName(l:leafdir) is# l:name
+      return maktaba#internal#plugin#GetOrInstall(l:leafpath)
     endif
   endfor
 
@@ -449,7 +449,7 @@ endfunction
 " See also @function(#Install).
 " @throws AlreadyExists if the existing plugin comes from a different directory.
 " @throws ConfigError if [settings] cannot be applied to this plugin.
-function! maktaba#plugin#GetOrInstall(dir, ...) abort
+function! maktaba#internal#plugin#GetOrInstall(dir, ...) abort
   let l:name = s:PluginNameFromDir(a:dir)
   let l:settings = maktaba#ensure#IsList(get(a:, 1, []))
   if has_key(s:plugins, l:name)
@@ -491,18 +491,18 @@ function! s:CreatePluginObject(name, location, settings) abort
       \ 'flags': {},
       \ 'globals': {},
       \ 'logger': maktaba#log#Logger(a:name),
-      \ 'Source': function('maktaba#plugin#Source'),
-      \ 'Load': function('maktaba#plugin#Load'),
-      \ 'AddonInfo': function('maktaba#plugin#AddonInfo'),
-      \ 'AllFlags': function('maktaba#plugin#AllFlags'),
-      \ 'Flag': function('maktaba#plugin#Flag'),
-      \ 'HasFlag': function('maktaba#plugin#HasFlag'),
-      \ 'HasDir': function('maktaba#plugin#HasDir'),
-      \ 'HasFiletypeData': function('maktaba#plugin#HasFiletypeData'),
-      \ 'GenerateHelpTags': function('maktaba#plugin#GenerateHelpTags'),
-      \ 'MapPrefix': function('maktaba#plugin#MapPrefix'),
-      \ 'IsLibrary': function('maktaba#plugin#IsLibrary'),
-      \ 'GetExtensionRegistry': function('maktaba#plugin#GetExtensionRegistry'),
+      \ 'Source': function('maktaba#internal#plugin#Source'),
+      \ 'Load': function('maktaba#internal#plugin#Load'),
+      \ 'AddonInfo': function('maktaba#internal#plugin#AddonInfo'),
+      \ 'AllFlags': function('maktaba#internal#plugin#AllFlags'),
+      \ 'Flag': function('maktaba#internal#plugin#Flag'),
+      \ 'HasFlag': function('maktaba#internal#plugin#HasFlag'),
+      \ 'HasDir': function('maktaba#internal#plugin#HasDir'),
+      \ 'HasFiletypeData': function('maktaba#internal#plugin#HasFiletypeData'),
+      \ 'GenerateHelpTags': function('maktaba#internal#plugin#GenerateHelpTags'),
+      \ 'MapPrefix': function('maktaba#internal#plugin#MapPrefix'),
+      \ 'IsLibrary': function('maktaba#internal#plugin#IsLibrary'),
+      \ 'GetExtensionRegistry': function('maktaba#internal#plugin#GetExtensionRegistry'),
       \ '_entered': l:entrycontroller,
       \ '_loaded_flags': 0,
       \ }
@@ -672,7 +672,7 @@ endfunction
 " @throws BadValue if {file} describes a directory.
 " @throws NotAuthorized if {file} cannot be read.
 " @throws NotFound if {file} does not describe a plugin file.
-function! maktaba#plugin#Source(file, ...) dict abort
+function! maktaba#internal#plugin#Source(file, ...) dict abort
   let l:optional = get(a:, 1)
   let l:name = maktaba#path#Join(maktaba#ensure#IsList(a:file))
   let l:path = maktaba#path#Join([self.location, l:name]) . '.vim'
@@ -700,7 +700,7 @@ endfunction
 " [file] may also be a list of filenames to source.
 " @default optional=0
 " @throws NotFound if [file] is given but is not found.
-function! maktaba#plugin#Load(...) dict abort
+function! maktaba#internal#plugin#Load(...) dict abort
   " Load specific plugin files.
   if a:0 >= 1
     call maktaba#ensure#TypeMatchesOneOf(a:1, ['', []])
@@ -719,7 +719,7 @@ endfunction
 " Returns 0 if there are no help tags.
 " Returns 1 if helptags are generated successfully.
 " @throws Impossible if help tags cannot be generated.
-function! maktaba#plugin#GenerateHelpTags() dict abort
+function! maktaba#internal#plugin#GenerateHelpTags() dict abort
   let l:docs = maktaba#path#Join([self.location, 'doc'])
   if !isdirectory(l:docs)
     return 0
@@ -741,7 +741,7 @@ endfunction
 " a subdirectory of the after/ directory.
 " Cached for performance, so new paths will not be discovered if they're added
 " to the plugin after the first check.
-function! maktaba#plugin#HasDir(dir) dict abort
+function! maktaba#internal#plugin#HasDir(dir) dict abort
   let l:dirs = call('s:GetSubdirs', [], self)
   let l:after_dirs = call('s:GetAfterSubdirs', [], self)
   return index(l:dirs, maktaba#path#AsDir(a:dir)) > -1 ||
@@ -753,7 +753,7 @@ endfunction
 " @dict Plugin
 " Tests whether a plugin has a filetype-active directory (ftdetect, ftplugin,
 " indent, or syntax).
-function! maktaba#plugin#HasFiletypeData() dict abort
+function! maktaba#internal#plugin#HasFiletypeData() dict abort
   return maktaba#rtp#DirDefinesFiletypes(self.location)
 endfunction
 
@@ -763,7 +763,7 @@ endfunction
 " Gets plugin metadata from plugin's addon-info.json file, if present.
 " Otherwise, returns an empty dict.
 " @throws BadValue if addon-info.json isn't valid JSON.
-function! maktaba#plugin#AddonInfo() dict abort
+function! maktaba#internal#plugin#AddonInfo() dict abort
   if !has_key(self, '_addon_info')
     let l:addon_info_path =
         \ maktaba#path#Join([self.location, 'addon-info.json'])
@@ -788,7 +788,7 @@ endfunction
 " @dict Plugin
 " Returns a dictionary of @dict(Flag) handles defined on the plugin, with flag
 " names as keys.
-function! maktaba#plugin#AllFlags() dict abort
+function! maktaba#internal#plugin#AllFlags() dict abort
   call s:EnsureFlagsLoaded(self)
   return self.flags
 endfunction
@@ -842,7 +842,7 @@ endfunction
 " <
 "
 " @throws BadValue if {flag} is an invalid flag name.
-function! maktaba#plugin#Flag(flag, ...) dict abort
+function! maktaba#internal#plugin#Flag(flag, ...) dict abort
   call s:EnsureFlagsLoaded(self)
   let [l:flag, l:foci] = maktaba#setting#Handle(a:flag)
   if !has_key(self.flags, l:flag)
@@ -862,7 +862,7 @@ endfunction
 ""
 " @dict Plugin
 " Whether or not the plugin has a flag named {flag}.
-function! maktaba#plugin#HasFlag(flag) dict abort
+function! maktaba#internal#plugin#HasFlag(flag) dict abort
   call s:EnsureFlagsLoaded(self)
   return has_key(self.flags, a:flag)
 endfunction
@@ -885,7 +885,7 @@ endfunction
 " @throws NotFound if plugin/mappings.vim does not exist.
 " @throws BadValue if the map prefix is invalid and [throw] is set.
 " @throws Unknown if mappings have been disabled.
-function! maktaba#plugin#MapPrefix(letter, ...) dict abort
+function! maktaba#internal#plugin#MapPrefix(letter, ...) dict abort
   let l:throw = maktaba#ensure#IsBool(get(a:, 1, 0))
 
   let l:mapfile = maktaba#path#Join([self.location, 'plugin', 'mappings.vim'])
@@ -930,8 +930,8 @@ endfunction
 " In order to be a library plugin, the plugin must contain an autoload/
 " directory and must not contain ftplugin/, ftdetect/, syntax/, indent/,
 " plugin/, nor instant/ directories.
-function! maktaba#plugin#IsLibrary() dict abort
-  for l:special in maktaba#plugin#NonlibraryDirs()
+function! maktaba#internal#plugin#IsLibrary() dict abort
+  for l:special in maktaba#internal#plugin#NonlibraryDirs()
     if self.HasDir(l:special)
       return 0
     endif
@@ -947,11 +947,6 @@ endfunction
 " This should be used only by the plugin itself; external callers should use
 " @function(maktaba#extension#GetRegistry) instead, rather than depend upon
 " the plugin directly.
-function! maktaba#plugin#GetExtensionRegistry() dict abort
+function! maktaba#internal#plugin#GetExtensionRegistry() dict abort
   return maktaba#extension#GetInternalRegistry(self.name)
 endfunction
-
-
-
-" Must be at the end of the file, to avoid infinite loops.
-let s:maktaba = maktaba#Maktaba()

@@ -355,7 +355,9 @@ function! maktaba#json#Parse(json, ...) abort
   if s:HAS_NATIVE_JSON
     try
       let l:value = json_decode(a:json)
-    catch /E474:/
+    catch /E474:/ " Invalid argument.
+      throw maktaba#error#BadValue('Input is not valid JSON text.')
+    catch /E491:/ " JSON decode error.
       throw maktaba#error#BadValue('Input is not valid JSON text.')
     endtry
     if l:use_custom_values

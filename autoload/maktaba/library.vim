@@ -1,3 +1,5 @@
+let s:maktaba = maktaba#Maktaba()
+
 function! s:NotALibrary(plugin, message, ...) abort
   let l:msg = 'Plugin "%s" is not a library plugin. ' . a:message
   return maktaba#error#Exception('NotALibrary', l:msg, [a:plugin.name] + a:000)
@@ -158,7 +160,3 @@ function! maktaba#library#RemoveInstaller(name) abort
   let l:msg = 'No library installer registered as %s.'
   throw maktaba#error#NotFound(l:msg, a:name)
 endfunction
-
-
-" Must be at the end of the file, to avoid infinite loops.
-let s:maktaba = maktaba#Maktaba()
