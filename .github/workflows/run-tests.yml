@@ -16,6 +16,9 @@ jobs:
         vim-from-testing:
           - true
           - false
+        exclude:
+          - os: ubuntu-18.04
+            vim-from-testing: true
     steps:
       - uses: actions/checkout@v2
 
