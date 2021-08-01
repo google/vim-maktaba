@@ -4,20 +4,23 @@ on: [push, pull_request]
 
 jobs:
   run-tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os:
+          - ubuntu-18.04
+          - ubuntu-latest
         vim-flavour:
           - vim
           - neovim
-        ubuntu-version:
-          - ubuntu-latest
-          - impish  # current bleeding edge
+        vim-from-testing:
+          - true
+          - false
     steps:
       - uses: actions/checkout@v2
 
       - name: Add hirsute repos
-        if: ${{ matrix.ubuntu-version == 'impish' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.vim-from-testing }}
         run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ impish main universe'
 
       - name: Install vim
@@ -37,7 +40,7 @@ jobs:
 
       - name: Run tests (vim)
         if: ${{ matrix.vim-flavour == 'vim' }}
-        continue-on-error: ${{ matrix.ubuntu-version == 'impish' }}
+        continue-on-error: ${{ matrix.ubuntu-version == 'ubuntu-latest' }}
         timeout-minutes: 30
         run: |
           xvfb-run script -q -e -c 'vroom --crawl --skip=vroom/system-job.vroom'
