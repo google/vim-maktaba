@@ -10,10 +10,15 @@ jobs:
         vim-flavour:
           - vim
           - neovim
+        ubuntu-version:
+          - ubuntu-latest
+          - impish  # current bleeding edge
     steps:
       - uses: actions/checkout@v2
+
       - name: Add hirsute repos
-        run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ hirsute main universe'
+        if: ${{ matrix.ubuntu-version == 'impish' }}
+        run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ impish main universe'
 
       - name: Install vim
         if: ${{ matrix.vim-flavour == 'vim' }}
@@ -25,7 +30,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install neovim python3-neovim xvfb
-
       - name: Install vroom
         run: |
           wget https://github.com/google/vroom/releases/download/v0.14.0/vroom_0.14.0-1_all.deb
@@ -33,10 +37,10 @@ jobs:
 
       - name: Run tests (vim)
         if: ${{ matrix.vim-flavour == 'vim' }}
+        continue-on-error: ${{ matrix.ubuntu-version == 'impish' }}
         timeout-minutes: 30
         run: |
           xvfb-run script -q -e -c 'vroom --crawl --skip=vroom/system-job.vroom'
-
       - name: Run tests (neovim)
         if: ${{ matrix.vim-flavour == 'neovim' }}
         continue-on-error: true
