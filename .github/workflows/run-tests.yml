@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Add hirsute repos
+      - name: Add testing repos
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.vim-from-testing }}
         run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ impish main universe'
 
@@ -37,9 +37,11 @@ jobs:
           sudo apt update
           sudo apt install neovim python3-neovim xvfb
       - name: Install vroom
+        env:
+          VROOM_VERSION: 0.14.0
         run: |
-          wget https://github.com/google/vroom/releases/download/v0.14.0/vroom_0.14.0-1_all.deb
-          sudo dpkg -i ./vroom_0.14.0-1_all.deb
+          wget https://github.com/google/vroom/releases/download/v${VROOM_VERSION}/vroom_${VROOM_VERSION}-1_all.deb
+          sudo dpkg -i ./vroom_${VROOM_VERSION}-1_all.deb
 
       - name: Run tests (vim)
         if: ${{ matrix.vim-flavour == 'vim' }}
