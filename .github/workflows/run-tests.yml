@@ -1,0 +1,57 @@
+name: run-tests
+
+on: [push, pull_request]
+
+jobs:
+  run-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - ubuntu-latest
+        vim-flavour:
+          - vim
+          - neovim
+        vim-from-testing:
+          - true
+          - false
+        exclude:
+          - os: ubuntu-18.04
+            vim-from-testing: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Add testing repos
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.vim-from-testing }}
+        run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ impish main universe'
+
+      - name: Install vim
+        if: ${{ matrix.vim-flavour == 'vim' }}
+        run: |
+          sudo apt update
+          sudo apt install vim vim-gtk xvfb
+      - name: Install neovim
+        if: ${{ matrix.vim-flavour == 'neovim' }}
+        run: |
+          sudo apt update
+          sudo apt install neovim python3-neovim xvfb
+      - name: Install vroom
+        env:
+          VROOM_VERSION: 0.14.0
+        run: |
+          wget https://github.com/google/vroom/releases/download/v${VROOM_VERSION}/vroom_${VROOM_VERSION}-1_all.deb
+          sudo dpkg -i ./vroom_${VROOM_VERSION}-1_all.deb
+
+      - name: Run tests (vim)
+        if: ${{ matrix.vim-flavour == 'vim' }}
+        continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
+        timeout-minutes: 30
+        run: |
+          xvfb-run script -q -e -c 'vroom --crawl --skip=vroom/system-job.vroom'
+      - name: Run tests (neovim)
+        if: ${{ matrix.vim-flavour == 'neovim' }}
+        continue-on-error: true
+        timeout-minutes: 30
+        run: |
+          xvfb-run script -q -e -c 'vroom --neovim --crawl --skip=vroom/system-job.vroom'
