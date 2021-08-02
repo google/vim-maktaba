@@ -85,6 +85,7 @@ endfunction
 
 
 ""
+" @private
 " Splits {dir} into canonical plugin name and parent directory, returning name.
 " If {dir} is in s:plugins_by_location, gets the name of the plugin there
 " instead.
@@ -213,6 +214,7 @@ endfunction
 
 
 ""
+" @private
 " This function is used to both control when plugin files are entered, and get
 " a handle to the current plugin object. It should be called from the top of
 " an autoload/*.vim, plugin/*.vim, ftplugin/*.vim, or instant/*.vim file as
@@ -294,6 +296,7 @@ endfunction
 
 
 ""
+" @private
 " Scans 'runtimepath' for any unregistered plugins and registers them with
 " maktaba. May trigger instant/ hooks for newly-registered plugins.
 function! maktaba#internal#plugin#Detect() abort
@@ -304,6 +307,7 @@ endfunction
 
 
 ""
+" @private
 " A list of all installed plugins in alphabetical order.
 " Automatically detects unregistered plugins using @function(#Detect).
 function! maktaba#internal#plugin#RegisteredPlugins() abort
@@ -313,6 +317,7 @@ endfunction
 
 
 ""
+" @private
 " 1 if {plugin} was registered with maktaba#plugin#Register.
 " This is more reliable for determining if a Maktaba compatible plugin by
 " the name of {plugin} was registered, but can not be used to dependency check
@@ -330,6 +335,7 @@ endfunction
 
 
 ""
+" @private
 " The canonical name of {plugin}.
 " This is the name of the plugin directory with any "vim-" prefix or ".vim"
 " suffix stripped off: both "vim-unimpaired" and "unimpaired.vim" would become
@@ -346,6 +352,7 @@ endfunction
 
 
 ""
+" @private
 " @usage dir [settings]
 " Installs the plugin located at {dir}. Installation entails adding the plugin
 " to the runtimepath, loading its flags.vim file, and sourcing any files in its
@@ -409,6 +416,7 @@ endfunction
 
 
 ""
+" @private
 " Gets the plugin object associated with {plugin}. {plugin} may either be the
 " name of the plugin directory, or the canonicalized plugin name (with any
 " "vim-" prefix or ".vim" suffix stripped off). See @function(#CanonicalName).
@@ -438,6 +446,7 @@ endfunction
 
 
 ""
+" @private
 " Installs the plugin located at {dir}, unless it already exists. The
 " appropriate maktaba plugin object is returned.
 "
@@ -662,6 +671,7 @@ endfunction
 
 
 ""
+" @dict Plugin
 " Sources {file}, which should be a list specifying the location of a file from
 " the plugin root. For example, if you want to source plugin/commands.vim, call
 " this function on ['plugin', 'commands']. The referenced file will be sourced,
