@@ -362,8 +362,8 @@ function! maktaba#ui#selector#DoToggleHelp() dict abort
   let l:len_help = len(self._GetHelpLines())
   let self._is_verbose = !self._is_verbose
   call maktaba#buffer#Overwrite(1, l:len_help, self._GetHelpLines())
-  let &readonly = l:prev_read
-  let &modifiable = l:prev_mod
+  let &l:readonly = l:prev_read
+  let &l:modifiable = l:prev_mod
 endfunction
 
 
