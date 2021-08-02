@@ -22,12 +22,13 @@ And sometimes it just gets in bad moods. What about the following values. Are
 they equal?
 
   :echomsg [] == 0
-  ~ E691: Can only compare List with List
+  ~ E691: Can only compare List with List($)|(\nE15: Invalid expression: \[\] == 0) (regex)
 
   :echomsg {} == function('empty')
-  ~ E735: Can only compare Dictionary with Dictionary
+  ~ E735: Can only compare Dictionary with Dictionary($)|(E15: Invalid expression: \{\} == function\('empty'\)) (regex)
 
 A simple "No" would have done...
+Older vim versions returned more than one error for such comparisons.
 
 maktaba#value#IsEqual performs a sane comparison to check if two values are
 *really* equal, in a meaningful sense.
