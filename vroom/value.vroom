@@ -18,18 +18,10 @@ Vim's concept of value equality is completely insane. Consider:
   ~ 1
   :set ignorecase&
 
-And sometimes it just gets in bad moods. What about the following values. Are
-they equal?
-
-  :echomsg [] == 0
-  ~ E691: Can only compare List with List
-  ~ E15: Invalid expression: [] == 0
-
-  :echomsg {} == function('empty')
-  ~ E735: Can only compare Dictionary with Dictionary
-  ~ E15: Invalid expression: {} == function('empty')
-
-A simple "No" would have done...
+And sometimes it just gets in bad moods.
+For example comparing list to a number ([] == 0)
+or dict to a function ({} == function('empty'))
+would throw an error instead of just returning 1.
 
 maktaba#value#IsEqual performs a sane comparison to check if two values are
 *really* equal, in a meaningful sense.

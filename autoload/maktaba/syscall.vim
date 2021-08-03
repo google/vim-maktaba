@@ -1,6 +1,6 @@
 "" Utilities for making system calls and dealing with the shell.
 
-let s:plugin = maktaba#Maktaba()
+let s:maktaba = maktaba#Maktaba()
 
 if !exists('s:usable_shell')
   let s:usable_shell = '\v^/bin/sh$'
@@ -333,7 +333,7 @@ function! maktaba#syscall#CallAsync(Callback, allow_sync_fallback) abort dict
       \ maktaba#ensure#IsCallable(a:Callback))
   if !maktaba#syscall#IsAsyncAvailable()
     if a:allow_sync_fallback || s:force_sync_fallback_allowed
-      call s:plugin.logger.Warn('Async support not available. ' .
+      call s:maktaba.logger.Warn('Async support not available. ' .
           \ 'Falling back to synchronous execution for system call: ' .
           \ self.GetCommand())
       let l:return_data = self.Call(0)

@@ -265,6 +265,18 @@ Logger.Severe({message}, [args...])                          *Logger.Severe()*
 The maktaba plugin object. Exposes functions that operate on the plugin
 itself.
 
+Plugin.Source({file}, [optional])                            *Plugin.Source()*
+  Sources {file}, which should be a list specifying the location of a file
+  from the plugin root. For example, if you want to source
+  plugin/commands.vim, call this function on ['plugin', 'commands']. The
+  referenced file will be sourced, if it exists. Otherwise, exceptions will be
+  thrown, unless you set [optional]. If [optional] exists, this function
+  returns whether or not the file was actually sourced.
+  [optional] is 0 if omitted.
+  Throws ERROR(BadValue) if {file} describes a directory.
+  Throws ERROR(NotAuthorized) if {file} cannot be read.
+  Throws ERROR(NotFound) if {file} does not describe a plugin file.
+
 Plugin.Load([file], [optional])                                *Plugin.Load()*
   If [file] is given, the plugin file plugin/<file>.vim will be sourced. An
   error will be thrown if [file] does not exist unless [optional] is set. If
@@ -1548,18 +1560,6 @@ maktaba#plugin#GetOrInstall({dir}, [settings]) *maktaba#plugin#GetOrInstall()*
   Throws ERROR(AlreadyExists) if the existing plugin comes from a different
   directory.
   Throws ERROR(ConfigError) if [settings] cannot be applied to this plugin.
-
-maktaba#plugin#Source({file}, [optional])            *maktaba#plugin#Source()*
-  Sources {file}, which should be a list specifying the location of a file
-  from the plugin root. For example, if you want to source
-  plugin/commands.vim, call this function on ['plugin', 'commands']. The
-  referenced file will be sourced, if it exists. Otherwise, exceptions will be
-  thrown, unless you set [optional]. If [optional] exists, this function
-  returns whether or not the file was actually sourced.
-  [optional] is 0 if omitted.
-  Throws ERROR(BadValue) if {file} describes a directory.
-  Throws ERROR(NotAuthorized) if {file} cannot be read.
-  Throws ERROR(NotFound) if {file} does not describe a plugin file.
 
 maktaba#python#ImportModule({plugin}, {name})  *maktaba#python#ImportModule()*
   Imports python module {name} into vim from {plugin}. Checks for {name} in

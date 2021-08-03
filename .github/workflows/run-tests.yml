@@ -45,7 +45,6 @@ jobs:
 
       - name: Run tests (vim)
         if: ${{ matrix.vim-flavour == 'vim' }}
-        continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
         timeout-minutes: 30
         run: |
           xvfb-run script -q -e -c 'vroom --crawl --skip=vroom/system-job.vroom'
