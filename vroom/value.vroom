@@ -21,11 +21,15 @@ Vim's concept of value equality is completely insane. Consider:
 And sometimes it just gets in bad moods. What about the following values. Are
 they equal?
 
+  @messages (RELAXED)
   :echomsg [] == 0
-  ~ E691: Can only compare List with List($)|(\nE15: Invalid expression: \[\] == 0) (regex)
+  ~ E691: Can only compare List with List
+  @messages
 
+  @messages (RELAXED)
   :echomsg {} == function('empty')
-  ~ E735: Can only compare Dictionary with Dictionary($)|(E15: Invalid expression: \{\} == function\('empty'\)) (regex)
+  ~ E735: Can only compare Dictionary with Dictionary
+  @messages
 
 A simple "No" would have done...
 Older vim versions returned more than one error for such comparisons.
