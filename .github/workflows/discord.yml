@@ -11,6 +11,7 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    if: github.repository == 'google/vim-maktaba'
 
     steps:
       - name: Actions for Discord
