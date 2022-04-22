@@ -122,6 +122,9 @@ function! maktaba#json#Format(value) abort
       " Ensure encoded value can be decoded again as a workaround for
       " https://github.com/vim/vim/issues/654.
       call json_decode(l:encoded)
+    catch /E1161:/
+      throw maktaba#error#BadValue(
+          \ 'Value cannot be represented as JSON: %s', string(a:value))
     catch /E474:/
       throw maktaba#error#BadValue(
           \ 'Value cannot be represented as JSON: %s', string(a:value))
