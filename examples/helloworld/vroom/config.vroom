@@ -28,9 +28,9 @@ which means the commands won't be defined.
   :call maktaba#LateLoad()
 
   :Hello
-  ~ E492: Not an editor command: Hello
+  ~ E492:.*\bHello\b (regex)
   :Goodbye
-  ~ E492: Not an editor command: Goodbye
+  ~ E492:.*\bGoodbye\b (regex)
 
 Any file in the plugin/ directory should have the standard maktaba#plugin#Enter
 boilerplate and therefore should be possible to disable. Other common files are
@@ -42,9 +42,9 @@ flag.
   :call g:helloworld.Load('commands')
 
   :Hello
-  ~ E492: Not an editor command: Hello
+  ~ E492:.*\bHello\b (regex)
   :Goodbye
-  ~ E492: Not an editor command: Goodbye
+  ~ E492:.*\bGoodbye\b (regex)
 
 You can change your mind and enable commands after the fact. Maktaba will load
 them if they're enabled late.
