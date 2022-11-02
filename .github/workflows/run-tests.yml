@@ -9,22 +9,13 @@ jobs:
       matrix:
         os:
           - ubuntu-18.04
-          - ubuntu-latest
+          - ubuntu-20.04
+          - ubuntu-22.04
         vim-flavour:
           - vim
           - neovim
-        vim-from-testing:
-          - true
-          - false
-        exclude:
-          - os: ubuntu-18.04
-            vim-from-testing: true
     steps:
       - uses: actions/checkout@v2
-
-      - name: Add testing repos
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.vim-from-testing }}
-        run: sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu/ impish main universe'
 
       - name: Install vim
         if: ${{ matrix.vim-flavour == 'vim' }}
