@@ -229,6 +229,19 @@ endfunction
 
 
 ""
+" Coerces {value_or_values} into a list, wrapping any non-list value into a
+" single-item list.
+" Examples: >
+"   maktaba#value#AsList('lonely') == ['lonely']
+"   maktaba#value#AsList(['pb', 'jelly']) == ['pb', 'jelly']
+" <
+function! maktaba#value#AsList(Value_or_values) abort
+  return maktaba#value#IsList(a:Value_or_values) ?
+      \ a:Value_or_values : [a:Value_or_values]
+endfunction
+
+
+""
 " Focuses on a part of {target} specified by {foci}. That object will either be
 " returned, or set to [value] if [value] is given (in which case {target} is
 " returned). Examples will make this clearer:

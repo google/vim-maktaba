@@ -1898,6 +1898,14 @@ maktaba#value#IsCallable({value})                 *maktaba#value#IsCallable()*
 maktaba#value#IsEnum({value})                         *maktaba#value#IsEnum()*
   1 if {value} is a maktaba enum type, 0 otherwise.
 
+maktaba#value#AsList({value_or_values})               *maktaba#value#AsList()*
+  Coerces {value_or_values} into a list, wrapping any non-list value into a
+  single-item list. Examples:
+>
+    maktaba#value#AsList('lonely') == ['lonely']
+    maktaba#value#AsList(['pb', 'jelly']) == ['pb', 'jelly']
+<
+
 maktaba#value#Focus({target}, {foci}, [value])         *maktaba#value#Focus()*
   Focuses on a part of {target} specified by {foci}. That object will either
   be returned, or set to [value] if [value] is given (in which case {target}

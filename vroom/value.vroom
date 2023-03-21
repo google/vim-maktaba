@@ -181,6 +181,19 @@ The empty funcref value is function('empty').
 
 Cute.
 
+You can also coerce an arbitrary value into a list using maktaba#value#AsList
+(wrapping non-list values into their own single-item list).
+
+  :echomsg string(maktaba#value#AsList('lonely'))
+  ~ ['lonely']
+  :echomsg string(maktaba#value#AsList({'abc': 123}))
+  ~ [{'abc': 123}]
+
+If the value is already a list, it's returned unchanged.
+
+  :echomsg string(maktaba#value#AsList(['pb', 'jelly']))
+  ~ ['pb', 'jelly']
+
 
 
 Sometimes you want to check whether a variable can be called, or whether
