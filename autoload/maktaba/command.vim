@@ -13,6 +13,11 @@ function! maktaba#command#GetOutput(command) abort
     " Example: #GetOutput('echo')
     return l:output
   else
+    " Neovim's UI2 handles captured output differently.
+    if has('nvim') && luaeval('pcall(require, "vim._core.ui2") and (require("vim._core.ui2").cfg ~= nil) and true or false')
+      return l:output
+    endif
+
     " Vim will dump an extra newline at the beginning of the redir output.
     " Yeah, I think it's dumb too.
     call maktaba#ensure#IsTrue(
