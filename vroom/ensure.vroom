@@ -109,6 +109,18 @@ maktaba#value:
 For specific use cases, it's recommended that you use the handy synonyms
 enumerated below. They are defined both for builtin vim types:
 
+  :call maktaba#ensure#IsBool(0)
+  :call maktaba#ensure#IsBool(1)
+  :if exists('v:t_bool')
+  :  call maktaba#ensure#IsBool(v:false)
+  :  call maktaba#ensure#IsBool(v:true)
+  :endif
+  :let g:isbool = maktaba#function#Create('maktaba#ensure#IsBool')
+  :call maktaba#error#Try(g:isbool.WithArgs(2))
+  ~ ERROR(BadValue): Expected one of 0 or 1. Got 2.
+  :call maktaba#error#Try(g:isbool.WithArgs('true'))
+  ~ ERROR(WrongType): Expected a *Got a string. (glob)
+
   :call maktaba#ensure#IsNumber(0)
   :let g:isnum = maktaba#function#Create('maktaba#ensure#IsNumber')
   :call maktaba#error#Try(g:isnum.WithArgs('10'))

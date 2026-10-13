@@ -756,9 +756,10 @@ maktaba#ensure#TypeMatchesOneOf({value}, {values})
   Throws ERROR(WrongType)
 
 maktaba#ensure#IsBool({value})                       *maktaba#ensure#IsBool()*
-  Ensures that {value} is 0 or 1, returns it for convenience.
+  Ensures that {value} is v:false or v:true (or 0 or 1), returns it for
+  convenience.
   Throws ERROR(BadValue) if {value} is a number but not 0 or 1.
-  Throws ERROR(WrongType) if {value} is not a number.
+  Throws ERROR(WrongType) if {value} is not a boolean or number.
 
 maktaba#ensure#IsNumber({value})                   *maktaba#ensure#IsNumber()*
   Ensures that {value} is a number, returns it for convenience.

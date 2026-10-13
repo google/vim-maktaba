@@ -113,11 +113,22 @@ endfunction
 
 
 ""
-" Ensures that {value} is 0 or 1, returns it for convenience.
+" Ensures that {value} is v:false or v:true (or 0 or 1), returns it for
+" convenience.
 " @throws BadValue if {value} is a number but not 0 or 1.
-" @throws WrongType if {value} is not a number.
+" @throws WrongType if {value} is not a boolean or number.
 function! maktaba#ensure#IsBool(Value) abort
-  return maktaba#ensure#IsIn(maktaba#ensure#IsNumber(a:Value), [0, 1])
+  if exists('v:t_bool')
+    if type(a:Value) == v:t_bool
+      return a:Value
+    endif
+    " The type check below is redundant but yields the correct error message
+    " on a type mismatch.
+    call maktaba#ensure#TypeMatchesOneOf(a:Value, [v:false, 0])
+  else
+    call maktaba#ensure#IsNumber(a:Value)
+  endif
+  return maktaba#ensure#IsIn(a:Value, [0, 1])
 endfunction
 
 ""
