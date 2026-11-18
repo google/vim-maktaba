@@ -147,6 +147,33 @@ Unless throw_errors is disabled, that is.
   ! false
 
 
+When CallForeground executes via :! (when pause is 0, or when terminal buffers
+are unavailable or disabled), it escapes Ex command-line specials and newlines
+so arguments are passed to the shell verbatim.
+
+  :let g:special_words = ['echo', '100% # ! <cword> <cWORD> <cfile> <other>']
+  :call maktaba#syscall#Create(g:special_words).CallForeground(0)
+  ! echo '100% # ! <cword> <cWORD> <cfile> <other>'
+  :call maktaba#syscall#Create(['echo', "line1\nline2"]).CallForeground(0)
+  ! echo 'line1\nline2'
+  :call maktaba#syscall#Create(
+  |    "echo '100% # ! <cword> <other>\nline2'").CallForeground(0)
+  ! echo '100% # ! <cword> <other>\nline2'
+
+When terminal buffers are enabled (the default when +terminal or Neovim is
+available), CallForeground(1) runs in a terminal buffer and likewise preserves
+Ex specials and newlines.
+
+  :call maktaba#syscall#SetTermCmdDisabledForTesting(0)
+  :let g:has_term = exists('*term_start') || has('nvim')
+  :let g:fg_syscall = maktaba#syscall#Create(
+  |    ['echo', "100% # ! <cword>\nline2"])
+  :call g:fg_syscall.CallForeground(g:has_term) (0.5s)
+  ! echo '100% # ! <cword>\nline2'
+  :if g:has_term | bwipeout! | endif
+  :call maktaba#syscall#SetTermCmdDisabledForTesting(1)
+
+
 You can configure the command to be executed from a particular directory using
 the WithCwd method.
 
@@ -208,6 +235,17 @@ The chained command may also be another Syscall object.
   :call maktaba#syscall#Create('true').And(g:success_syscall).CallForeground(0)
   ! true && echo SUCCESS
   $ SUCCESS
+
+
+Chained commands preserve proper escaping across both Call and CallForeground
+without double-escaping.
+
+  :let g:special_chain = maktaba#syscall#Create(['echo', '100% <cword>']).And(
+  |    ['echo', "a\nb"])
+  :call g:special_chain.Call()
+  ! echo '100% <cword>' && echo 'a\nb' 2> /tmp/.*
+  :call g:special_chain.CallForeground(0)
+  ! echo '100% <cword>' && echo 'a\nb'
 
 
 

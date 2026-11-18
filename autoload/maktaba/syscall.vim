@@ -24,24 +24,42 @@ endif
 
 
 ""
-" Escape the special chars in a {string}.  This is useful for when "execute
-" '!foo'" is used. The \ is then removed again by the :! command.  See helpdocs
-" on shellescape.
-function! s:EscapeSpecialChars(string) abort
-  return escape(a:string, '!%#')
-endfunction
-
-
-""
-" Escapes a string for the shell, but only if it contains special characters
-" (anything besides letters, numbers, or [-=/.:_]) or is empty (in which case
-" it needs to be quoted so it counts as an argument).
-function! s:SoftShellEscape(word) abort
-  if a:word =~# '\m^[-=/.:_[:alnum:]]\+$'
-    " Simple value, no need to escape.
-    return a:word
+" Formats {syscall} into a shell command string.
+" When {special} is 1, also escapes Vim cmdline-special characters and newlines
+" for execution via |:!|.
+function! s:FormatCommand(syscall, special) abort
+  let l:chained = get(a:syscall, '_chained', [])
+  if !empty(l:chained)
+    let [l:left, l:op, l:right] = l:chained
+    return join([
+        \ s:FormatCommand(l:left, a:special),
+        \ s:FormatCommand(l:right, a:special)], l:op)
   endif
-  return shellescape(a:word)
+  if maktaba#value#IsString(a:syscall.cmd)
+    " A string cmd is already shell-escaped, so only escape Ex specials when
+    " formatting for :! (using shellescape() to identify recognized <...>
+    " cmdline-specials without altering ordinary '<' characters).
+    if !a:special
+      return a:syscall.cmd
+    endif
+    return substitute(
+        \ escape(a:syscall.cmd, "!%#\n"),
+        \ '\m<[[:alnum:]_]\+>',
+        \ '\=shellescape(submatch(0), 1)[1:-2]',
+        \ 'g')
+  endif
+  let l:words = []
+  for l:raw_word in a:syscall.cmd
+    let l:word = maktaba#string#Strip(l:raw_word)
+    " Leave non-empty strings containing only alphanumerics and [-=/.:_] as bare
+    " words; quote and escape all other strings (including empty strings),
+    " optionally also escaping Ex command-line specials when {special} is set.
+    if l:word !~# '\m^[-=/.:_[:alnum:]]\+$'
+      let l:word = shellescape(l:word, a:special)
+    endif
+    call add(l:words, l:word)
+  endfor
+  return join(l:words)
 endfunction
 
 
@@ -58,9 +76,10 @@ function! s:DoSyscallCommon(syscall, CallFunc, throw_errors) abort
   " Force shell to /bin/sh since vim only works properly with POSIX shells.
   " If the shell is an allowed wrapper, override the wrapped shell via $SHELL
   " instead.
-  let l:shell_state = maktaba#value#SaveAll(['&shell', '$SHELL'])
+  let l:shell_state = maktaba#value#SaveAll(
+      \ ['&shell', '&shellcmdflag', '$SHELL'])
   if &shell !~# s:usable_shell
-    set shell=/bin/sh
+    set shell=/bin/sh shellcmdflag=-c
   endif
   if $SHELL !~# s:usable_shell
     let $SHELL = '/bin/sh'
@@ -139,18 +158,31 @@ endfunction
 function! maktaba#syscall#DoCallForeground(pause) abort dict
   let l:return_data = {}
   if a:pause
-    " Neovim has supported terminals for all versioned releases so we don't need
-    " a version or feature check here.
-    if !s:terminal_disabled && has('nvim')
-        let l:cmd = 'noautocmd new | terminal '
-    elseif !s:terminal_disabled && has('terminal')
-        let l:cmd = 'terminal '
+    " Invoke terminal APIs directly rather than `:execute 'terminal ...'` so
+    " Vim/Neovim never performs Ex command-line expansion on the command (note
+    " :terminal also differs from :! in not stripping \! escapes).
+    " Pass &shell and &shellcmdflag explicitly because GetCommand() returns a
+    " shell command string (with shell quoting and &&/|| operators), whereas
+    " Vim's term_start(string) executes the command directly without &shell.
+    " Neovim has supported terminals for all versioned releases; termopen() was
+    " deprecated in Neovim 0.11 in favor of jobstart(..., {'term': v:true}).
+    if !s:terminal_disabled && (has('nvim') || exists('*term_start'))
+      let l:shell_cmd = [&shell] + split(&shellcmdflag) + [self.GetCommand()]
+      if has('nvim')
+        noautocmd new
+        if has('nvim-0.11')
+          call jobstart(l:shell_cmd, {'term': v:true})
+        else
+          call termopen(l:shell_cmd)
+        endif
+      else
+        call term_start(l:shell_cmd)
+      endif
     else
-        let l:cmd = '!'
+      execute '!' . s:FormatCommand(self, 1)
     endif
-    execute l:cmd . s:EscapeSpecialChars(self.GetCommand())
   else
-    silent execute '!' . s:EscapeSpecialChars(self.GetCommand())
+    silent execute '!' . s:FormatCommand(self, 1)
     redraw!
   endif
   return l:return_data
@@ -173,8 +205,16 @@ function! maktaba#syscall#Create(cmd) abort
   if maktaba#value#IsDict(a:cmd)
     return a:cmd
   endif
+  " The shell command is stored under either the 'cmd' or '_chained' dict keys:
+  " - Unchained syscalls store an already-shell-escaped command string or
+  "   unescaped word list in cmd, with _chained set to [].
+  " - Chained syscalls (from WithCwd/And/Or) have _chained set to a list
+  "   [left, op, right], where left and right are Syscall dicts and op is the
+  "   shell operator string (like ' && '). Chained syscalls have an empty value
+  "   in cmd.
   return {
       \ 'cmd': maktaba#ensure#TypeMatchesOneOf(a:cmd, ['', []]),
+      \ '_chained': [],
       \ 'WithCwd': function('maktaba#syscall#WithCwd'),
       \ 'WithStdin': function('maktaba#syscall#WithStdin'),
       \ 'And': function('maktaba#syscall#And'),
@@ -192,7 +232,7 @@ endfunction
 " @throws WrongType
 " @throws NotFound if {directory} is invalid.
 function! maktaba#syscall#WithCwd(directory) abort dict
-  let l:directory = a:directory
+  let l:directory = maktaba#ensure#IsString(a:directory)
   if !isdirectory(l:directory) && filereadable(l:directory)
     let l:directory = fnamemodify(l:directory, ':h')
   endif
@@ -200,9 +240,10 @@ function! maktaba#syscall#WithCwd(directory) abort dict
     throw maktaba#error#NotFound('Directory %s does not exist.', l:directory)
   endif
   let l:new_cmd = copy(self)
-  let l:orig_cmd_value = self.cmd
-  let l:new_cmd.cmd = ['cd', l:directory]
-  return l:new_cmd.And(l:orig_cmd_value)
+  let l:new_cmd.cmd = ''
+  let l:new_cmd._chained = [
+      \ maktaba#syscall#Create(['cd', l:directory]), ' && ', self]
+  return l:new_cmd
 endfunction
 
 
@@ -226,9 +267,10 @@ endfunction
 " {cmd} may be any valid @function(#Create) argument.
 " @throws WrongType
 function! maktaba#syscall#And(cmd) abort dict
-  let l:cmd_string = maktaba#syscall#Create(a:cmd).GetCommand()
+  let l:right = maktaba#syscall#Create(a:cmd)
   let l:new_cmd = copy(self)
-  let l:new_cmd.cmd = join([self.GetCommand(), l:cmd_string], ' && ')
+  let l:new_cmd.cmd = ''
+  let l:new_cmd._chained = [self, ' && ', l:right]
   return l:new_cmd
 endfunction
 
@@ -240,9 +282,10 @@ endfunction
 " {cmd} may be any valid @function(#Create) argument.
 " @throws WrongType
 function! maktaba#syscall#Or(cmd) abort dict
-  let l:cmd_string = maktaba#syscall#Create(a:cmd).GetCommand()
+  let l:right = maktaba#syscall#Create(a:cmd)
   let l:new_cmd = copy(self)
-  let l:new_cmd.cmd = join([self.GetCommand(), l:cmd_string], ' || ')
+  let l:new_cmd.cmd = ''
+  let l:new_cmd._chained = [self, ' || ', l:right]
   return l:new_cmd
 endfunction
 
@@ -413,13 +456,7 @@ endfunction
 " @function(Syscall.Call) or @function(Syscall.CallForeground), with words
 " joined and special characters escaped.
 function! maktaba#syscall#GetCommand() abort dict
-  if maktaba#value#IsString(self.cmd)
-    " Accept strings for convenience, return as-is.
-    return self.cmd
-  endif
-  let l:words = map(copy(self.cmd), 'maktaba#string#Strip(v:val)')
-  let l:words = map(l:words, 's:SoftShellEscape(v:val)')
-  return join(l:words)
+  return s:FormatCommand(self, 0)
 endfunction
 
 
@@ -476,7 +513,8 @@ endfunction
 
 ""
 " @private
-" Disables internal use of |:terminal| if {disabled} is true. Enables otherwise.
+" Disables use of terminal buffers in CallForeground(1) if {disabled} is true.
+" Enables otherwise.
 function! maktaba#syscall#SetTermCmdDisabledForTesting(disabled) abort
   let s:terminal_disabled = maktaba#ensure#IsBool(a:disabled)
 endfunction
